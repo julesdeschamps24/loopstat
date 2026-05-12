@@ -11,7 +11,6 @@ import type {
 
 export interface PollRecentResult {
   inserted: number;
-  cursorAfter: number | null;
 }
 
 export async function pollUserRecentPlays(
@@ -46,35 +45,33 @@ export async function pollUserRecentPlays(
 
   // Build stream rows. The unique index (user_id, played_at, track_id) plus
   // insertStreams' onConflictDoNothing guarantees idempotency.
+  // Note: msPlayed is null here — Spotify's /me/player/recently-played does
+  // not expose actual listening duration per stream. Leaving it null is
+  // honest; downstream stats should treat null as "unknown".
   const rows: NewStream[] = items.map((it) => ({
     userId,
     trackId: it.track.id,
     playedAt: new Date(it.played_at),
-    msPlayed: it.track.duration_ms,
+    msPlayed: null,
     source: "api",
   }));
 
+  // The three writes below (catalog upsert above, streams insert, user update)
+  // are not wrapped in a transaction; each is idempotent on its own.
   const inserted = await insertStreams(rows);
 
   // lastSyncedAt policy: we always bump to `now()` regardless of whether items
-  // were returned. This reflects "we successfully polled at time X" rather
-  // than "we have data up to X". Two reasons:
-  //   1. Spotify's `after` filter is exclusive on played_at; bumping to now()
-  //      avoids re-fetching items we've already seen on the next poll.
-  //   2. On an empty response we still want to advance the cursor so we
-  //      don't keep querying with a stale, very old `after` value forever.
+  // were returned. Two reasons:
+  //   1. Advance on empty responses — if Spotify returns 0 items (user idle),
+  //      we still need the cursor to move forward; otherwise future polls
+  //      keep using a stale `after` value.
+  //   2. Robustness against clock skew between this server and the timestamps
+  //      Spotify attaches to plays.
   const now = new Date();
   await db
     .update(users)
     .set({ lastSyncedAt: now })
     .where(eq(users.id, userId));
 
-  // cursorAfter: most recent played_at across items (ms epoch), or null.
-  let cursorAfter: number | null = null;
-  for (const it of items) {
-    const t = new Date(it.played_at).getTime();
-    if (cursorAfter === null || t > cursorAfter) cursorAfter = t;
-  }
-
-  return { inserted, cursorAfter };
+  return { inserted };
 }

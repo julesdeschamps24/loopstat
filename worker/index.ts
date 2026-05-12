@@ -12,7 +12,7 @@ interface PollRecentJobData {
 
 async function processPollRecent(
   job: Job<PollRecentJobData>,
-): Promise<{ inserted: number; cursorAfter: number | null }> {
+): Promise<{ inserted: number }> {
   const { userId } = job.data;
   if (!userId) throw new Error(`job ${job.id}: missing userId in data`);
 
