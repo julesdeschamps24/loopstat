@@ -24,7 +24,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET ?? "missing",
       authorization: {
         url: "https://accounts.spotify.com/authorize",
-        params: { scope: SPOTIFY_SCOPES },
+        params: {
+          scope: SPOTIFY_SCOPES,
+          redirect_uri: "http://127.0.0.1:3000/api/auth/callback/spotify",
+        },
       },
       [customFetch]: async (...args) => {
         const [input, init] = args;
