@@ -16,7 +16,7 @@ export async function POST(): Promise<Response> {
     const job = await pollRecentQueue.add("poll-user", { userId });
     return Response.json({ ok: true, jobId: job.id }, { status: 202 });
   } catch (err) {
-    console.error("[api/sync] failed to enqueue poll-user job:", err);
+    console.error("[api/sync] failed to enqueue poll-user job for user", userId, err);
     return Response.json({ error: "enqueue_failed" }, { status: 500 });
   }
 }
