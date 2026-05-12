@@ -136,6 +136,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return token;
     },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) {
+        return url === "/" ? `${baseUrl}/dashboard` : `${baseUrl}${url}`;
+      }
+      try {
+        const parsed = new URL(url);
+        if (parsed.origin === baseUrl) {
+          return parsed.pathname === "/" ? `${baseUrl}/dashboard` : url;
+        }
+      } catch {
+        // not a valid absolute URL — fall through
+      }
+      return `${baseUrl}/dashboard`;
+    },
     async session({ session, token }) {
       if (token.userId) {
         session.user.id = token.userId as string;
