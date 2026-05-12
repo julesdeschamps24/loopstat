@@ -4,10 +4,26 @@ import {
   connection,
   pollRecentQueue,
 } from "./queue";
+import { pollUserRecentPlays } from "./jobs/pollRecent";
 
-// Placeholder processor — real job logic comes in Phase 3 Task 2.
-async function processPollRecent(job: Job): Promise<void> {
-  console.log(`[worker] job received: ${job.name}`, job.data);
+interface PollRecentJobData {
+  userId: string;
+}
+
+async function processPollRecent(
+  job: Job<PollRecentJobData>,
+): Promise<{ inserted: number; cursorAfter: number | null }> {
+  const { userId } = job.data;
+  if (!userId) throw new Error(`job ${job.id}: missing userId in data`);
+
+  const start = Date.now();
+  const result = await pollUserRecentPlays(userId);
+  const duration = Date.now() - start;
+
+  console.log(
+    `[worker] poll-recent user=${userId} inserted=${result.inserted} ms=${duration}`,
+  );
+  return result;
 }
 
 const worker = new Worker(POLL_RECENT_QUEUE_NAME, processPollRecent, {
