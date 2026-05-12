@@ -71,7 +71,7 @@ function SetupNeeded() {
             Remplis :
             <ul className="mt-2 space-y-1 text-muted-foreground">
               <li>
-                <strong>App name</strong> : <code className="text-foreground">stat_fm</code>
+                <strong>App name</strong> : <code className="text-foreground">loopstat</code>
               </li>
               <li>
                 <strong>App description</strong> : ce que tu veux

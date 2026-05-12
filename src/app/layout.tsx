@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "stat_fm — your Spotify, in numbers",
+  title: "loopstat — your Spotify, in numbers",
   description: "Stats Spotify détaillées, gratuites et sans pub.",
 };
 

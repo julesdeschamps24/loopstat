@@ -1,4 +1,4 @@
-# stat_fm
+# loopstat
 
 > Ton Spotify, en chiffres. Une alternative **plus légère, gratuite et sans pub** à [stats.fm](https://stats.fm) — auto-hébergeable et open.
 
@@ -30,7 +30,7 @@
 
 ## Aperçu
 
-`stat_fm` agrège les statistiques d'écoute Spotify d'un utilisateur et les expose dans une UI moderne, sobre, sans pub :
+`loopstat` agrège les statistiques d'écoute Spotify d'un utilisateur et les expose dans une UI moderne, sobre, sans pub :
 
 - **Top tracks / artistes / albums / genres** sur 4 semaines, 6 mois, 1 an, lifetime.
 - **Listening clock** (heatmap heure × jour de la semaine).
@@ -147,8 +147,8 @@ Conçu pour scaler à **≥ 10 000 utilisateurs** dès la modélisation des donn
 
 ```bash
 # 1. Cloner et installer
-git clone <repo-url> stat_fm
-cd stat_fm
+git clone <repo-url> loopstat
+cd loopstat
 pnpm install
 
 # 2. Démarrer Postgres + Redis
@@ -181,7 +181,7 @@ pnpm worker
 
 1. Va sur [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) → connecte-toi → **Create app**.
 2. Remplis :
-   - **App name** : `stat_fm` (ou ce que tu veux)
+   - **App name** : `loopstat` (ou ce que tu veux)
    - **Redirect URIs** : `http://127.0.0.1:3000/api/auth/callback/spotify` (clic **Add** !)
    - **Which API/SDKs** : coche **Web API**
 3. Coche les CGU → **Save**.
@@ -218,7 +218,7 @@ pnpm worker
 ## Structure du projet
 
 ```
-stat_fm/
+loopstat/
 ├── docker-compose.yml          # Postgres 16 + Redis 7
 ├── drizzle.config.ts           # Config Drizzle Kit
 ├── drizzle/                    # Migrations SQL générées
@@ -262,7 +262,7 @@ Toutes dans `.env.local` (gitignored).
 | `SPOTIFY_CLIENT_SECRET` | `0123456789abcdef...` | Client secret idem |
 | `AUTH_SECRET` | `openssl rand -base64 32` | Secret de signature JWT NextAuth |
 | `AUTH_URL` | `http://127.0.0.1:3000` | Origine canonique de l'app (sans slash final) |
-| `DATABASE_URL` | `postgres://stat_fm:stat_fm@127.0.0.1:5432/stat_fm` | Connexion Postgres (matche `docker-compose.yml`) |
+| `DATABASE_URL` | `postgres://loopstat:loopstat@127.0.0.1:5432/loopstat` | Connexion Postgres (matche `docker-compose.yml`) |
 | `REDIS_URL` | `redis://127.0.0.1:6379` | Connexion Redis pour BullMQ |
 | `TOKEN_ENC_KEY` | `openssl rand -hex 32` (64 chars hex) | Clé AES-256 pour chiffrer les tokens Spotify en DB |
 

@@ -1,25 +1,25 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: stat_fm_postgres
+    container_name: loopstat_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: stat_fm
-      POSTGRES_PASSWORD: stat_fm
-      POSTGRES_DB: stat_fm
+      POSTGRES_USER: loopstat
+      POSTGRES_PASSWORD: loopstat
+      POSTGRES_DB: loopstat
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U stat_fm -d stat_fm"]
+      test: ["CMD-SHELL", "pg_isready -U loopstat -d loopstat"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: stat_fm_redis
+    container_name: loopstat_redis
     restart: unless-stopped
     ports:
       - "6379:6379"
