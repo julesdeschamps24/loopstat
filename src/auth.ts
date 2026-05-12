@@ -32,16 +32,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       [customFetch]: async (...args) => {
         const [input, init] = args;
         const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+        if (url.includes("/api/token") && init?.body instanceof URLSearchParams) {
+          // Auth.js computes redirect_uri from the incoming Host header (trustHost: true).
+          // If the user landed on localhost:3000 instead of 127.0.0.1:3000, the value sent
+          // here mismatches what was sent in the authorize step → Spotify rejects with
+          // invalid_grant. Pin it to the canonical URL registered in the dashboard.
+          init.body.set("redirect_uri", "http://127.0.0.1:3000/api/auth/callback/spotify");
+        }
         if (url.includes("/api/token")) {
           console.log("\n========== [SPOTIFY TOKEN REQUEST] ==========");
           console.log("URL    :", url);
-          console.log("METHOD :", init?.method ?? "GET");
-          const headers = new Headers(init?.headers ?? {});
-          const headerLog: Record<string, string> = {};
-          headers.forEach((v, k) => {
-            headerLog[k] = k.toLowerCase() === "authorization" ? v.slice(0, 20) + "...(redacted)" : v;
-          });
-          console.log("HEADERS:", headerLog);
           const body = init?.body;
           if (body instanceof URLSearchParams) {
             const obj: Record<string, string> = {};
@@ -49,10 +49,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               obj[k] = k === "code" || k === "code_verifier" ? v.slice(0, 12) + "...(truncated)" : v;
             });
             console.log("BODY   :", obj);
-          } else if (typeof body === "string") {
-            console.log("BODY (raw):", body.slice(0, 500));
-          } else {
-            console.log("BODY (?) :", body);
           }
           console.log("=============================================\n");
         }
