@@ -356,4 +356,4 @@ MIT — fais-en ce que tu veux.
 
 ---
 
-> Construit avec ☕ par [@judescha](https://github.com/judescha) (et Claude Code). 
+> Construit avec ☕ par [@judescha](https://github.com/judescha) (et Claude Code).
