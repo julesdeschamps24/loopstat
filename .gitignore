@@ -43,4 +43,8 @@ next-env.d.ts
 
 # import temp dir (uploaded Spotify dumps, processed by the importHistory job)
 /.import-tmp/
-.claude/settings.local.json
+
+# Claude Code / agent tooling (local, not part of the app)
+/.claude/
+/.agents/
+/skills-lock.json
