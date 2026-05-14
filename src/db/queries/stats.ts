@@ -97,6 +97,58 @@ export async function getTrackPlayStats(
   };
 }
 
+export async function getArtistPlayStats(
+  userId: string,
+  artistId: string,
+): Promise<{ count: number }> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(streams)
+    .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
+    .where(and(eq(streams.userId, userId), eq(trackArtists.artistId, artistId)));
+
+  return { count: Number(row?.count ?? 0) };
+}
+
+export async function getUserTopTracksByArtist(
+  userId: string,
+  artistId: string,
+  limit: number,
+): Promise<{ trackId: string; trackName: string; playCount: number }[]> {
+  const rows = await db
+    .select({
+      trackId: streams.trackId,
+      trackName: tracks.name,
+      playCount: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .where(and(eq(streams.userId, userId), eq(trackArtists.artistId, artistId)))
+    .groupBy(streams.trackId, tracks.name)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+
+  return rows.map((r) => ({
+    trackId: r.trackId,
+    trackName: r.trackName,
+    playCount: Number(r.playCount),
+  }));
+}
+
+export async function getAlbumPlayStats(
+  userId: string,
+  albumId: string,
+): Promise<{ count: number }> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(streams)
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .where(and(eq(streams.userId, userId), eq(tracks.albumId, albumId)));
+
+  return { count: Number(row?.count ?? 0) };
+}
+
 /**
  * Listening distribution by hour of day (0-23). Returns a dense 24-element
  * array so callers can render every bucket without gap-filling.

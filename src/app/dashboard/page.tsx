@@ -146,6 +146,7 @@ export default async function DashboardPage() {
                   key={track.id}
                   rank={index + 1}
                   title={track.name}
+                  href={`/track/${track.id}`}
                   subtitle={track.artists.map((a) => a.name).join(", ")}
                   imageUrl={track.album?.images?.[0]?.url}
                 />
@@ -179,6 +180,7 @@ export default async function DashboardPage() {
                   key={artist.id}
                   rank={index + 1}
                   title={artist.name}
+                  href={`/artist/${artist.id}`}
                   subtitle={artist.genres?.slice(0, 3).join(" · ") || undefined}
                   imageUrl={artist.images?.[0]?.url}
                 />

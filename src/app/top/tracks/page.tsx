@@ -56,6 +56,7 @@ export default async function TopTracksPage({
                 key={track.id}
                 rank={index + 1}
                 title={track.name}
+                href={`/track/${track.id}`}
                 subtitle={track.artists.map((a) => a.name).join(", ")}
                 imageUrl={track.album?.images?.[0]?.url}
                 metric={

@@ -57,6 +57,7 @@ export default async function TopArtistsPage({
                 key={artist.id}
                 rank={index + 1}
                 title={artist.name}
+                href={`/artist/${artist.id}`}
                 subtitle={genres || undefined}
                 imageUrl={artist.images?.[0]?.url}
                 metric={

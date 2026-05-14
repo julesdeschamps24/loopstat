@@ -108,6 +108,7 @@ export default async function TopAlbumsPage({
               key={album.id}
               rank={index + 1}
               title={album.name}
+              href={`/album/${album.id}`}
               subtitle={album.artistNames}
               imageUrl={album.imageUrl}
               metric={`${album.trackCount} ${
