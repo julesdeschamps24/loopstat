@@ -1,16 +1,19 @@
 import { Worker, type Job } from "bullmq";
 import {
+  ENRICH_QUEUE_NAME,
   IMPORT_QUEUE_NAME,
   POLL_RECENT_FANOUT_EVERY_MS,
   POLL_RECENT_FANOUT_SCHEDULER_ID,
   POLL_RECENT_QUEUE_NAME,
   connection,
+  enrichQueue,
   importQueue,
   pollRecentQueue,
 } from "./queue";
 import { pollUserRecentPlays } from "./jobs/pollRecent";
 import { fanoutPolls } from "./jobs/fanout";
 import { importHistory } from "./jobs/importHistory";
+import { enrichMetadata } from "./jobs/enrichMetadata";
 
 interface PollUserJobData {
   userId: string;
@@ -18,6 +21,10 @@ interface PollUserJobData {
 
 interface ImportJobData {
   importId: string;
+}
+
+interface EnrichJobData {
+  userId: string;
 }
 
 // The queue carries two job kinds, distinguished by `job.name`:
@@ -65,6 +72,21 @@ async function processImportJob(job: Job): Promise<unknown> {
   return result;
 }
 
+// Enrich queue: one job kind, "enrich-metadata", payload { userId }. Backfills
+// full track metadata for tracks importHistory inserted minimal.
+async function processEnrichJob(job: Job): Promise<unknown> {
+  const start = Date.now();
+  const { userId } = job.data as EnrichJobData;
+  if (!userId) throw new Error(`job ${job.id}: missing userId in data`);
+
+  const result = await enrichMetadata(userId);
+  const duration = Date.now() - start;
+  console.log(
+    `[worker] enrich user=${userId} enrichedCount=${result.enrichedCount} ms=${duration}`,
+  );
+  return result;
+}
+
 const worker = new Worker(POLL_RECENT_QUEUE_NAME, processJob, {
   connection,
 });
@@ -97,6 +119,22 @@ importWorker.on("error", (err) => {
   console.error("[worker] import worker error:", err);
 });
 
+const enrichWorker = new Worker(ENRICH_QUEUE_NAME, processEnrichJob, {
+  connection,
+});
+
+enrichWorker.on("ready", () => {
+  console.log("[worker] enrich worker ready");
+});
+
+enrichWorker.on("failed", (job, err) => {
+  console.error(`[worker] enrich job ${job?.id ?? "?"} failed:`, err);
+});
+
+enrichWorker.on("error", (err) => {
+  console.error("[worker] enrich worker error:", err);
+});
+
 // Register the repeatable fanout scheduler. `upsertJobScheduler` is idempotent
 // across restarts: same id + same opts is a no-op, so it's safe to call on
 // every boot.
@@ -126,10 +164,14 @@ async function shutdown(signal: string): Promise<void> {
     console.log("[worker] poll-recent worker closed");
     await importWorker.close();
     console.log("[worker] import worker closed");
+    await enrichWorker.close();
+    console.log("[worker] enrich worker closed");
     await pollRecentQueue.close();
     console.log("[worker] poll-recent queue closed");
     await importQueue.close();
     console.log("[worker] import queue closed");
+    await enrichQueue.close();
+    console.log("[worker] enrich queue closed");
     await connection.quit();
     console.log("[worker] redis connection closed");
     process.exit(0);

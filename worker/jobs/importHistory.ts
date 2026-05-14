@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { imports, tracks, type NewStream } from "@/db/schema";
 import { insertStreams } from "@/db/queries/streams";
+import { enrichQueue } from "../queue";
 
 // Temp dir layout written by POST /api/import: <projectRoot>/.import-tmp/<importId>/<file>.
 // The route saves files here so we never push file buffers through Redis.
@@ -126,6 +127,18 @@ export async function importHistory(
       .where(eq(imports.id, importId));
 
     await rm(dir, { recursive: true, force: true });
+
+    // Chain the import → enrich pipeline: backfill full metadata for the
+    // minimal track rows just inserted. The import already succeeded, so an
+    // enqueue failure must not fail it — enrichment can be retried later.
+    try {
+      await enrichQueue.add("enrich-metadata", { userId });
+    } catch (enqueueErr) {
+      console.error(
+        `[importHistory] import=${importId} user=${userId} failed to enqueue enrich job:`,
+        enqueueErr,
+      );
+    }
 
     return { rowsImported };
   } catch (err) {
