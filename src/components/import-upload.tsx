@@ -6,6 +6,7 @@ import { CheckCircle2, Upload } from "lucide-react";
 import { ImportProgress } from "@/components/import-progress";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB — mirrors the route
+const MAX_FILES = 30; // mirrors the route
 
 // Maps the route's machine error codes (POST /api/import, 400 branch) to
 // user-facing French copy. Keep in sync with src/app/api/import/route.ts.
@@ -13,6 +14,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   no_files: "Sélectionne au moins un fichier.",
   invalid_file_type: "Le fichier n'est pas un fichier .json.",
   file_too_large: "Le fichier dépasse la limite de 50 Mo.",
+  too_many_files: "Trop de fichiers : 30 au maximum.",
 };
 
 type Status =
@@ -34,6 +36,7 @@ export function ImportUpload() {
 
   function validate(selected: File[]): string | null {
     if (selected.length === 0) return "Sélectionne au moins un fichier.";
+    if (selected.length > MAX_FILES) return "Trop de fichiers : 30 au maximum.";
     for (const file of selected) {
       if (!file.name.toLowerCase().endsWith(".json")) {
         return `« ${file.name} » n'est pas un fichier .json.`;

@@ -27,10 +27,12 @@ interface EnrichJobData {
   userId: string;
 }
 
-// The queue carries two job kinds, distinguished by `job.name`:
+// poll-recent queue processor. Handles two job kinds, distinguished by
+// `job.name`:
 //   - "fanout"    — payload {}, fired by the repeatable scheduler. Selects
 //                   eligible users and enqueues one "poll-user" per user.
 //   - "poll-user" — payload { userId }, per-user Spotify poll.
+// The import and enrich queues have their own processors below.
 async function processJob(job: Job): Promise<unknown> {
   const start = Date.now();
 
@@ -96,7 +98,7 @@ worker.on("ready", () => {
 });
 
 worker.on("failed", (job, err) => {
-  console.error(`[worker] job ${job?.id ?? "?"} failed:`, err);
+  console.error(`[worker] poll-recent job ${job?.id ?? "?"} failed:`, err);
 });
 
 worker.on("error", (err) => {

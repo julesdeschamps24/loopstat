@@ -11,6 +11,7 @@ import { importQueue } from "../../../../worker/queue";
 export const dynamic = "force-dynamic";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
+const MAX_FILES = 30; // a real Spotify dump is ~5-20 JSON files
 const IMPORT_TMP_DIR = path.join(process.cwd(), ".import-tmp");
 
 export async function POST(request: Request): Promise<Response> {
@@ -27,6 +28,9 @@ export async function POST(request: Request): Promise<Response> {
 
   if (files.length === 0) {
     return Response.json({ error: "no_files" }, { status: 400 });
+  }
+  if (files.length > MAX_FILES) {
+    return Response.json({ error: "too_many_files" }, { status: 400 });
   }
   for (const file of files) {
     if (!file.name.toLowerCase().endsWith(".json")) {
