@@ -47,6 +47,16 @@ export interface SpotifyPagingCursor<T> {
   href: string;
 }
 
+export interface SpotifyPagingOffset<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+  href: string;
+  next: string | null;
+  previous: string | null;
+}
+
 export interface SpotifyPlayHistoryItem {
   track: SpotifyTrack;
   played_at: string;
