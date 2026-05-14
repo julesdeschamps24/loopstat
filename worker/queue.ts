@@ -10,9 +10,14 @@ export const POLL_RECENT_FANOUT_EVERY_MS = 30 * 60 * 1000;
 
 // Cache the connection + queue on globalThis so dev-mode HMR (Next.js / tsx watch)
 // doesn't open a new Redis socket and a new BullMQ Queue on every module reload.
+export const IMPORT_QUEUE_NAME = "import";
+export const ENRICH_QUEUE_NAME = "enrich";
+
 const globalCache = globalThis as unknown as {
   __loopstatRedis?: IORedis;
   __loopstatPollRecentQueue?: Queue;
+  __loopstatImportQueue?: Queue;
+  __loopstatEnrichQueue?: Queue;
 };
 
 // BullMQ requires maxRetriesPerRequest: null on the connection used by Workers.
@@ -28,6 +33,34 @@ export const pollRecentQueue =
   (globalCache.__loopstatPollRecentQueue = new Queue(POLL_RECENT_QUEUE_NAME, {
     connection,
     defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: "exponential", delay: 5_000 },
+      removeOnComplete: { age: 3600, count: 1000 },
+      removeOnFail: { age: 24 * 3600 },
+    },
+  }));
+
+export const importQueue =
+  globalCache.__loopstatImportQueue ??
+  (globalCache.__loopstatImportQueue = new Queue(IMPORT_QUEUE_NAME, {
+    connection,
+    defaultJobOptions: {
+      // Imports are not safely retryable: a partial run already wrote streams
+      // (idempotent thanks to the unique index) but a blind retry re-reads the
+      // temp dir which the previous attempt may have deleted. One attempt.
+      attempts: 1,
+      removeOnComplete: { age: 24 * 3600, count: 1000 },
+      removeOnFail: { age: 7 * 24 * 3600 },
+    },
+  }));
+
+export const enrichQueue =
+  globalCache.__loopstatEnrichQueue ??
+  (globalCache.__loopstatEnrichQueue = new Queue(ENRICH_QUEUE_NAME, {
+    connection,
+    defaultJobOptions: {
+      // Enrichment is idempotent (enriched tracks have duration_ms set, so a
+      // retry won't re-select them) — safe to retry transient Spotify 5xx.
       attempts: 3,
       backoff: { type: "exponential", delay: 5_000 },
       removeOnComplete: { age: 3600, count: 1000 },

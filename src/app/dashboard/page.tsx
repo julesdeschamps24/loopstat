@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 
@@ -37,11 +38,19 @@ export default async function DashboardPage() {
         </form>
       </header>
 
-      <section className="rounded-2xl border bg-card p-8 text-center space-y-2">
-        <h2 className="text-xl font-semibold">Phase 1 — Auth Spotify ✅</h2>
-        <p className="text-muted-foreground text-sm">
-          Tes tokens sont chiffrés en DB. Les pages stats arrivent en Phase 5.
-        </p>
+      <section className="rounded-2xl border bg-card p-8 text-center space-y-4">
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold">Phase 1 — Auth Spotify ✅</h2>
+          <p className="text-muted-foreground text-sm">
+            Tes tokens sont chiffrés en DB. Les pages stats arrivent en Phase 5.
+          </p>
+        </div>
+        <Link
+          href="/import"
+          className="inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition"
+        >
+          Importer mon historique
+        </Link>
       </section>
     </main>
   );
