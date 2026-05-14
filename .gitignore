@@ -43,3 +43,4 @@ next-env.d.ts
 
 # import temp dir (uploaded Spotify dumps, processed by the importHistory job)
 /.import-tmp/
+.claude/settings.local.json
