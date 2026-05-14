@@ -27,6 +27,16 @@ export interface SpotifyAlbumSimple {
   artists?: SpotifyArtistSimple[];
 }
 
+/**
+ * Album-detail response (`GET /albums/{id}`). Extends the simple shape with
+ * the embedded tracklist — only the fields the album page actually renders.
+ */
+export interface SpotifyAlbum extends SpotifyAlbumSimple {
+  tracks?: {
+    items: { id: string; name: string; track_number?: number }[];
+  };
+}
+
 export interface SpotifyTrack {
   id: string;
   name: string;
@@ -45,6 +55,16 @@ export interface SpotifyPagingCursor<T> {
   cursors: { after?: string; before?: string };
   limit: number;
   href: string;
+}
+
+export interface SpotifyPagingOffset<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+  href: string;
+  next: string | null;
+  previous: string | null;
 }
 
 export interface SpotifyPlayHistoryItem {

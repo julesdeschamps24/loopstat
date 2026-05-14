@@ -27,13 +27,6 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `if(location.hostname==="localhost"){location.replace(location.href.replace("//localhost","//127.0.0.1"));}`,
-          }}
-        />
-      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider
           attribute="class"

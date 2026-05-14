@@ -12,12 +12,6 @@ export const isSpotifyConfigured = Boolean(
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
-  debug: true,
-  logger: {
-    error: (e) => console.error("[auth-error]", e),
-    warn: (c) => console.warn("[auth-warn]", c),
-    debug: (code, meta) => console.log("[auth-debug]", code, meta),
-  },
   providers: [
     Spotify({
       clientId: process.env.SPOTIFY_CLIENT_ID ?? "missing",
@@ -31,26 +25,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       [customFetch]: async (...args) => {
         const [input, init] = args;
-        const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
         if (url.includes("/api/token") && init?.body instanceof URLSearchParams) {
           // Auth.js computes redirect_uri from the incoming Host header (trustHost: true).
           // If the user landed on localhost:3000 instead of 127.0.0.1:3000, the value sent
           // here mismatches what was sent in the authorize step → Spotify rejects with
           // invalid_grant. Pin it to the canonical URL registered in the dashboard.
-          init.body.set("redirect_uri", "http://127.0.0.1:3000/api/auth/callback/spotify");
-        }
-        if (url.includes("/api/token")) {
-          console.log("\n========== [SPOTIFY TOKEN REQUEST] ==========");
-          console.log("URL    :", url);
-          const body = init?.body;
-          if (body instanceof URLSearchParams) {
-            const obj: Record<string, string> = {};
-            body.forEach((v, k) => {
-              obj[k] = k === "code" || k === "code_verifier" ? v.slice(0, 12) + "...(truncated)" : v;
-            });
-            console.log("BODY   :", obj);
-          }
-          console.log("=============================================\n");
+          init.body.set(
+            "redirect_uri",
+            "http://127.0.0.1:3000/api/auth/callback/spotify",
+          );
         }
         return fetch(input as Parameters<typeof fetch>[0], init);
       },
