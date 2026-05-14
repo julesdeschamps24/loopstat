@@ -51,14 +51,12 @@ export default async function TopArtistsPage({
         <RankedList>
           {artists.map((artist, index) => {
             const count = playCounts.get(artist.id) ?? 0;
-            const genres = artist.genres?.slice(0, 3).join(" · ");
             return (
               <RankedRow
                 key={artist.id}
                 rank={index + 1}
                 title={artist.name}
                 href={`/artist/${artist.id}`}
-                subtitle={genres || undefined}
                 imageUrl={artist.images?.[0]?.url}
                 metric={
                   count > 0 ? `${formatNumber(count)} écoutes` : undefined

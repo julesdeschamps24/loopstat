@@ -55,18 +55,6 @@ export default async function ArtistDetailPage({
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">Artiste</p>
           <h1 className="text-3xl font-semibold">{artist.name}</h1>
-          {artist.genres && artist.genres.length > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {artist.genres.slice(0, 6).map((genre) => (
-                <span
-                  key={genre}
-                  className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
-                >
-                  {genre}
-                </span>
-              ))}
-            </div>
-          ) : null}
           <p className="mt-3 text-sm text-muted-foreground">
             {formatNumber(stats.count)} écoutes
           </p>

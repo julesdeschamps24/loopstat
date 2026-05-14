@@ -7,7 +7,6 @@ import {
   Disc3,
   Download,
   Music2,
-  Tags,
   Users,
 } from "lucide-react";
 
@@ -34,7 +33,6 @@ const NAV_LINKS = [
   { href: "/top/tracks", label: "Top titres", icon: Music2 },
   { href: "/top/artists", label: "Top artistes", icon: Users },
   { href: "/top/albums", label: "Top albums", icon: Album },
-  { href: "/top/genres", label: "Top genres", icon: Tags },
   { href: "/listening-clock", label: "Horloge d'écoute", icon: Clock },
 ];
 
@@ -181,7 +179,6 @@ export default async function DashboardPage() {
                   rank={index + 1}
                   title={artist.name}
                   href={`/artist/${artist.id}`}
-                  subtitle={artist.genres?.slice(0, 3).join(" · ") || undefined}
                   imageUrl={artist.images?.[0]?.url}
                 />
               ))}
