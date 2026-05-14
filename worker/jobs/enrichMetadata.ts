@@ -6,8 +6,10 @@ import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
 import type { SpotifyTrack } from "@/lib/spotify/types";
 
 // The batched GET /tracks?ids= endpoint returns 403 for this app's Spotify
-// credentials, so we fetch one at a time via GET /tracks/{id}. Delay between
-// calls to stay polite with rate limits.
+// credentials, so we fetch one at a time via GET /tracks/{id}. Fixed delay
+// between calls to space out requests. NOTE: there is no HTTP 429/Retry-After
+// handling — if Spotify rate-limits us, spotifyFetch throws and we rely on
+// BullMQ to retry the whole job (cheap, since enriched tracks self-exclude).
 const RATE_DELAY_MS = 150;
 
 export interface EnrichMetadataResult {
@@ -20,6 +22,11 @@ export interface EnrichMetadataResult {
 // problems — skip just that one track rather than failing (and retrying) the
 // whole job. Any other status (403, 5xx, network) is treated as transient and
 // allowed to propagate so BullMQ retries.
+// NOTE: this matches on the thrown message string, so it is coupled to
+// spotifyFetch's message format. The message also embeds the response body,
+// so a non-4xx error whose body literally contains "failed: 400/404" could
+// false-positive — low risk, but a typed error carrying .status would be the
+// robust fix if spotifyFetch is ever revisited.
 function isSkippableTrackError(err: unknown): boolean {
   return (
     err instanceof Error &&
@@ -31,6 +38,10 @@ function isSkippableTrackError(err: unknown): boolean {
 // Sweeps tracks inserted "minimal" by importHistory ({id,name}, duration_ms NULL)
 // and backfills full metadata from the Spotify catalog. Idempotent: once a track
 // is enriched it has duration_ms set, so a re-run won't re-select it.
+// NOTE: `tracks` is a global shared catalog (no userId column), so this is a
+// GLOBAL sweep — it enriches every unenriched track, not just one user's.
+// `userId` here is only the Spotify credential used for the API calls (and the
+// log prefix); concurrent enrich jobs would redundantly fetch the same ids.
 export async function enrichMetadata(
   userId: string,
 ): Promise<EnrichMetadataResult> {
