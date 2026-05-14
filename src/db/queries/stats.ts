@@ -97,6 +97,32 @@ export async function getTrackPlayStats(
   };
 }
 
+/**
+ * Listening distribution by hour of day (0-23). Returns a dense 24-element
+ * array so callers can render every bucket without gap-filling.
+ *
+ * NOTE: groups on `EXTRACT(HOUR FROM played_at)` using the DB/server
+ * timezone — there is no per-user timezone in MVP scope.
+ */
+export async function getListeningClock(
+  userId: string,
+): Promise<{ hour: number; count: number }[]> {
+  const rows = await db
+    .select({
+      hour: sql<number>`extract(hour from ${streams.playedAt})::int`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .where(eq(streams.userId, userId))
+    .groupBy(sql`extract(hour from ${streams.playedAt})`);
+
+  const counts = new Map(rows.map((r) => [Number(r.hour), Number(r.count)]));
+  return Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    count: counts.get(hour) ?? 0,
+  }));
+}
+
 export async function getRecentStreams(
   userId: string,
   limit: number,

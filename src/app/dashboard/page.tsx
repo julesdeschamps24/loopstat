@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { auth, signOut } from "@/auth";
+import { CurrentlyPlaying } from "@/components/stats/currently-playing";
 import { RankedList, RankedRow } from "@/components/stats/ranked-list";
 import { StatCard } from "@/components/stats/stat-card";
 import { EmptyState } from "@/components/stats/empty-state";
@@ -93,14 +94,9 @@ export default async function DashboardPage() {
       </header>
 
       <div className="flex flex-col gap-12">
-        {/* CurrentlyPlaying — wired in Task 8 */}
+        {/* CurrentlyPlaying */}
         <section>
-          <div className="rounded-2xl border bg-card p-6">
-            <p className="text-sm text-muted-foreground">Lecture en cours</p>
-            <p className="mt-1 text-muted-foreground">
-              Le widget « lecture en cours » arrive bientôt.
-            </p>
-          </div>
+          <CurrentlyPlaying />
         </section>
 
         {/* Listening totals */}
