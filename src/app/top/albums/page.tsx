@@ -92,7 +92,7 @@ export default async function TopAlbumsPage({
       </header>
 
       <p className="mb-8 text-sm text-muted-foreground">
-        Classement dérivé de vos top titres — Spotify ne fournit pas de
+        Classement dérivé de tes top titres — Spotify ne fournit pas de
         palmarès d&apos;albums.
       </p>
 

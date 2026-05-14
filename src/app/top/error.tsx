@@ -25,8 +25,8 @@ export default function Error({
       <div className="flex max-w-md flex-col items-center rounded-2xl border bg-card px-6 py-12 text-center">
         <h1 className="text-xl font-semibold">Oups, un souci côté stats</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Impossible de récupérer vos statistiques Spotify pour le moment.
-          C&apos;est peut-être temporaire — réessayez dans un instant.
+          Impossible de récupérer tes statistiques Spotify pour le moment.
+          C&apos;est peut-être temporaire — réessaie dans un instant.
         </p>
         <div className="mt-6 flex items-center gap-3">
           <button

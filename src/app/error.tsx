@@ -28,7 +28,7 @@ export default function Error({
         <h1 className="text-xl font-semibold">Une erreur est survenue</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Quelque chose s&apos;est mal passé en chargeant cette page. C&apos;est
-          peut-être temporaire — réessayez dans un instant.
+          peut-être temporaire — réessaie dans un instant.
         </p>
         <div className="mt-6 flex items-center gap-3">
           <button

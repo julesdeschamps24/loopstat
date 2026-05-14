@@ -74,7 +74,7 @@ export default async function TrackDetailPage({
       </div>
 
       <section className="mt-10 rounded-2xl border bg-card p-6">
-        <h2 className="text-lg font-semibold">Vos écoutes</h2>
+        <h2 className="text-lg font-semibold">Tes écoutes</h2>
         {stats.count > 0 ? (
           <div className="mt-4 flex flex-col gap-2 text-sm">
             <p className="text-2xl font-semibold">

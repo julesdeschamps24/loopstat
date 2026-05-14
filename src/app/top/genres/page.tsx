@@ -79,14 +79,14 @@ export default async function TopGenresPage({
       </header>
 
       <p className="mb-8 text-sm text-muted-foreground">
-        Classement dérivé de vos top artistes — Spotify ne fournit pas de
+        Classement dérivé de tes top artistes — Spotify ne fournit pas de
         palmarès de genres.
       </p>
 
       {genres.length === 0 ? (
         <EmptyState
           title="Aucun genre pour cette période."
-          description="Vos top artistes ne sont pas encore associés à des genres."
+          description="Tes top artistes ne sont pas encore associés à des genres."
         />
       ) : (
         <RankedList>

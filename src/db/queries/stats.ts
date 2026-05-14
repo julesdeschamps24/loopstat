@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { albums, artists, streams, trackArtists, tracks } from "@/db/schema";
+import { streams, trackArtists, tracks } from "@/db/schema";
 
 type ListeningWindow = "7d" | "30d" | "lifetime";
 
@@ -172,61 +172,5 @@ export async function getListeningClock(
   return Array.from({ length: 24 }, (_, hour) => ({
     hour,
     count: counts.get(hour) ?? 0,
-  }));
-}
-
-export async function getRecentStreams(
-  userId: string,
-  limit: number,
-): Promise<
-  {
-    playedAt: Date;
-    trackId: string;
-    trackName: string;
-    artistNames: string[];
-    albumImageUrl: string | null;
-  }[]
-> {
-  const rows = await db
-    .select({
-      playedAt: streams.playedAt,
-      trackId: streams.trackId,
-      trackName: tracks.name,
-      albumImageUrl: albums.imageUrl,
-    })
-    .from(streams)
-    .innerJoin(tracks, eq(tracks.id, streams.trackId))
-    .leftJoin(albums, eq(albums.id, tracks.albumId))
-    .where(eq(streams.userId, userId))
-    .orderBy(desc(streams.playedAt))
-    .limit(limit);
-
-  if (rows.length === 0) return [];
-
-  const trackIds = [...new Set(rows.map((r) => r.trackId))];
-  const artistRows = await db
-    .select({
-      trackId: trackArtists.trackId,
-      artistName: artists.name,
-      position: trackArtists.position,
-    })
-    .from(trackArtists)
-    .innerJoin(artists, eq(artists.id, trackArtists.artistId))
-    .where(inArray(trackArtists.trackId, trackIds))
-    .orderBy(trackArtists.trackId, trackArtists.position);
-
-  const artistsByTrack = new Map<string, string[]>();
-  for (const r of artistRows) {
-    const list = artistsByTrack.get(r.trackId) ?? [];
-    list.push(r.artistName);
-    artistsByTrack.set(r.trackId, list);
-  }
-
-  return rows.map((r) => ({
-    playedAt: r.playedAt,
-    trackId: r.trackId,
-    trackName: r.trackName,
-    artistNames: artistsByTrack.get(r.trackId) ?? [],
-    albumImageUrl: r.albumImageUrl,
   }));
 }

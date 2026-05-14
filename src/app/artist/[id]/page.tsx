@@ -75,12 +75,12 @@ export default async function ArtistDetailPage({
 
       <section className="mt-10">
         <h2 className="mb-4 text-lg font-semibold">
-          Vos titres les plus écoutés
+          Tes titres les plus écoutés
         </h2>
         {topTracks.length === 0 ? (
           <EmptyState
             title="Pas encore d'écoute enregistrée"
-            description="Vos titres les plus écoutés de cet artiste apparaîtront ici."
+            description="Tes titres les plus écoutés de cet artiste apparaîtront ici."
           />
         ) : (
           <RankedList>
