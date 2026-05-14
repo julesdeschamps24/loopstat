@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _request: NextRequest,
-  ctx: RouteContext<"/api/import/[importId]/status">,
+  ctx: { params: Promise<{ importId: string }> },
 ): Promise<Response> {
   const session = await auth();
   const userId = session?.user?.id;
