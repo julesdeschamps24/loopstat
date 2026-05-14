@@ -44,6 +44,9 @@ export async function importHistory(
       .set({ status: "processing" })
       .where(eq(imports.id, importId));
 
+    // readdir throws ENOENT if the temp dir is missing — an expected condition
+    // (route crashed before mkdir, or a stale job) distinct from a parse
+    // failure. The outer try/catch intentionally catches it and marks failed.
     const fileNames = await readdir(dir);
 
     // Dedup track id -> name across all files, and accumulate kept stream rows.
@@ -54,10 +57,16 @@ export async function importHistory(
       const raw = await readFile(path.join(dir, fileName), "utf8");
       const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) {
-        throw new Error(`File ${fileName} is not a JSON array`);
+        // Not a Spotify history array (e.g. a JSON object) — skip, don't fail.
+        console.warn(`[importHistory] skipping ${fileName}: not a JSON array`);
+        continue;
       }
 
       for (const item of parsed as RawStreamEntry[]) {
+        // Skip non-object array items (null, numbers, strings) — field access
+        // would otherwise throw and fail the whole import.
+        if (typeof item !== "object" || item === null) continue;
+
         const uri = item.spotify_track_uri;
         const name = item.master_metadata_track_name;
 
@@ -73,12 +82,17 @@ export async function importHistory(
         const trackId = uri.slice(TRACK_URI_PREFIX.length);
         if (!trackId) continue;
 
+        // Skip entries with a malformed ts — an Invalid Date would otherwise
+        // blow up the whole batch insert.
+        const playedAt = new Date(item.ts);
+        if (Number.isNaN(playedAt.getTime())) continue;
+
         trackNames.set(trackId, name);
 
         streamRows.push({
           userId,
           trackId,
-          playedAt: new Date(item.ts),
+          playedAt,
           msPlayed:
             typeof item.ms_played === "number" ? item.ms_played : null,
           source: "import",

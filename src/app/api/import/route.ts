@@ -1,5 +1,6 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { imports } from "@/db/schema";
@@ -42,13 +43,16 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  // Visible in the catch block so cleanup can target the row + temp dir.
+  let importId: string | undefined;
+
   try {
     // Create the imports row first so we have the id to name the temp dir.
     const [importRow] = await db
       .insert(imports)
       .values({ userId, status: "pending", filesCount: files.length })
       .returning({ id: imports.id });
-    const importId = importRow.id;
+    importId = importRow.id;
 
     // Persist files to .import-tmp/<importId>/ — the job reads them back from
     // disk so we don't push file buffers through Redis.
@@ -64,6 +68,22 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ importId }, { status: 202 });
   } catch (err) {
     console.error("[api/import] failed to create import for user", userId, err);
+
+    // Best-effort cleanup so a crash here doesn't leave an orphaned "pending"
+    // row + dangling temp files. Wrapped so a cleanup failure can't mask `err`.
+    if (importId) {
+      const orphanedId = importId;
+      await db
+        .update(imports)
+        .set({ status: "failed", errorMessage: "Upload failed" })
+        .where(eq(imports.id, orphanedId))
+        .catch(() => {});
+      await rm(path.join(IMPORT_TMP_DIR, orphanedId), {
+        recursive: true,
+        force: true,
+      }).catch(() => {});
+    }
+
     return Response.json({ error: "import_failed" }, { status: 500 });
   }
 }
