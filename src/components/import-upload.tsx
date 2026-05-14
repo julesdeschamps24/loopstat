@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Upload } from "lucide-react";
+import { ImportProgress } from "@/components/import-progress";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB — mirrors the route
 
@@ -177,24 +178,14 @@ export function ImportUpload() {
 
         {status.kind === "success" ? (
           <div
-            // data-import-id : seam pour le suivi de progression (tâche 4)
             data-import-id={status.importId}
-            className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-sm"
+            className="space-y-2 rounded-2xl border border-primary/30 bg-primary/10 p-4 text-sm"
           >
             <p className="flex items-center gap-2 font-medium text-primary">
               <CheckCircle2 className="size-4" />
               Import lancé
             </p>
-            <p className="mt-1 text-muted-foreground">
-              Identifiant :{" "}
-              <code className="break-all text-foreground">
-                {status.importId}
-              </code>
-            </p>
-            <p className="mt-1 text-muted-foreground">
-              Le traitement se fait en arrière-plan. Le suivi de progression
-              arrive bientôt.
-            </p>
+            <ImportProgress importId={status.importId} />
           </div>
         ) : null}
       </div>
