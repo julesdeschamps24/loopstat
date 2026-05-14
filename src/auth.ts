@@ -137,13 +137,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async redirect({ url, baseUrl }) {
+      // Auth.js v5 ne propage pas le callbackUrl du form POST → après login il
+      // retombe sur la page d'origine ("/" ou "/login"). Ces routes ne sont
+      // jamais une destination post-authentification valide : rediriger vers
+      // /dashboard. Les autres routes same-origin sont préservées.
+      const isNotADestination = (pathname: string) =>
+        pathname === "/" || pathname === "/login";
+
       if (url.startsWith("/")) {
-        return url === "/" ? `${baseUrl}/dashboard` : `${baseUrl}${url}`;
+        return isNotADestination(url) ? `${baseUrl}/dashboard` : `${baseUrl}${url}`;
       }
       try {
         const parsed = new URL(url);
         if (parsed.origin === baseUrl) {
-          return parsed.pathname === "/" ? `${baseUrl}/dashboard` : url;
+          return isNotADestination(parsed.pathname) ? `${baseUrl}/dashboard` : url;
         }
       } catch {
         // not a valid absolute URL — fall through
