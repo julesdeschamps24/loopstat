@@ -12,9 +12,10 @@ import {
 
 import { auth, signOut } from "@/auth";
 import { CurrentlyPlaying } from "@/components/stats/currently-playing";
-import { RankedList, RankedRow } from "@/components/stats/ranked-list";
+import { RankedRow } from "@/components/stats/ranked-list";
 import { StatCard } from "@/components/stats/stat-card";
 import { EmptyState } from "@/components/stats/empty-state";
+import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { fetchTopArtists, fetchTopTracks } from "@/lib/spotify/top";
 import { getListeningTotals } from "@/db/queries/stats";
 import { formatMs, formatNumber } from "@/lib/utils";
@@ -138,18 +139,19 @@ export default async function DashboardPage() {
               icon={Music2}
             />
           ) : (
-            <RankedList>
+            <StaggerList className="flex flex-col gap-1">
               {top5Tracks.map((track, index) => (
-                <RankedRow
-                  key={track.id}
-                  rank={index + 1}
-                  title={track.name}
-                  href={`/track/${track.id}`}
-                  subtitle={track.artists.map((a) => a.name).join(", ")}
-                  imageUrl={track.album?.images?.[0]?.url}
-                />
+                <StaggerItem key={track.id}>
+                  <RankedRow
+                    rank={index + 1}
+                    title={track.name}
+                    href={`/track/${track.id}`}
+                    subtitle={track.artists.map((a) => a.name).join(", ")}
+                    imageUrl={track.album?.images?.[0]?.url}
+                  />
+                </StaggerItem>
               ))}
-            </RankedList>
+            </StaggerList>
           )}
         </section>
 
@@ -172,17 +174,18 @@ export default async function DashboardPage() {
               icon={Users}
             />
           ) : (
-            <RankedList>
+            <StaggerList className="flex flex-col gap-1">
               {top5Artists.map((artist, index) => (
-                <RankedRow
-                  key={artist.id}
-                  rank={index + 1}
-                  title={artist.name}
-                  href={`/artist/${artist.id}`}
-                  imageUrl={artist.images?.[0]?.url}
-                />
+                <StaggerItem key={artist.id}>
+                  <RankedRow
+                    rank={index + 1}
+                    title={artist.name}
+                    href={`/artist/${artist.id}`}
+                    imageUrl={artist.images?.[0]?.url}
+                  />
+                </StaggerItem>
               ))}
-            </RankedList>
+            </StaggerList>
           )}
         </section>
 
