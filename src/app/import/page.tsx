@@ -26,55 +26,150 @@ export default async function ImportPage() {
               Importer ton historique
             </h1>
             <p className="text-sm text-muted-foreground">
-              Pour analyser toute ta vie d&apos;écoute, pas juste les
-              écoutes récentes.
+              Pour avoir tes vraies écoutes lifetime, pas juste depuis ton
+              inscription à loopstat.
             </p>
           </div>
         </div>
       </header>
 
-      <section className="rounded-2xl border bg-card p-8 space-y-3 mb-6">
-        <h2 className="font-semibold">Comment récupérer tes fichiers ?</h2>
-        <p className="text-sm text-muted-foreground">
-          La synchro automatique (toutes les 30 min) ne capte que tes écoutes
-          récentes. Pour ton historique complet, il faut le demander à
-          Spotify :
-        </p>
-        <ol className="space-y-2 text-sm text-muted-foreground list-decimal pl-5">
-          <li>
-            Va sur{" "}
-            <a
-              href="https://www.spotify.com/account/privacy"
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary inline-flex items-center gap-1 hover:underline"
-            >
-              spotify.com/account/privacy
-              <ExternalLink className="size-3" />
-            </a>{" "}
-            et coche{" "}
-            <strong className="text-foreground">
-              « Extended streaming history »
-            </strong>
-            .
-          </li>
-          <li>
-            Spotify t&apos;envoie le dump par e-mail sous forme de ZIP (compte
-            ~30 jours d&apos;attente).
-          </li>
-          <li>
-            Dézippe-le et dépose ici les fichiers{" "}
-            <code className="text-foreground">
-              Streaming_History_Audio_*.json
-            </code>
-            .
-          </li>
+      <section className="rounded-2xl border bg-card p-8 space-y-4 mb-6">
+        <div>
+          <h2 className="font-semibold mb-2">Pourquoi un import ?</h2>
+          <p className="text-sm text-muted-foreground">
+            Spotify n&apos;expose <strong className="text-foreground">aucun</strong>{" "}
+            endpoint public pour récupérer tes playcounts lifetime — c&apos;est
+            volontaire de leur part. Le seul moyen légitime est de demander
+            ton « Extended Streaming History » via RGPD, gratuit, puis de
+            l&apos;uploader ici. Compte{" "}
+            <strong className="text-foreground">~30 jours d&apos;attente</strong>{" "}
+            avant que Spotify te l&apos;envoie par e-mail.
+          </p>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border bg-card p-8 space-y-6 mb-6">
+        <h2 className="font-semibold">Guide pas-à-pas</h2>
+
+        <ol className="space-y-6">
+          <Step n={1}>
+            <p>
+              Va sur{" "}
+              <a
+                href="https://www.spotify.com/account/privacy"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary inline-flex items-center gap-1 hover:underline"
+              >
+                spotify.com/account/privacy
+                <ExternalLink className="size-3" />
+              </a>{" "}
+              et descend jusqu&apos;à la section{" "}
+              <strong className="text-foreground">
+                « Télécharger tes données »
+              </strong>
+              .
+            </p>
+          </Step>
+
+          <Step n={2}>
+            <p className="mb-3">
+              <strong className="text-foreground">
+                Coche uniquement « Historique de streaming étendu »
+              </strong>{" "}
+              (préparation : 30 jours). Les deux autres cases (« Données de
+              compte » et « Journal technique ») ne servent pas à loopstat —
+              décoche-les pour ne pas rallonger l&apos;attente.
+            </p>
+            <div className="rounded-xl border bg-background overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/spotify-data-request.png"
+                alt="Page Spotify : seule la case « Historique de streaming étendu » est cochée"
+                className="w-full h-auto"
+              />
+            </div>
+          </Step>
+
+          <Step n={3}>
+            <p>
+              Clique{" "}
+              <kbd className="rounded bg-accent px-1.5 py-0.5 text-xs">
+                Demander des données
+              </kbd>
+              .
+            </p>
+          </Step>
+
+          <Step n={4}>
+            <p className="mb-3">
+              <strong className="text-foreground">
+                Spotify t&apos;envoie immédiatement un mail de confirmation
+              </strong>{" "}
+              — tu dois cliquer dessus, sinon la demande n&apos;est jamais
+              traitée. Ouvre ta boîte mail et clique{" "}
+              <strong className="text-foreground">« Confirmer »</strong>{" "}
+              dans le mail intitulé <em>« Confirme ta demande de données »</em>.
+            </p>
+            <div className="rounded-xl border bg-background overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/spotify-data-confirm-email.png"
+                alt="Mail de confirmation Spotify avec le bouton « Confirmer » à cliquer"
+                className="w-full h-auto"
+              />
+            </div>
+          </Step>
+
+          <Step n={5}>
+            <p>
+              Tu recevras un second mail avec un lien de téléchargement{" "}
+              <em>sous ~5 à 30 jours</em>. Dézippe l&apos;archive. À l&apos;intérieur
+              tu trouveras plusieurs fichiers{" "}
+              <code className="text-foreground">
+                Streaming_History_Audio_*.json
+              </code>{" "}
+              (un par tranche d&apos;années). Dépose-les ici-dessous.
+            </p>
+          </Step>
+
+          <Step n={6}>
+            <p>
+              Le worker parse, dédup et insère tout en quelques minutes. À la
+              fin, tes pages détail (`/track/[id]`, etc.) affichent les vrais
+              compteurs lifetime, et tes pages top sont enrichies de
+              playcounts précis.
+            </p>
+          </Step>
         </ol>
+
+        <div className="border-t pt-4">
+          <p className="text-xs text-muted-foreground">
+            <strong className="text-foreground">Note</strong> : en attendant,
+            le polling toutes les 30 min remplit déjà ton historique
+            <em> vers le futur</em>. Plus tu utilises Spotify, plus loopstat
+            accumule de données — pas besoin d&apos;y revenir.
+          </p>
+        </div>
       </section>
 
       <section className="rounded-2xl border bg-card p-8">
+        <h2 className="font-semibold mb-4">Déposer tes fichiers JSON</h2>
         <ImportUpload />
       </section>
     </main>
+  );
+}
+
+function Step({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <li className="flex gap-4">
+      <span className="size-7 shrink-0 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+        {n}
+      </span>
+      <div className="flex-1 pt-0.5 text-sm text-muted-foreground space-y-2">
+        {children}
+      </div>
+    </li>
   );
 }
