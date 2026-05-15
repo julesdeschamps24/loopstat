@@ -1,4 +1,9 @@
+import { rm } from "node:fs/promises";
+import path from "node:path";
 import { Worker, type Job } from "bullmq";
+import { and, inArray, lt } from "drizzle-orm";
+import { db } from "@/db/client";
+import { imports } from "@/db/schema";
 import { log } from "@/lib/log";
 import {
   ENRICH_QUEUE_NAME,
@@ -20,6 +25,59 @@ import {
   ImportJobData,
   EnrichJobData,
 } from "./schemas";
+
+// Same layout as worker/jobs/importHistory.ts: <projectRoot>/.import-tmp/<importId>/.
+const IMPORT_TMP_DIR = path.join(process.cwd(), ".import-tmp");
+const STALE_IMPORT_THRESHOLD_MS = 30 * 60 * 1000;
+
+// One-shot sweep run at worker boot to recover from a previous worker process
+// that died mid-job: any `imports` row still in pending/processing after the
+// stale threshold gets marked failed and its temp dir is removed. This avoids
+// the UI hanging on a "Traitement en cours…" spinner forever.
+async function sweepStaleImports(): Promise<void> {
+  const slog = log.child({ worker: "startup-sweep" });
+  const cutoff = new Date(Date.now() - STALE_IMPORT_THRESHOLD_MS);
+
+  const stale = await db
+    .select({ id: imports.id })
+    .from(imports)
+    .where(
+      and(
+        inArray(imports.status, ["pending", "processing"]),
+        lt(imports.startedAt, cutoff),
+      ),
+    );
+
+  if (stale.length === 0) return;
+
+  for (const { id } of stale) {
+    await db
+      .update(imports)
+      .set({
+        status: "failed",
+        errorMessage: "Worker restarted while job was running",
+        completedAt: new Date(),
+      })
+      .where(
+        and(
+          inArray(imports.status, ["pending", "processing"]),
+          lt(imports.startedAt, cutoff),
+          // Re-narrow by id to avoid clobbering rows that flipped state
+          // between the SELECT and this UPDATE.
+          inArray(imports.id, [id]),
+        ),
+      );
+
+    const tmp = path.join(IMPORT_TMP_DIR, id);
+    try {
+      await rm(tmp, { recursive: true, force: true });
+    } catch (err) {
+      slog.warn({ importId: id, tmp, err }, "failed to remove stale tmp dir");
+    }
+  }
+
+  slog.info({ count: stale.length }, "stale imports swept");
+}
 
 // poll-recent queue processor. Handles two job kinds, distinguished by
 // `job.name`:
@@ -142,6 +200,7 @@ enrichWorker.on("error", (err) => {
 // across restarts: same id + same opts is a no-op, so it's safe to call on
 // every boot.
 async function bootstrap(): Promise<void> {
+  await sweepStaleImports();
   await pollRecentQueue.upsertJobScheduler(
     POLL_RECENT_FANOUT_SCHEDULER_ID,
     { every: POLL_RECENT_FANOUT_EVERY_MS },
