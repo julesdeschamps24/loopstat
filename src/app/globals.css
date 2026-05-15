@@ -44,6 +44,7 @@
   --radius: var(--radius);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-instrument-serif);
 }
 
 * {

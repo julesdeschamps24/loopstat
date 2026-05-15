@@ -15,9 +15,11 @@ export function StatCard({ label, value, sublabel }: StatCardProps) {
   return (
     <div className="rounded-2xl border bg-card p-6">
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 text-3xl font-semibold tabular-nums">{value}</p>
+      <p className="mt-1 font-serif italic text-5xl leading-none tracking-tight tabular-nums">
+        {value}
+      </p>
       {sublabel ? (
-        <p className="mt-1 text-sm text-muted-foreground">{sublabel}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{sublabel}</p>
       ) : null}
     </div>
   );
