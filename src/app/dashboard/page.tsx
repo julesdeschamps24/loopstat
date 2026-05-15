@@ -10,7 +10,8 @@ import {
   Users,
 } from "lucide-react";
 
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
+import { AppHeader } from "@/components/app-header";
 import { CurrentlyPlaying } from "@/components/stats/currently-playing";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { StatCard } from "@/components/stats/stat-card";
@@ -60,37 +61,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
-      <header className="flex items-center justify-between mb-12">
-        <div className="flex items-center gap-3">
-          {session.user.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={session.user.image}
-              alt={session.user.name ?? ""}
-              className="size-12 rounded-full"
-            />
-          ) : null}
-          <div>
-            <p className="text-sm text-muted-foreground">Connecté en tant que</p>
-            <p className="font-medium">
-              {session.user.name ?? session.user.spotifyId}
-            </p>
-          </div>
-        </div>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}
-        >
-          <button
-            type="submit"
-            className="rounded-full border px-4 py-2 text-sm hover:bg-accent transition"
-          >
-            Déconnexion
-          </button>
-        </form>
-      </header>
+      <AppHeader session={session} />
 
       <div className="flex flex-col gap-12">
         {/* CurrentlyPlaying */}
