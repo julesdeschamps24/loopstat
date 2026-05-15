@@ -28,14 +28,22 @@ export function NebulaBackground() {
   const { resolvedTheme } = useTheme();
 
   useEffect(() => {
-    if (resolvedTheme !== "dark") return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (resolvedTheme !== "dark") {
+      console.log("[nebula] skip: not dark", { resolvedTheme });
       return;
     }
+
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      console.log("[nebula] skip: no canvas ref");
+      return;
+    }
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      console.log("[nebula] skip: prefers-reduced-motion");
+      return;
+    }
+    console.log("[nebula] mounting Three.js scene");
 
     const HUE1 = 220; // cyan
     const HUE2 = 320; // magenta
@@ -164,13 +172,15 @@ export function NebulaBackground() {
       <canvas
         ref={canvasRef}
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-5 hidden h-screen w-screen dark:block"
+        className="pointer-events-none fixed inset-0 hidden h-screen w-screen dark:block"
+        style={{ zIndex: -5 }}
       />
       {/* Voile radial sombre par-dessus, pour garder le texte lisible */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-4 hidden dark:block"
+        className="pointer-events-none fixed inset-0 hidden dark:block"
         style={{
+          zIndex: -4,
           background:
             "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.5) 100%)",
         }}
