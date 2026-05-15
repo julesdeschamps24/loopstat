@@ -35,7 +35,8 @@ function isSkippableTrackError(err: unknown): boolean {
 // NOTE: `tracks` is a global shared catalog (no userId column), so this is a
 // GLOBAL sweep — it enriches every unenriched track, not just one user's.
 // `userId` here is only the Spotify credential used for the API calls (and the
-// log prefix); concurrent enrich jobs would redundantly fetch the same ids.
+// log prefix). Concurrent enrich enqueues are deduplicated at the enqueue
+// boundary via jobId: "enrich-metadata-global", so only one job runs at a time.
 export async function enrichMetadata(
   userId: string,
 ): Promise<EnrichMetadataResult> {

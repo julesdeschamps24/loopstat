@@ -131,8 +131,10 @@ export async function importHistory(
     // Chain the import → enrich pipeline: backfill full metadata for the
     // minimal track rows just inserted. The import already succeeded, so an
     // enqueue failure must not fail it — enrichment can be retried later.
+    // Use jobId to dedup concurrent enqueues: if an enrich job is already
+    // queued or in-flight, this add() returns the existing job ref.
     try {
-      await enrichQueue.add("enrich-metadata", { userId });
+      await enrichQueue.add("enrich-metadata", { userId }, { jobId: "enrich-metadata-global" });
     } catch (enqueueErr) {
       console.error(
         `[importHistory] import=${importId} user=${userId} failed to enqueue enrich job:`,
