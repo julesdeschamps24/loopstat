@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Music2 } from "lucide-react";
+import { Music2 } from "lucide-react";
 
+import { FadeSwap } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
 
 const POLL_INTERVAL_MS = 15_000;
@@ -60,16 +61,49 @@ export function CurrentlyPlaying({ className }: { className?: string }) {
     };
   }, []);
 
+  // Design choice: a single <FadeSwap> wraps the whole card body, keyed on a
+  // state-identifying string. This gives one uniform 200ms cross-fade contract
+  // across every transition (loading → idle, loading → playing, playing →
+  // playing on track change, playing → idle, …) rather than wrapping only the
+  // playing branch and leaving loading/idle swaps abrupt. The key changes only
+  // when the *displayed* content changes: a "playing" tick that keeps the same
+  // track keeps the same key and won't re-trigger the fade (progress bar still
+  // updates in place via its CSS transition).
+  const motionKey = motionKeyFor(state);
+
+  return (
+    <FadeSwap motionKey={motionKey} className={className}>
+      {renderBody(state)}
+    </FadeSwap>
+  );
+}
+
+function motionKeyFor(state: State): string {
+  if (state.kind === "loading") return "loading";
+  if (state.kind === "idle") return "idle";
+  const { track } = state.data;
+  return `playing:${track?.name ?? ""}|${track?.artists.join(",") ?? ""}`;
+}
+
+function renderBody(state: State) {
   if (state.kind === "loading") {
     return (
       <div
+        role="status"
+        aria-busy="true"
+        aria-label="Chargement de la lecture en cours"
         className={cn(
-          "flex items-center gap-2 rounded-2xl border bg-card p-6 text-muted-foreground",
-          className,
+          "animate-pulse rounded-2xl border bg-card p-6",
         )}
       >
-        <Loader2 className="size-4 animate-spin" />
-        <span className="text-sm">Lecture en cours…</span>
+        <div className="flex items-center gap-4">
+          <div className="size-14 shrink-0 rounded-xl bg-muted" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-3 w-24 rounded bg-muted" />
+            <div className="h-4 w-3/4 rounded bg-muted" />
+            <div className="h-3 w-1/2 rounded bg-muted" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -79,7 +113,6 @@ export function CurrentlyPlaying({ className }: { className?: string }) {
       <div
         className={cn(
           "flex items-center gap-3 rounded-2xl border bg-card p-6 text-muted-foreground",
-          className,
         )}
       >
         <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
@@ -100,13 +133,15 @@ export function CurrentlyPlaying({ className }: { className?: string }) {
       : 0;
 
   return (
-    <div className={cn("rounded-2xl border bg-card p-6", className)}>
+    <div className={cn("rounded-2xl border bg-card p-6")}>
       <div className="flex items-center gap-4">
         {track?.albumImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={track.albumImageUrl}
             alt=""
+            loading="lazy"
+            decoding="async"
             className="size-14 shrink-0 rounded-xl object-cover"
           />
         ) : (
