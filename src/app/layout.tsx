@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Instrument_Serif, Inter } from "next/font/google";
 import "./globals.css";
+import { NebulaBackground } from "@/components/nebula-background";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({
@@ -51,6 +52,7 @@ export default function RootLayout({
         >
           Aller au contenu
         </a>
+        <NebulaBackground />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
