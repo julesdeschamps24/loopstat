@@ -1,0 +1,43 @@
+import { eq } from "drizzle-orm";
+
+import { auth, signOut } from "@/auth";
+import { db } from "@/db/client";
+import { users } from "@/db/schema";
+
+// Mutates server state (deletes the user + cascades) and depends on the
+// session cookie — never cache.
+export const dynamic = "force-dynamic";
+
+export async function DELETE(): Promise<Response> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  try {
+    // All user-scoped FKs (spotify_tokens, streams, imports, top_cache) have
+    // ON DELETE CASCADE on users.id, so a single delete cascades. Catalog
+    // tables (tracks, artists, albums, track_artists, album_artists) are
+    // shared across users and intentionally preserved.
+    await db.transaction(async (tx) => {
+      await tx.delete(users).where(eq(users.id, userId));
+    });
+  } catch (err) {
+    console.error("[api/account] delete failed", err);
+    return Response.json({ error: "delete_failed" }, { status: 500 });
+  }
+
+  try {
+    // Invalidate the JWT session cookie server-side. NextAuth v5 supports
+    // `redirect: false` inside a route handler; the client will redirect
+    // itself after a 200 response.
+    await signOut({ redirect: false });
+  } catch (err) {
+    console.error("[api/account] signOut after delete failed", err);
+    // The row is already gone — surface success anyway; the stale cookie
+    // will resolve to an unauthenticated session on the next request.
+  }
+
+  return Response.json({ ok: true });
+}

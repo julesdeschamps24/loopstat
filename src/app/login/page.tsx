@@ -9,7 +9,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+    <main id="main" className="flex-1 flex flex-col items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm rounded-2xl border bg-card p-8 text-center space-y-6">
         <div className="space-y-2">
           <div className="mx-auto size-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -31,7 +31,7 @@ export default function LoginPage() {
 
 function SetupNeeded() {
   return (
-    <main className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+    <main id="main" className="flex-1 flex flex-col items-center justify-center px-6 py-16">
       <div className="w-full max-w-xl rounded-2xl border bg-card p-8 space-y-6">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs uppercase tracking-wider text-muted-foreground">

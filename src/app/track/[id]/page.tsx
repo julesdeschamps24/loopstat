@@ -49,13 +49,15 @@ export default async function TrackDetailPage({
   const artistNames = track.artists.map((a) => a.name).join(", ");
 
   return (
-    <main className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
+    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
         {albumImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={albumImage}
             alt=""
+            decoding="async"
+            fetchPriority="high"
             className="size-48 shrink-0 rounded-2xl object-cover shadow-lg"
           />
         ) : (

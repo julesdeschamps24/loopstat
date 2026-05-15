@@ -41,6 +41,8 @@ export function RankedRow({
         <img
           src={imageUrl}
           alt=""
+          loading="lazy"
+          decoding="async"
           className="size-12 shrink-0 rounded-lg object-cover"
         />
       ) : (

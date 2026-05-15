@@ -10,11 +10,13 @@ import {
   Users,
 } from "lucide-react";
 
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
+import { AppHeader } from "@/components/app-header";
 import { CurrentlyPlaying } from "@/components/stats/currently-playing";
-import { RankedList, RankedRow } from "@/components/stats/ranked-list";
+import { RankedRow } from "@/components/stats/ranked-list";
 import { StatCard } from "@/components/stats/stat-card";
 import { EmptyState } from "@/components/stats/empty-state";
+import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { fetchTopArtists, fetchTopTracks } from "@/lib/spotify/top";
 import { getListeningTotals } from "@/db/queries/stats";
 import { formatMs, formatNumber } from "@/lib/utils";
@@ -58,38 +60,8 @@ export default async function DashboardPage() {
   const top5Artists = topArtists.slice(0, 5);
 
   return (
-    <main className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
-      <header className="flex items-center justify-between mb-12">
-        <div className="flex items-center gap-3">
-          {session.user.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={session.user.image}
-              alt={session.user.name ?? ""}
-              className="size-12 rounded-full"
-            />
-          ) : null}
-          <div>
-            <p className="text-sm text-muted-foreground">Connecté en tant que</p>
-            <p className="font-medium">
-              {session.user.name ?? session.user.spotifyId}
-            </p>
-          </div>
-        </div>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/" });
-          }}
-        >
-          <button
-            type="submit"
-            className="rounded-full border px-4 py-2 text-sm hover:bg-accent transition"
-          >
-            Déconnexion
-          </button>
-        </form>
-      </header>
+    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
+      <AppHeader session={session} />
 
       <div className="flex flex-col gap-12">
         {/* CurrentlyPlaying */}
@@ -138,18 +110,19 @@ export default async function DashboardPage() {
               icon={Music2}
             />
           ) : (
-            <RankedList>
+            <StaggerList className="flex flex-col gap-1">
               {top5Tracks.map((track, index) => (
-                <RankedRow
-                  key={track.id}
-                  rank={index + 1}
-                  title={track.name}
-                  href={`/track/${track.id}`}
-                  subtitle={track.artists.map((a) => a.name).join(", ")}
-                  imageUrl={track.album?.images?.[0]?.url}
-                />
+                <StaggerItem key={track.id}>
+                  <RankedRow
+                    rank={index + 1}
+                    title={track.name}
+                    href={`/track/${track.id}`}
+                    subtitle={track.artists.map((a) => a.name).join(", ")}
+                    imageUrl={track.album?.images?.[0]?.url}
+                  />
+                </StaggerItem>
               ))}
-            </RankedList>
+            </StaggerList>
           )}
         </section>
 
@@ -172,17 +145,18 @@ export default async function DashboardPage() {
               icon={Users}
             />
           ) : (
-            <RankedList>
+            <StaggerList className="flex flex-col gap-1">
               {top5Artists.map((artist, index) => (
-                <RankedRow
-                  key={artist.id}
-                  rank={index + 1}
-                  title={artist.name}
-                  href={`/artist/${artist.id}`}
-                  imageUrl={artist.images?.[0]?.url}
-                />
+                <StaggerItem key={artist.id}>
+                  <RankedRow
+                    rank={index + 1}
+                    title={artist.name}
+                    href={`/artist/${artist.id}`}
+                    imageUrl={artist.images?.[0]?.url}
+                  />
+                </StaggerItem>
               ))}
-            </RankedList>
+            </StaggerList>
           )}
         </section>
 

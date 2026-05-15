@@ -9,7 +9,7 @@ export default async function ImportPage() {
   if (!session?.user?.id) redirect("/login");
 
   return (
-    <main className="flex-1 flex flex-col px-6 py-12 max-w-2xl mx-auto w-full">
+    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-2xl mx-auto w-full">
       <header className="mb-8">
         <Link
           href="/dashboard"

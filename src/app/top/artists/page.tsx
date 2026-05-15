@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
-import { RankedList, RankedRow } from "@/components/stats/ranked-list";
+import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
+import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { fetchTopArtists, isTopPeriod, type TopPeriod } from "@/lib/spotify/top";
 import { getPlayCountsForArtists } from "@/db/queries/stats";
 import { formatNumber } from "@/lib/utils";
@@ -31,7 +32,7 @@ export default async function TopArtistsPage({
   );
 
   return (
-    <main className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
+    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Top artistes</h1>
         <Suspense
@@ -48,23 +49,24 @@ export default async function TopArtistsPage({
           Aucun artiste pour cette période.
         </p>
       ) : (
-        <RankedList>
+        <StaggerList key={period} className="flex flex-col gap-1">
           {artists.map((artist, index) => {
             const count = playCounts.get(artist.id) ?? 0;
             return (
-              <RankedRow
-                key={artist.id}
-                rank={index + 1}
-                title={artist.name}
-                href={`/artist/${artist.id}`}
-                imageUrl={artist.images?.[0]?.url}
-                metric={
-                  count > 0 ? `${formatNumber(count)} écoutes` : undefined
-                }
-              />
+              <StaggerItem key={artist.id}>
+                <RankedRow
+                  rank={index + 1}
+                  title={artist.name}
+                  href={`/artist/${artist.id}`}
+                  imageUrl={artist.images?.[0]?.url}
+                  metric={
+                    count > 0 ? `${formatNumber(count)} écoutes` : undefined
+                  }
+                />
+              </StaggerItem>
             );
           })}
-        </RankedList>
+        </StaggerList>
       )}
     </main>
   );

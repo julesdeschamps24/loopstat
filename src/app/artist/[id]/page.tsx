@@ -40,13 +40,15 @@ export default async function ArtistDetailPage({
   const image = artist.images?.[0]?.url;
 
   return (
-    <main className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
+    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt=""
+            decoding="async"
+            fetchPriority="high"
             className="size-48 shrink-0 rounded-full object-cover shadow-lg"
           />
         ) : (

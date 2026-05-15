@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+    <main id="main" className="flex-1 flex flex-col items-center justify-center px-6 py-16">
       <div className="max-w-2xl text-center space-y-6">
         <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs uppercase tracking-wider text-muted-foreground">
           <span className="size-1.5 rounded-full bg-primary animate-pulse" />
