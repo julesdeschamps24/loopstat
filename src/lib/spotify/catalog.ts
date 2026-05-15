@@ -38,6 +38,8 @@ export async function upsertCatalogFromTracks(
 ) {
   if (spotifyTracks.length === 0) return;
 
+  const CHUNK = 500;
+
   const rawArtists: SpotifyArtistSimple[] = [];
   const rawAlbums: SpotifyAlbumSimple[] = [];
   for (const t of spotifyTracks) {
@@ -74,66 +76,81 @@ export async function upsertCatalogFromTracks(
   }));
 
   if (artistRows.length > 0) {
-    await tx
-      .insert(artists)
-      .values(artistRows)
-      .onConflictDoUpdate({
-        target: artists.id,
-        set: {
-          name: sql`excluded.name`,
-          updatedAt: sql`now()`,
-        },
-      });
+    for (let i = 0; i < artistRows.length; i += CHUNK) {
+      const slice = artistRows.slice(i, i + CHUNK);
+      await tx
+        .insert(artists)
+        .values(slice)
+        .onConflictDoUpdate({
+          target: artists.id,
+          set: {
+            name: sql`excluded.name`,
+            updatedAt: sql`now()`,
+          },
+        });
+    }
   }
 
   if (albumRows.length > 0) {
-    await tx
-      .insert(albums)
-      .values(albumRows)
-      .onConflictDoUpdate({
-        target: albums.id,
-        set: {
-          name: sql`excluded.name`,
-          releaseDate: sql`excluded.release_date`,
-          imageUrl: sql`coalesce(excluded.image_url, ${albums.imageUrl})`,
-          totalTracks: sql`excluded.total_tracks`,
-          albumType: sql`excluded.album_type`,
-          updatedAt: sql`now()`,
-        },
-      });
+    for (let i = 0; i < albumRows.length; i += CHUNK) {
+      const slice = albumRows.slice(i, i + CHUNK);
+      await tx
+        .insert(albums)
+        .values(slice)
+        .onConflictDoUpdate({
+          target: albums.id,
+          set: {
+            name: sql`excluded.name`,
+            releaseDate: sql`excluded.release_date`,
+            imageUrl: sql`coalesce(excluded.image_url, ${albums.imageUrl})`,
+            totalTracks: sql`excluded.total_tracks`,
+            albumType: sql`excluded.album_type`,
+            updatedAt: sql`now()`,
+          },
+        });
+    }
   }
 
   if (trackRows.length > 0) {
-    await tx
-      .insert(tracks)
-      .values(trackRows)
-      .onConflictDoUpdate({
-        target: tracks.id,
-        set: {
-          name: sql`excluded.name`,
-          albumId: sql`coalesce(excluded.album_id, ${tracks.albumId})`,
-          durationMs: sql`excluded.duration_ms`,
-          popularity: sql`coalesce(excluded.popularity, ${tracks.popularity})`,
-          explicit: sql`coalesce(excluded.explicit, ${tracks.explicit})`,
-          previewUrl: sql`coalesce(excluded.preview_url, ${tracks.previewUrl})`,
-          isrc: sql`coalesce(excluded.isrc, ${tracks.isrc})`,
-          updatedAt: sql`now()`,
-        },
-      });
+    for (let i = 0; i < trackRows.length; i += CHUNK) {
+      const slice = trackRows.slice(i, i + CHUNK);
+      await tx
+        .insert(tracks)
+        .values(slice)
+        .onConflictDoUpdate({
+          target: tracks.id,
+          set: {
+            name: sql`excluded.name`,
+            albumId: sql`coalesce(excluded.album_id, ${tracks.albumId})`,
+            durationMs: sql`excluded.duration_ms`,
+            popularity: sql`coalesce(excluded.popularity, ${tracks.popularity})`,
+            explicit: sql`coalesce(excluded.explicit, ${tracks.explicit})`,
+            previewUrl: sql`coalesce(excluded.preview_url, ${tracks.previewUrl})`,
+            isrc: sql`coalesce(excluded.isrc, ${tracks.isrc})`,
+            updatedAt: sql`now()`,
+          },
+        });
+    }
   }
 
   const trackArtistRows = spotifyTracks.flatMap((t) =>
     t.artists.map((a, i) => ({ trackId: t.id, artistId: a.id, position: i })),
   );
   if (trackArtistRows.length > 0) {
-    await tx.insert(trackArtists).values(trackArtistRows).onConflictDoNothing();
+    for (let i = 0; i < trackArtistRows.length; i += CHUNK) {
+      const slice = trackArtistRows.slice(i, i + CHUNK);
+      await tx.insert(trackArtists).values(slice).onConflictDoNothing();
+    }
   }
 
   const albumArtistRows = rawAlbums.flatMap((al) =>
     (al.artists ?? []).map((a) => ({ albumId: al.id, artistId: a.id })),
   );
   if (albumArtistRows.length > 0) {
-    await tx.insert(albumArtists).values(albumArtistRows).onConflictDoNothing();
+    for (let i = 0; i < albumArtistRows.length; i += CHUNK) {
+      const slice = albumArtistRows.slice(i, i + CHUNK);
+      await tx.insert(albumArtists).values(slice).onConflictDoNothing();
+    }
   }
 }
 
