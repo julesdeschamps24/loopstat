@@ -1,6 +1,7 @@
 import { isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import { tracks } from "@/db/schema";
+import { log } from "@/lib/log";
 import { SpotifyError, spotifyFetch } from "@/lib/spotify/client";
 import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
 import type { SpotifyTrack } from "@/lib/spotify/types";
@@ -38,15 +39,15 @@ function isSkippableTrackError(err: unknown): boolean {
 export async function enrichMetadata(
   userId: string,
 ): Promise<EnrichMetadataResult> {
+  const wlog = log.child({ job: "enrich-metadata", userId });
+
   const unenriched = await db
     .select({ id: tracks.id })
     .from(tracks)
     .where(isNull(tracks.durationMs));
 
   if (unenriched.length === 0) {
-    console.log(
-      `[enrichMetadata] user=${userId} unenriched=0 — nothing to do`,
-    );
+    wlog.info({ unenriched: 0 }, "nothing to do");
     return { enrichedCount: 0 };
   }
 
@@ -67,10 +68,9 @@ export async function enrichMetadata(
       collected.push(track);
     } catch (err) {
       if (isSkippableTrackError(err)) {
-        console.warn(
-          `[enrichMetadata] user=${userId} track=${id} — skipping: ${
-            err instanceof Error ? err.message : String(err)
-          }`,
+        wlog.warn(
+          { track: id, err },
+          "skipping unenriched track",
         );
         skipped += 1;
         continue;
@@ -81,8 +81,9 @@ export async function enrichMetadata(
 
   await upsertCatalogFromTracks(collected);
 
-  console.log(
-    `[enrichMetadata] user=${userId} unenriched=${ids.length} enriched=${collected.length} skipped=${skipped}`,
+  wlog.info(
+    { unenriched: ids.length, enriched: collected.length, skipped },
+    "enrich batch complete",
   );
 
   return { enrichedCount: collected.length };

@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { auth, signOut } from "@/auth";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
+import { log } from "@/lib/log";
 
 // Mutates server state (deletes the user + cascades) and depends on the
 // session cookie — never cache.
@@ -15,6 +16,8 @@ export async function DELETE(): Promise<Response> {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const wlog = log.child({ route: "api/account", userId });
+
   try {
     // All user-scoped FKs (spotify_tokens, streams, imports, top_cache) have
     // ON DELETE CASCADE on users.id, so a single delete cascades. Catalog
@@ -24,7 +27,7 @@ export async function DELETE(): Promise<Response> {
       await tx.delete(users).where(eq(users.id, userId));
     });
   } catch (err) {
-    console.error("[api/account] delete failed", err);
+    wlog.error({ err }, "delete failed");
     return Response.json({ error: "delete_failed" }, { status: 500 });
   }
 
@@ -34,7 +37,7 @@ export async function DELETE(): Promise<Response> {
     // itself after a 200 response.
     await signOut({ redirect: false });
   } catch (err) {
-    console.error("[api/account] signOut after delete failed", err);
+    wlog.error({ err }, "signOut after delete failed");
     // The row is already gone — surface success anyway; the stale cookie
     // will resolve to an unauthenticated session on the next request.
   }

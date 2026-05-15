@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { log } from "@/lib/log";
 import { spotifyFetch } from "@/lib/spotify/client";
 import type { SpotifyCurrentlyPlaying } from "@/lib/spotify/types";
 
@@ -22,6 +23,8 @@ export async function GET(): Promise<Response> {
   if (!userId) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
+
+  const wlog = log.child({ route: "api/now-playing", userId });
 
   try {
     // /me/player/currently-playing returns HTTP 204 (no body) when nothing is
@@ -49,7 +52,7 @@ export async function GET(): Promise<Response> {
     return Response.json(payload);
   } catch (err) {
     // A now-playing widget failing should degrade silently, never 500.
-    console.error("[api/now-playing] failed for user", userId, err);
+    wlog.error({ err }, "failed to fetch now-playing");
     return Response.json({ isPlaying: false } satisfies NowPlayingResponse);
   }
 }
