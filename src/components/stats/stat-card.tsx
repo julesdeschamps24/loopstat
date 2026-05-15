@@ -1,3 +1,5 @@
+import { cn, glassCard } from "@/lib/utils";
+
 /**
  * A label + big number card. Pure presentational — value is pre-formatted
  * by the caller.
@@ -13,7 +15,7 @@ export type StatCardProps = {
 
 export function StatCard({ label, value, sublabel }: StatCardProps) {
   return (
-    <div className="rounded-2xl border bg-card p-6">
+    <div className={cn(glassCard, "p-6")}>
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="mt-1 font-serif italic text-5xl leading-none tracking-tight tabular-nums">
         {value}

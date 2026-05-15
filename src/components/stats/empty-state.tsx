@@ -1,4 +1,5 @@
 import { Inbox, type LucideIcon } from "lucide-react";
+import { cn, glassCard } from "@/lib/utils";
 
 /**
  * Friendly placeholder for "pas encore assez de données". Pure presentational.
@@ -16,7 +17,12 @@ export function EmptyState({
   icon: Icon = Inbox,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border bg-card px-6 py-12 text-center">
+    <div
+      className={cn(
+        glassCard,
+        "flex flex-col items-center px-6 py-12 text-center",
+      )}
+    >
       <div className="flex size-12 items-center justify-center rounded-full bg-muted">
         <Icon className="size-6 text-muted-foreground" />
       </div>

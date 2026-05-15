@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Music2 } from "lucide-react";
 
 import { FadeSwap } from "@/components/ui/motion";
-import { cn } from "@/lib/utils";
+import { cn, glassCard } from "@/lib/utils";
 
 const POLL_INTERVAL_MS = 15_000;
 
@@ -92,9 +92,7 @@ function renderBody(state: State) {
         role="status"
         aria-busy="true"
         aria-label="Chargement de la lecture en cours"
-        className={cn(
-          "animate-pulse rounded-2xl border bg-card p-6",
-        )}
+        className={cn(glassCard, "animate-pulse p-6")}
       >
         <div className="flex items-center gap-4">
           <div className="size-14 shrink-0 rounded-xl bg-muted" />
@@ -112,7 +110,8 @@ function renderBody(state: State) {
     return (
       <div
         className={cn(
-          "flex items-center gap-3 rounded-2xl border bg-card p-6 text-muted-foreground",
+          glassCard,
+          "flex items-center gap-3 p-6 text-muted-foreground",
         )}
       >
         <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
@@ -133,7 +132,7 @@ function renderBody(state: State) {
       : 0;
 
   return (
-    <div className={cn("rounded-2xl border bg-card p-6")}>
+    <div className={cn(glassCard, "p-6")}>
       <div className="flex items-center gap-4">
         {track?.albumImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element

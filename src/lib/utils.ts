@@ -19,3 +19,11 @@ export function formatMs(ms: number) {
 export function formatNumber(n: number) {
   return new Intl.NumberFormat("fr-FR").format(n);
 }
+
+/**
+ * Glassmorphisme : carte translucide + backdrop-blur en dark, carte solide
+ * classique en light. À utiliser à la place de "rounded-2xl border bg-card"
+ * sur les cards qui doivent laisser passer le dégradé violet derrière.
+ */
+export const glassCard =
+  "rounded-2xl border bg-card backdrop-blur-xl dark:bg-white/[0.04] dark:border-white/10";
