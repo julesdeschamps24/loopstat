@@ -10,6 +10,14 @@ export const isSpotifyConfigured = Boolean(
   process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET,
 );
 
+// Canonical Spotify OAuth redirect URI. Derived from AUTH_URL (set in
+// .env.local for dev = http://127.0.0.1:3000, in Vercel for prod =
+// https://loopstat.tech) so the value sent at /authorize and /api/token
+// matches exactly what's registered in the Spotify dashboard.
+const SPOTIFY_REDIRECT_URI = `${(
+  process.env.AUTH_URL ?? "http://127.0.0.1:3000"
+).replace(/\/$/, "")}/api/auth/callback/spotify`;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   providers: [
@@ -20,7 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         url: "https://accounts.spotify.com/authorize",
         params: {
           scope: SPOTIFY_SCOPES,
-          redirect_uri: "http://127.0.0.1:3000/api/auth/callback/spotify",
+          redirect_uri: SPOTIFY_REDIRECT_URI,
         },
       },
       [customFetch]: async (...args) => {
@@ -32,14 +40,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               ? input.toString()
               : input.url;
         if (url.includes("/api/token") && init?.body instanceof URLSearchParams) {
-          // Auth.js computes redirect_uri from the incoming Host header (trustHost: true).
-          // If the user landed on localhost:3000 instead of 127.0.0.1:3000, the value sent
-          // here mismatches what was sent in the authorize step → Spotify rejects with
-          // invalid_grant. Pin it to the canonical URL registered in the dashboard.
-          init.body.set(
-            "redirect_uri",
-            "http://127.0.0.1:3000/api/auth/callback/spotify",
-          );
+          // Auth.js recomputes redirect_uri from the incoming Host header
+          // (trustHost: true). Override with our pinned value so the token
+          // exchange matches the authorize step byte-for-byte and Spotify
+          // doesn't reject with invalid_grant.
+          init.body.set("redirect_uri", SPOTIFY_REDIRECT_URI);
         }
         return fetch(input as Parameters<typeof fetch>[0], init);
       },
