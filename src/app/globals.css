@@ -17,16 +17,17 @@
 }
 
 .dark {
-  --background: 10 10 10;
-  --foreground: 245 245 245;
-  --muted: 23 23 23;
-  --muted-foreground: 163 163 163;
-  --card: 18 18 18;
-  --card-foreground: 245 245 245;
-  --border: 38 38 38;
-  --primary: 30 215 96;
+  /* Nébuleuse palette : violet profond avec teinte mauve sur le texte */
+  --background: 7 7 16; /* #070710 */
+  --foreground: 244 240 255; /* #f4f0ff */
+  --muted: 18 12 30;
+  --muted-foreground: 168 158 200;
+  --card: 18 12 30;
+  --card-foreground: 244 240 255;
+  --border: 38 32 62;
+  --primary: 30 215 96; /* Spotify green — reste pour les CTA Spotify */
   --primary-foreground: 10 10 10;
-  --accent: 30 30 30;
+  --accent: 28 22 46;
 }
 
 @theme inline {
@@ -54,6 +55,17 @@ body {
   color: rgb(var(--foreground));
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Dégradé radial mauve en haut de la page, uniquement en dark.
+   Position fixed pour ne pas se répéter sur de longues pages. */
+.dark body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  background: radial-gradient(ellipse at top, #1a0d2e 0%, #070710 60%);
+  pointer-events: none;
 }
 
 :focus-visible {
