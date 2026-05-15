@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -16,6 +16,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "loopstat — your Spotify, in numbers",
   description: "Stats Spotify détaillées, gratuites et sans pub.",
+  appleWebApp: {
+    capable: true,
+    title: "loopstat",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1ed760",
 };
 
 export default function RootLayout({
