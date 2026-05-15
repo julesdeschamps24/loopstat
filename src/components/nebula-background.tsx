@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useTheme } from "next-themes";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 type CubeUserData = {
@@ -25,11 +24,23 @@ type CubeUserData = {
  */
 export function NebulaBackground() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { resolvedTheme } = useTheme();
+
+  // On lit la classe .dark directement sur <html> + on observe ses changements
+  // via MutationObserver. C'est plus fiable que useTheme() de next-themes qui
+  // peut renvoyer undefined indéfiniment selon le timing d'hydratation.
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const html = document.documentElement;
+    const update = () => setIsDark(html.classList.contains("dark"));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(html, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
-    if (resolvedTheme !== "dark") {
-      console.log("[nebula] skip: not dark", { resolvedTheme });
+    if (!isDark) {
+      console.log("[nebula] skip: not dark");
       return;
     }
 
@@ -165,7 +176,7 @@ export function NebulaBackground() {
       }
       renderer.dispose();
     };
-  }, [resolvedTheme]);
+  }, [isDark]);
 
   return (
     <>
