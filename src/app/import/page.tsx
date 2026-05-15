@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ExternalLink, FileJson } from "lucide-react";
 import { auth } from "@/auth";
+import { ImageZoom } from "@/components/image-zoom";
 import { ImportUpload } from "@/components/import-upload";
 
 export default async function ImportPage() {
@@ -81,14 +82,10 @@ export default async function ImportPage() {
               compte » et « Journal technique ») ne servent pas à loopstat —
               décoche-les pour ne pas rallonger l&apos;attente.
             </p>
-            <div className="rounded-xl border bg-background overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/spotify-data-request.png"
-                alt="Page Spotify : seule la case « Historique de streaming étendu » est cochée"
-                className="w-full h-auto"
-              />
-            </div>
+            <ImageZoom
+              src="/spotify-data-request.png"
+              alt="Page Spotify : seule la case « Historique de streaming étendu » est cochée"
+            />
           </Step>
 
           <Step n={3}>
@@ -111,14 +108,10 @@ export default async function ImportPage() {
               <strong className="text-foreground">« Confirmer »</strong>{" "}
               dans le mail intitulé <em>« Confirme ta demande de données »</em>.
             </p>
-            <div className="rounded-xl border bg-background overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/spotify-data-confirm-email.png"
-                alt="Mail de confirmation Spotify avec le bouton « Confirmer » à cliquer"
-                className="w-full h-auto"
-              />
-            </div>
+            <ImageZoom
+              src="/spotify-data-confirm-email.png"
+              alt="Mail de confirmation Spotify avec le bouton « Confirmer » à cliquer"
+            />
           </Step>
 
           <Step n={5}>
