@@ -85,26 +85,38 @@ export function NebulaBackground() {
       const materials = [
         new THREE.MeshBasicMaterial({
           color: new THREE.Color().setHSL((baseHue - 20) / 360, 0.7, 0.55),
+          transparent: true,
+          opacity: 0.55,
         }),
         new THREE.MeshBasicMaterial({
           color: new THREE.Color().setHSL((baseHue + 20) / 360, 0.7, 0.55),
+          transparent: true,
+          opacity: 0.55,
         }),
         new THREE.MeshBasicMaterial({
           color: new THREE.Color().setHSL((baseHue - 40) / 360, 0.7, 0.45),
+          transparent: true,
+          opacity: 0.55,
         }),
         new THREE.MeshBasicMaterial({
           color: new THREE.Color().setHSL((baseHue + 40) / 360, 0.7, 0.65),
+          transparent: true,
+          opacity: 0.55,
         }),
         new THREE.MeshBasicMaterial({
           color: new THREE.Color().setHSL(baseHue / 360, 0.7, 0.4),
+          transparent: true,
+          opacity: 0.55,
         }),
         new THREE.MeshBasicMaterial({
           color: new THREE.Color().setHSL(baseHue / 360, 0.7, 0.6),
+          transparent: true,
+          opacity: 0.55,
         }),
       ];
       const cube = new THREE.Mesh(geo, materials);
       cube.position.set(
-        (Math.random() - 0.5) * 22,
+        (Math.random() - 0.5) * 33,
         (Math.random() - 0.5) * 14,
         (Math.random() - 0.5) * 14,
       );
