@@ -38,16 +38,12 @@ export async function pollUserRecentPlays(
 
   const items = data.items ?? [];
 
-  // Upsert catalog (tracks/artists/albums + junctions). Dedup by track.id is
-  // handled inside the helper.
-  const tracks = items.map((it) => it.track);
-  await upsertCatalogFromTracks(tracks);
-
-  // Build stream rows. The unique index (user_id, played_at, track_id) plus
-  // insertStreams' onConflictDoNothing guarantees idempotency.
+  // Build stream rows up front. The unique index (user_id, played_at, track_id)
+  // plus insertStreams' onConflictDoNothing guarantees idempotency.
   // Note: msPlayed is null here — Spotify's /me/player/recently-played does
   // not expose actual listening duration per stream. Leaving it null is
   // honest; downstream stats should treat null as "unknown".
+  const tracks = items.map((it) => it.track);
   const rows: NewStream[] = items.map((it) => ({
     userId,
     trackId: it.track.id,
@@ -56,10 +52,10 @@ export async function pollUserRecentPlays(
     source: "api",
   }));
 
-  // The three writes below (catalog upsert above, streams insert, user update)
-  // are not wrapped in a transaction; each is idempotent on its own.
-  const inserted = await insertStreams(rows);
-
+  // Wrap the three writes (catalog upsert, streams insert, users.lastSyncedAt
+  // update) in a single transaction so a mid-flight failure rolls back cleanly
+  // instead of leaving a partially-synced state.
+  //
   // lastSyncedAt policy: we always bump to `now()` regardless of whether items
   // were returned. Two reasons:
   //   1. Advance on empty responses — if Spotify returns 0 items (user idle),
@@ -67,11 +63,15 @@ export async function pollUserRecentPlays(
   //      keep using a stale `after` value.
   //   2. Robustness against clock skew between this server and the timestamps
   //      Spotify attaches to plays.
-  const now = new Date();
-  await db
-    .update(users)
-    .set({ lastSyncedAt: now })
-    .where(eq(users.id, userId));
+  const inserted = await db.transaction(async (tx) => {
+    await upsertCatalogFromTracks(tracks, tx);
+    const insertedCount = await insertStreams(rows, tx);
+    await tx
+      .update(users)
+      .set({ lastSyncedAt: new Date() })
+      .where(eq(users.id, userId));
+    return insertedCount;
+  });
 
   return { inserted };
 }

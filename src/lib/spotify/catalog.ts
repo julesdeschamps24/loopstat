@@ -1,6 +1,9 @@
 import { sql } from "drizzle-orm";
-import { db } from "@/db/client";
+import { db, type DB } from "@/db/client";
 import { albumArtists, albums, artists, trackArtists, tracks } from "@/db/schema";
+
+type Tx = Parameters<Parameters<DB["transaction"]>[0]>[0];
+type DbOrTx = DB | Tx;
 import type {
   SpotifyAlbumSimple,
   SpotifyArtistSimple,
@@ -29,7 +32,10 @@ function uniqById<T extends { id: string }>(items: T[]): T[] {
   return Array.from(map.values());
 }
 
-export async function upsertCatalogFromTracks(spotifyTracks: SpotifyTrack[]) {
+export async function upsertCatalogFromTracks(
+  spotifyTracks: SpotifyTrack[],
+  tx: DbOrTx = db,
+) {
   if (spotifyTracks.length === 0) return;
 
   const rawArtists: SpotifyArtistSimple[] = [];
@@ -68,7 +74,7 @@ export async function upsertCatalogFromTracks(spotifyTracks: SpotifyTrack[]) {
   }));
 
   if (artistRows.length > 0) {
-    await db
+    await tx
       .insert(artists)
       .values(artistRows)
       .onConflictDoUpdate({
@@ -81,7 +87,7 @@ export async function upsertCatalogFromTracks(spotifyTracks: SpotifyTrack[]) {
   }
 
   if (albumRows.length > 0) {
-    await db
+    await tx
       .insert(albums)
       .values(albumRows)
       .onConflictDoUpdate({
@@ -98,7 +104,7 @@ export async function upsertCatalogFromTracks(spotifyTracks: SpotifyTrack[]) {
   }
 
   if (trackRows.length > 0) {
-    await db
+    await tx
       .insert(tracks)
       .values(trackRows)
       .onConflictDoUpdate({
@@ -120,14 +126,14 @@ export async function upsertCatalogFromTracks(spotifyTracks: SpotifyTrack[]) {
     t.artists.map((a, i) => ({ trackId: t.id, artistId: a.id, position: i })),
   );
   if (trackArtistRows.length > 0) {
-    await db.insert(trackArtists).values(trackArtistRows).onConflictDoNothing();
+    await tx.insert(trackArtists).values(trackArtistRows).onConflictDoNothing();
   }
 
   const albumArtistRows = rawAlbums.flatMap((al) =>
     (al.artists ?? []).map((a) => ({ albumId: al.id, artistId: a.id })),
   );
   if (albumArtistRows.length > 0) {
-    await db.insert(albumArtists).values(albumArtistRows).onConflictDoNothing();
+    await tx.insert(albumArtists).values(albumArtistRows).onConflictDoNothing();
   }
 }
 
