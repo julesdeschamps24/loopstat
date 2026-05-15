@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { auth } from "@/auth";
+import { AlbumWall } from "@/components/album-wall";
 import { AppHeader } from "@/components/app-header";
 import { CurrentlyPlaying } from "@/components/stats/currently-playing";
 import { RankedRow } from "@/components/stats/ranked-list";
@@ -20,6 +21,8 @@ import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { fetchTopArtists, fetchTopTracks } from "@/lib/spotify/top";
 import { getListeningTotals } from "@/db/queries/stats";
 import { formatMs, formatNumber } from "@/lib/utils";
+
+const WALL_CELLS = 40;
 
 // Re-fetch the Spotify Top Read data at most once an hour; repeated navigation
 // reuses the cached RSC payload instead of re-hitting Spotify.
@@ -43,10 +46,11 @@ export default async function DashboardPage() {
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
-  const [totals, topTracks, topArtists] = await Promise.all([
+  const [totals, topTracks, topArtists, topTracks1y] = await Promise.all([
     getListeningTotals(userId),
     fetchTopTracks(userId, "4w"),
     fetchTopArtists(userId, "4w"),
+    fetchTopTracks(userId, "1y").catch(() => []),
   ]);
 
   const totalsByWindow = new Map(totals.map((t) => [t.window, t]));
@@ -59,9 +63,24 @@ export default async function DashboardPage() {
   const top5Tracks = topTracks.slice(0, 5);
   const top5Artists = topArtists.slice(0, 5);
 
+  // Dédup les top tracks 1y par album.id, garde les 40 premières pochettes
+  // uniques pour le mur de fond, pad avec null pour atteindre 40.
+  const seenAlbums = new Set<string>();
+  const wallCovers: (string | null)[] = [];
+  for (const track of topTracks1y) {
+    const id = track.album?.id;
+    if (!id || seenAlbums.has(id)) continue;
+    seenAlbums.add(id);
+    wallCovers.push(track.album?.images?.[0]?.url ?? null);
+    if (wallCovers.length === WALL_CELLS) break;
+  }
+  while (wallCovers.length < WALL_CELLS) wallCovers.push(null);
+
   return (
-    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
-      <AppHeader session={session} />
+    <>
+      <AlbumWall covers={wallCovers} />
+      <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
+        <AppHeader session={session} />
 
       <div className="flex flex-col gap-12">
         {/* CurrentlyPlaying */}
@@ -200,7 +219,8 @@ export default async function DashboardPage() {
             Importer mon historique
           </Link>
         </section>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   );
 }

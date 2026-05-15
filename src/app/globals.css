@@ -89,3 +89,68 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- Mur d'albums (fond du /dashboard, dark only) ---------- */
+
+.ls-album-wall {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: -5;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.dark .ls-album-wall {
+  display: block;
+}
+
+.ls-album-wall .grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  gap: 2px;
+  opacity: 0.42;
+  mix-blend-mode: luminosity;
+  transform: scale(1.1) rotate(-3deg);
+  transform-origin: center;
+}
+
+.ls-album-wall .cell {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ls-album-wall .cell.fallback {
+  background: linear-gradient(
+    var(--cell-angle, 135deg),
+    #5dd9ff,
+    #ff5dc8
+  );
+}
+
+.ls-album-wall .tint {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(93, 217, 255, 0.25),
+    rgba(255, 93, 200, 0.25)
+  );
+  mix-blend-mode: overlay;
+}
+
+@media (max-width: 767px) {
+  .ls-album-wall .grid {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+  }
+  /* Le composant rend toujours 40 cellules ; en mobile on cache les
+     16 dernières pour éviter qu'elles créent des lignes implicites. */
+  .ls-album-wall .grid .cell:nth-child(n + 25) {
+    display: none;
+  }
+}
