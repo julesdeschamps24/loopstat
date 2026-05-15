@@ -1,6 +1,11 @@
 export default function AlbumDetailLoading() {
   return (
-    <main className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
+    <main
+      role="status"
+      aria-busy="true"
+      aria-label="Chargement"
+      className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full"
+    >
       {/* Hero section: artwork placeholder + text stack */}
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
         {/* Artwork placeholder: size-48 rounded-2xl */}
