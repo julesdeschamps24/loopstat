@@ -4,7 +4,7 @@ import { isSpotifyConfigured } from "@/auth";
 import { SpotifyLoginButton } from "@/components/spotify-login-button";
 
 export default function LoginPage() {
-  if (!isSpotifyConfigured) {
+  if (!isSpotifyConfigured()) {
     return <SetupNeeded />;
   }
 

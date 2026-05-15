@@ -6,9 +6,14 @@ import { users, spotifyTokens } from "@/db/schema";
 import { encryptToken } from "@/lib/crypto";
 import { SPOTIFY_SCOPES } from "@/lib/spotify/scopes";
 
-export const isSpotifyConfigured = Boolean(
-  process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET,
-);
+// Read at request time, not module-load. Next/Turbopack may otherwise inline
+// `process.env.X` at `next build` (where the var is intentionally absent in
+// our Docker build stage) and bake the result into the compiled output.
+export function isSpotifyConfigured(): boolean {
+  return Boolean(
+    process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET,
+  );
+}
 
 // Canonical Spotify OAuth redirect URI. Derived from AUTH_URL (set in
 // .env.local for dev = http://127.0.0.1:3000, in Vercel for prod =
