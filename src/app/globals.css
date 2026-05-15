@@ -114,6 +114,9 @@ body {
   gap: 2px;
   opacity: 0.15;
   mix-blend-mode: luminosity;
+  /* Blur les pochettes pour un fond plus atmosphérique (taches floues plutôt
+     que vignettes nettes). */
+  filter: blur(4px);
   transform: scale(1.1) rotate(-3deg);
   transform-origin: center;
 }
@@ -130,17 +133,6 @@ body {
     #5dd9ff,
     #ff5dc8
   );
-}
-
-.ls-album-wall .tint {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(93, 217, 255, 0.25),
-    rgba(255, 93, 200, 0.25)
-  );
-  mix-blend-mode: overlay;
 }
 
 /* Voile sombre par-dessus le mur pour adoucir le contraste avec le contenu. */

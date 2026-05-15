@@ -39,7 +39,7 @@ export function Sidebar() {
   if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api")) return null;
 
   return (
-    <aside className="hidden md:flex md:w-[220px] md:shrink-0 md:flex-col md:gap-1 md:border-r md:border-white/[0.06] md:bg-white/[0.03] md:backdrop-blur-xl md:p-4 md:sticky md:top-0 md:h-screen">
+    <aside className="hidden md:flex md:w-55 md:shrink-0 md:flex-col md:gap-1 md:border-r md:border-white/6 md:bg-white/3 md:backdrop-blur-xl md:p-4 md:sticky md:top-0 md:h-screen">
       <Link
         href="/dashboard"
         className="mb-6 px-2 py-3 font-serif italic text-2xl tracking-tight"
@@ -65,8 +65,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
                 active
-                  ? "bg-linear-to-br from-[#5dd9ff] to-[#ff5dc8] text-black font-medium"
-                  : "text-muted-foreground hover:bg-white/[0.05] hover:text-foreground",
+                  ? "bg-[#7c3aed] text-white font-medium"
+                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
               )}
             >
               <Icon className="size-4 shrink-0" />
