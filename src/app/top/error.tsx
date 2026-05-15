@@ -21,7 +21,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="flex-1 flex items-center justify-center px-6 py-12">
+    <main id="main" className="flex-1 flex items-center justify-center px-6 py-12">
       <div className="flex max-w-md flex-col items-center rounded-2xl border bg-card px-6 py-12 text-center">
         <h1 className="text-xl font-semibold">Oups, un souci côté stats</h1>
         <p className="mt-2 text-sm text-muted-foreground">

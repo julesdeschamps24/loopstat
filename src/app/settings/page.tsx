@@ -17,7 +17,7 @@ export default async function SettingsPage() {
   const email = session.user.email ?? null;
 
   return (
-    <main className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
+    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
       <AppHeader session={session} />
 
       <div className="flex flex-col gap-12">

@@ -4,6 +4,7 @@ import { SkeletonRow } from "@/components/stats/skeleton-row";
 export default function ArtistDetailLoading() {
   return (
     <main
+      id="main"
       role="status"
       aria-busy="true"
       aria-label="Chargement"

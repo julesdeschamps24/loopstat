@@ -7,13 +7,13 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AppHeader({ session }: { session: Session }) {
   return (
-    <header className="flex items-center justify-between mb-12">
+    <header className="flex flex-wrap items-center justify-between gap-4 mb-12">
       <div className="flex items-center gap-3">
         {session.user.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={session.user.image}
-            alt={session.user.name ?? ""}
+            alt=""
             className="size-12 rounded-full"
           />
         ) : null}
@@ -24,7 +24,7 @@ export function AppHeader({ session }: { session: Session }) {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <ThemeToggle />
         <Link
           href="/settings"

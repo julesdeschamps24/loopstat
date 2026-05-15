@@ -1,6 +1,7 @@
 export default function AlbumDetailLoading() {
   return (
     <main
+      id="main"
       role="status"
       aria-busy="true"
       aria-label="Chargement"

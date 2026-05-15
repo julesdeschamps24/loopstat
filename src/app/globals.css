@@ -56,6 +56,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+:focus-visible {
+  outline: 2px solid rgb(var(--primary));
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
 /* Respect prefers-reduced-motion globally — Tailwind v4 does not wrap
    animate-* utilities in this media query by default. Stops the pulse on
    loading skeletons (and any other CSS animation) for users who've opted out.

@@ -35,7 +35,7 @@ export default async function AlbumDetailPage({
   const trackItems = album.tracks?.items ?? [];
 
   return (
-    <main className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
+    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element

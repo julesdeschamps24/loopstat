@@ -60,7 +60,7 @@ export default async function DashboardPage() {
   const top5Artists = topArtists.slice(0, 5);
 
   return (
-    <main className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
+    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
       <AppHeader session={session} />
 
       <div className="flex flex-col gap-12">

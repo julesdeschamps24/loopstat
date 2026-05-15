@@ -80,7 +80,7 @@ export default async function TopAlbumsPage({
   const albums = deriveTopAlbums(tracks);
 
   return (
-    <main className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
+    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
       <header className="mb-2 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Top albums</h1>
         <Suspense
