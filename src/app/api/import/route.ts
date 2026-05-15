@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { imports } from "@/db/schema";
+import { log } from "@/lib/log";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { importQueue } from "../../../../worker/queue";
 
 // Mutates server state (writes temp files, inserts a row, enqueues a job) and
@@ -19,6 +21,14 @@ export async function POST(request: Request): Promise<Response> {
   const userId = session?.user?.id;
   if (!userId) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const wlog = log.child({ route: "api/import", userId });
+
+  const rl = checkRateLimit(`import:${userId}`, 1, 60_000);
+  if (!rl.ok) {
+    wlog.warn({ retryAfterMs: rl.retryAfterMs }, "rate-limited");
+    return rateLimitResponse(rl.retryAfterMs);
   }
 
   const formData = await request.formData();
@@ -71,7 +81,7 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json({ importId }, { status: 202 });
   } catch (err) {
-    console.error("[api/import] failed to create import for user", userId, err);
+    wlog.error({ err }, "failed to create import");
 
     // Best-effort cleanup so a crash here doesn't leave an orphaned "pending"
     // row + dangling temp files. Wrapped so a cleanup failure can't mask `err`.

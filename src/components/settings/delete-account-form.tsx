@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const CONFIRMATION_PHRASE = "SUPPRIMER";
 
@@ -9,34 +9,60 @@ export function DeleteAccountForm() {
   const [typed, setTyped] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
 
-  const canConfirm = typed === CONFIRMATION_PHRASE;
+  const canConfirm = typed.trim() === CONFIRMATION_PHRASE;
 
   async function handleDelete() {
     setError(null);
     setLoading(true);
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     try {
-      const res = await fetch("/api/account", { method: "DELETE" });
+      const res = await fetch("/api/account", {
+        method: "DELETE",
+        signal: controller.signal,
+      });
+
+      // Check if the request was aborted before proceeding with state updates
+      if (controller.signal.aborted) return;
+
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as {
           error?: string;
         };
-        setError(
-          body.error
-            ? `La suppression a échoué (${body.error}).`
-            : "La suppression a échoué. Réessaie dans un instant.",
-        );
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setError(
+            body.error
+              ? `La suppression a échoué (${body.error}).`
+              : "La suppression a échoué. Réessaie dans un instant.",
+          );
+          setLoading(false);
+        }
         return;
       }
       // Session cookie cleared server-side; bounce to the landing page.
       window.location.replace("/");
     } catch (err) {
+      // Silently ignore AbortError — the component is unmounted
+      if (err instanceof Error && err.name === "AbortError") {
+        return;
+      }
       console.error("[delete-account] request failed", err);
-      setError("Impossible de joindre le serveur. Réessaie dans un instant.");
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setError("Impossible de joindre le serveur. Réessaie dans un instant.");
+        setLoading(false);
+      }
     }
   }
+
+  // Abort any in-flight request when the component unmounts
+  useEffect(() => {
+    return () => {
+      controllerRef.current?.abort();
+    };
+  }, []);
 
   if (!confirming) {
     return (

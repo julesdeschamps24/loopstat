@@ -2,10 +2,42 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { spotifyTokens } from "@/db/schema";
 import { decryptToken, encryptToken } from "@/lib/crypto";
+import { log } from "@/lib/log";
+
+export class SpotifyError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly path: string,
+    public readonly bodyText: string,
+    public readonly retryAfterMs?: number,
+  ) {
+    super(`Spotify ${path} failed: ${status}`);
+    this.name = "SpotifyError";
+  }
+}
 
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 const API_BASE = "https://api.spotify.com/v1";
 const REFRESH_THRESHOLD_MS = 60_000;
+const MAX_RETRY_AFTER_MS = 10_000;
+const DEFAULT_RETRY_AFTER_MS = 1_000;
+
+/**
+ * Parse Retry-After header as integer seconds, capped at 10s, default 1s.
+ */
+function parseRetryAfter(header: string | null): number {
+  if (!header) return DEFAULT_RETRY_AFTER_MS;
+  const seconds = parseInt(header, 10);
+  if (isNaN(seconds) || seconds <= 0) return DEFAULT_RETRY_AFTER_MS;
+  return Math.min(seconds * 1000, MAX_RETRY_AFTER_MS);
+}
+
+/**
+ * Sleep for a given duration in milliseconds.
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 interface RefreshResponse {
   access_token: string;
@@ -27,20 +59,36 @@ async function refreshAccessToken(userId: string): Promise<string> {
     `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
   ).toString("base64");
 
-  const res = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${basic}`,
-    },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-    }),
-  });
+  const doTokenRequest = async () =>
+    fetch(TOKEN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${basic}`,
+      },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+      }),
+    });
+
+  let res = await doTokenRequest();
+
+  if (res.status === 429) {
+    const retryAfterMs = parseRetryAfter(res.headers.get("Retry-After"));
+    log.warn({ path: "/api/token", retryAfterMs }, "Spotify 429, retrying once");
+    await sleep(retryAfterMs);
+    res = await doTokenRequest();
+
+    if (res.status === 429) {
+      const bodyText = await res.text();
+      throw new SpotifyError(res.status, "/api/token", bodyText, retryAfterMs);
+    }
+  }
 
   if (!res.ok) {
-    throw new Error(`Spotify refresh failed: ${res.status} ${await res.text()}`);
+    const bodyText = await res.text();
+    throw new SpotifyError(res.status, "/api/token", bodyText);
   }
 
   const data = (await res.json()) as RefreshResponse;
@@ -95,8 +143,21 @@ export async function spotifyFetch<T>(
     res = await doFetch(token);
   }
 
+  if (res.status === 429) {
+    const retryAfterMs = parseRetryAfter(res.headers.get("Retry-After"));
+    log.warn({ path, retryAfterMs }, "Spotify 429, retrying once");
+    await sleep(retryAfterMs);
+    res = await doFetch(token);
+
+    if (res.status === 429) {
+      const bodyText = await res.text();
+      throw new SpotifyError(res.status, path, bodyText, retryAfterMs);
+    }
+  }
+
   if (!res.ok) {
-    throw new Error(`Spotify ${path} failed: ${res.status} ${await res.text()}`);
+    const bodyText = await res.text();
+    throw new SpotifyError(res.status, path, bodyText);
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;

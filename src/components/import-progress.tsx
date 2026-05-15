@@ -6,6 +6,8 @@ import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 
 const POLL_INTERVAL_MS = 2000;
+const STALL_THRESHOLD_MS = 5 * 60 * 1000;
+const STALL_TICK_MS = 30 * 1000;
 
 type ImportStatus = "pending" | "processing" | "completed" | "failed";
 
@@ -26,6 +28,18 @@ type State =
 
 export function ImportProgress({ importId }: { importId: string }) {
   const [state, setState] = useState<State>({ kind: "loading" });
+  // Mount time stands in for the import's server-side `started_at`: the
+  // component mounts right after POST /api/import returns, so the gap is at
+  // most a couple of seconds — well below the 5 min stall threshold. A `now`
+  // state ticks every 30s so the banner appears as soon as the elapsed time
+  // crosses STALL_THRESHOLD_MS, even if no poll response lands in that window.
+  const [mountedAt] = useState<number>(() => Date.now());
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), STALL_TICK_MS);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,13 +139,27 @@ export function ImportProgress({ importId }: { importId: string }) {
     );
   }
 
-  // loading / running — animated indicator
+  // loading / running — animated indicator, plus a stalled banner when the
+  // import has been pending/processing for more than STALL_THRESHOLD_MS.
+  const elapsedMs = now - mountedAt;
+  const isStalled =
+    state.kind === "running" &&
+    (state.status === "pending" || state.status === "processing") &&
+    elapsedMs > STALL_THRESHOLD_MS;
+
   return (
-    <p className="flex items-center gap-2 text-muted-foreground">
-      <Loader2 className="size-4 animate-spin" />
-      {state.kind === "running" && state.status === "processing"
-        ? "Traitement en cours…"
-        : "Import en attente de traitement…"}
-    </p>
+    <div className="flex flex-col gap-2">
+      {isStalled ? (
+        <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-300">
+          L&apos;import semble bloqué. Le worker BullMQ tourne-t-il&nbsp;?
+        </div>
+      ) : null}
+      <p className="flex items-center gap-2 text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" />
+        {state.kind === "running" && state.status === "processing"
+          ? "Traitement en cours…"
+          : "Import en attente de traitement…"}
+      </p>
+    </div>
   );
 }

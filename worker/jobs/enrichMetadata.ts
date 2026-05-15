@@ -1,7 +1,8 @@
 import { isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import { tracks } from "@/db/schema";
-import { spotifyFetch } from "@/lib/spotify/client";
+import { log } from "@/lib/log";
+import { SpotifyError, spotifyFetch } from "@/lib/spotify/client";
 import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
 import type { SpotifyTrack } from "@/lib/spotify/types";
 
@@ -16,22 +17,15 @@ export interface EnrichMetadataResult {
   enrichedCount: number;
 }
 
-// spotifyFetch throws Error("Spotify /tracks/xxx failed: <status> ...").
+// spotifyFetch throws SpotifyError carrying .status from Spotify's response.
 // A 404 means the track is gone from Spotify's catalog; a 400 "Invalid base62
 // id" means the stored id is malformed. Both are permanent, per-track data
 // problems — skip just that one track rather than failing (and retrying) the
 // whole job. Any other status (403, 5xx, network) is treated as transient and
 // allowed to propagate so BullMQ retries.
-// NOTE: this matches on the thrown message string, so it is coupled to
-// spotifyFetch's message format. The message also embeds the response body,
-// so a non-4xx error whose body literally contains "failed: 400/404" could
-// false-positive — low risk, but a typed error carrying .status would be the
-// robust fix if spotifyFetch is ever revisited.
 function isSkippableTrackError(err: unknown): boolean {
   return (
-    err instanceof Error &&
-    (/ failed: 404\b/.test(err.message) ||
-      / failed: 400\b/.test(err.message))
+    err instanceof SpotifyError && (err.status === 400 || err.status === 404)
   );
 }
 
@@ -41,19 +35,20 @@ function isSkippableTrackError(err: unknown): boolean {
 // NOTE: `tracks` is a global shared catalog (no userId column), so this is a
 // GLOBAL sweep — it enriches every unenriched track, not just one user's.
 // `userId` here is only the Spotify credential used for the API calls (and the
-// log prefix); concurrent enrich jobs would redundantly fetch the same ids.
+// log prefix). Concurrent enrich enqueues are deduplicated at the enqueue
+// boundary via jobId: "enrich-metadata-global", so only one job runs at a time.
 export async function enrichMetadata(
   userId: string,
 ): Promise<EnrichMetadataResult> {
+  const wlog = log.child({ job: "enrich-metadata", userId });
+
   const unenriched = await db
     .select({ id: tracks.id })
     .from(tracks)
     .where(isNull(tracks.durationMs));
 
   if (unenriched.length === 0) {
-    console.log(
-      `[enrichMetadata] user=${userId} unenriched=0 — nothing to do`,
-    );
+    wlog.info({ unenriched: 0 }, "nothing to do");
     return { enrichedCount: 0 };
   }
 
@@ -74,10 +69,9 @@ export async function enrichMetadata(
       collected.push(track);
     } catch (err) {
       if (isSkippableTrackError(err)) {
-        console.warn(
-          `[enrichMetadata] user=${userId} track=${id} — skipping: ${
-            err instanceof Error ? err.message : String(err)
-          }`,
+        wlog.warn(
+          { track: id, err },
+          "skipping unenriched track",
         );
         skipped += 1;
         continue;
@@ -88,8 +82,9 @@ export async function enrichMetadata(
 
   await upsertCatalogFromTracks(collected);
 
-  console.log(
-    `[enrichMetadata] user=${userId} unenriched=${ids.length} enriched=${collected.length} skipped=${skipped}`,
+  wlog.info(
+    { unenriched: ids.length, enriched: collected.length, skipped },
+    "enrich batch complete",
   );
 
   return { enrichedCount: collected.length };
