@@ -3,6 +3,18 @@ import { db } from "@/db/client";
 import { spotifyTokens } from "@/db/schema";
 import { decryptToken, encryptToken } from "@/lib/crypto";
 
+export class SpotifyError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly path: string,
+    public readonly bodyText: string,
+    public readonly retryAfterMs?: number,
+  ) {
+    super(`Spotify ${path} failed: ${status}`);
+    this.name = "SpotifyError";
+  }
+}
+
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 const API_BASE = "https://api.spotify.com/v1";
 const REFRESH_THRESHOLD_MS = 60_000;
@@ -40,7 +52,8 @@ async function refreshAccessToken(userId: string): Promise<string> {
   });
 
   if (!res.ok) {
-    throw new Error(`Spotify refresh failed: ${res.status} ${await res.text()}`);
+    const bodyText = await res.text();
+    throw new SpotifyError(res.status, "/api/token", bodyText);
   }
 
   const data = (await res.json()) as RefreshResponse;
@@ -96,7 +109,8 @@ export async function spotifyFetch<T>(
   }
 
   if (!res.ok) {
-    throw new Error(`Spotify ${path} failed: ${res.status} ${await res.text()}`);
+    const bodyText = await res.text();
+    throw new SpotifyError(res.status, path, bodyText);
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;

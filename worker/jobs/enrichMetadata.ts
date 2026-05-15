@@ -1,7 +1,7 @@
 import { isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import { tracks } from "@/db/schema";
-import { spotifyFetch } from "@/lib/spotify/client";
+import { SpotifyError, spotifyFetch } from "@/lib/spotify/client";
 import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
 import type { SpotifyTrack } from "@/lib/spotify/types";
 
@@ -16,22 +16,15 @@ export interface EnrichMetadataResult {
   enrichedCount: number;
 }
 
-// spotifyFetch throws Error("Spotify /tracks/xxx failed: <status> ...").
+// spotifyFetch throws SpotifyError carrying .status from Spotify's response.
 // A 404 means the track is gone from Spotify's catalog; a 400 "Invalid base62
 // id" means the stored id is malformed. Both are permanent, per-track data
 // problems — skip just that one track rather than failing (and retrying) the
 // whole job. Any other status (403, 5xx, network) is treated as transient and
 // allowed to propagate so BullMQ retries.
-// NOTE: this matches on the thrown message string, so it is coupled to
-// spotifyFetch's message format. The message also embeds the response body,
-// so a non-4xx error whose body literally contains "failed: 400/404" could
-// false-positive — low risk, but a typed error carrying .status would be the
-// robust fix if spotifyFetch is ever revisited.
 function isSkippableTrackError(err: unknown): boolean {
   return (
-    err instanceof Error &&
-    (/ failed: 404\b/.test(err.message) ||
-      / failed: 400\b/.test(err.message))
+    err instanceof SpotifyError && (err.status === 400 || err.status === 404)
   );
 }
 
