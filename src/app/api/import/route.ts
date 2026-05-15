@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { imports } from "@/db/schema";
 import { log } from "@/lib/log";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { importQueue } from "../../../../worker/queue";
 
 // Mutates server state (writes temp files, inserts a row, enqueues a job) and
@@ -23,6 +24,12 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const wlog = log.child({ route: "api/import", userId });
+
+  const rl = checkRateLimit(`import:${userId}`, 1, 60_000);
+  if (!rl.ok) {
+    wlog.warn({ retryAfterMs: rl.retryAfterMs }, "rate-limited");
+    return rateLimitResponse(rl.retryAfterMs);
+  }
 
   const formData = await request.formData();
   const files = formData

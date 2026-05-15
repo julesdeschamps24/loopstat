@@ -4,6 +4,7 @@ import { auth, signOut } from "@/auth";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { log } from "@/lib/log";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 // Mutates server state (deletes the user + cascades) and depends on the
 // session cookie — never cache.
@@ -17,6 +18,12 @@ export async function DELETE(): Promise<Response> {
   }
 
   const wlog = log.child({ route: "api/account", userId });
+
+  const rl = checkRateLimit(`account:${userId}`, 1, 3_600_000);
+  if (!rl.ok) {
+    wlog.warn({ retryAfterMs: rl.retryAfterMs }, "rate-limited");
+    return rateLimitResponse(rl.retryAfterMs);
+  }
 
   try {
     // All user-scoped FKs (spotify_tokens, streams, imports, top_cache) have
