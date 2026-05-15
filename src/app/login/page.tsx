@@ -3,6 +3,11 @@ import { ExternalLink, Music } from "lucide-react";
 import { isSpotifyConfigured } from "@/auth";
 import { SpotifyLoginButton } from "@/components/spotify-login-button";
 
+// Force dynamic rendering so isSpotifyConfigured() is evaluated at each
+// request against the current runtime env, rather than being baked into a
+// statically prerendered HTML at build time.
+export const dynamic = "force-dynamic";
+
 export default function LoginPage() {
   if (!isSpotifyConfigured()) {
     return <SetupNeeded />;
