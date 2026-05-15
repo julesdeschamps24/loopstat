@@ -38,6 +38,7 @@ export function AlbumWall({ covers }: { covers: (string | null)[] }) {
         )}
       </div>
       <div className="tint" />
+      <div className="darken" />
     </div>
   );
 }
