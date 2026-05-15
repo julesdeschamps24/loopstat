@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cn, gradientCta } from "@/lib/utils";
 
 export function SpotifyLoginButton() {
   const [loading, setLoading] = useState(false);
@@ -43,7 +44,10 @@ export function SpotifyLoginButton() {
       type="button"
       disabled={loading}
       onClick={() => void startSignIn()}
-      className="w-full rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+      className={cn(
+        gradientCta,
+        "w-full rounded-full px-6 py-3 font-medium disabled:opacity-50 disabled:cursor-not-allowed",
+      )}
     >
       {loading ? "Redirection vers Spotify…" : "Se connecter avec Spotify"}
     </button>

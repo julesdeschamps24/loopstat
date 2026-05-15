@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { TopPeriod } from "@/lib/spotify/top";
-import { cn } from "@/lib/utils";
+import { cn, gradientCta } from "@/lib/utils";
 
 const PERIODS: { value: TopPeriod; label: string }[] = [
   { value: "4w", label: "4 semaines" },
@@ -42,7 +42,7 @@ export function PeriodSelector({ current }: { current: TopPeriod }) {
             className={cn(
               "rounded-full px-4 py-1.5 text-sm font-medium transition",
               active
-                ? "bg-primary text-primary-foreground"
+                ? gradientCta
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >

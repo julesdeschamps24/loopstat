@@ -159,7 +159,7 @@ function renderBody(state: State) {
       {durationMs && durationMs > 0 ? (
         <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-primary transition-all"
+            className="h-full rounded-full bg-linear-to-r from-[#5dd9ff] to-[#ff5dc8] transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>

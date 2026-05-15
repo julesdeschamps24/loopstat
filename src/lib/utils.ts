@@ -27,3 +27,17 @@ export function formatNumber(n: number) {
  */
 export const glassCard =
   "rounded-2xl border bg-card backdrop-blur-xl dark:bg-white/[0.04] dark:border-white/10";
+
+/**
+ * Gradient cyan→magenta de la palette Nébuleuse. Texte noir pour le contraste
+ * sur le gradient clair. Utilisé sur les CTA secondaires et les états actifs.
+ */
+export const gradientCta =
+  "bg-linear-to-br from-[#5dd9ff] to-[#ff5dc8] text-black hover:opacity-90 transition";
+
+/**
+ * Variante "texte" du gradient cyan→magenta (clip-path sur le texte). Pour
+ * les liens "Voir tout" et autres accents typographiques.
+ */
+export const gradientText =
+  "bg-linear-to-r from-[#5dd9ff] to-[#ff5dc8] bg-clip-text text-transparent";
