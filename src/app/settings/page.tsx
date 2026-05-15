@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { AppHeader } from "@/components/app-header";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { db } from "@/db/client";
+import { users } from "@/db/schema";
 
 // No Spotify calls here — keep the standard revalidate window for consistency
 // with the other authenticated pages.
@@ -13,8 +16,15 @@ export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const displayName = session.user.name ?? session.user.spotifyId ?? "";
-  const email = session.user.email ?? null;
+  // Fetch email and displayName from DB since session.user.email is not reliably
+  // propagated by the current JWT session callback
+  const userRow = await db.query.users.findFirst({
+    where: eq(users.id, session.user.id),
+    columns: { email: true, displayName: true, spotifyId: true },
+  });
+
+  const displayName = userRow?.displayName ?? session.user.name ?? userRow?.spotifyId ?? "";
+  const email = userRow?.email ?? null;
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
