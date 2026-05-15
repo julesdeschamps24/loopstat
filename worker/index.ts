@@ -15,18 +15,11 @@ import { pollUserRecentPlays } from "./jobs/pollRecent";
 import { fanoutPolls } from "./jobs/fanout";
 import { importHistory } from "./jobs/importHistory";
 import { enrichMetadata } from "./jobs/enrichMetadata";
-
-interface PollUserJobData {
-  userId: string;
-}
-
-interface ImportJobData {
-  importId: string;
-}
-
-interface EnrichJobData {
-  userId: string;
-}
+import {
+  PollUserJobData,
+  ImportJobData,
+  EnrichJobData,
+} from "./schemas";
 
 // poll-recent queue processor. Handles two job kinds, distinguished by
 // `job.name`:
@@ -48,7 +41,7 @@ async function processJob(job: Job): Promise<unknown> {
   // Default: per-user poll. Tolerates the historical job name (anything that
   // isn't "fanout") so jobs queued before this dispatch was introduced still
   // work.
-  const { userId } = job.data as PollUserJobData;
+  const { userId } = PollUserJobData.parse(job.data);
   if (!userId) throw new Error(`job ${job.id}: missing userId in data`);
 
   const result = await pollUserRecentPlays(userId);
@@ -65,7 +58,7 @@ async function processJob(job: Job): Promise<unknown> {
 async function processImportJob(job: Job): Promise<unknown> {
   const start = Date.now();
   const wlog = log.child({ worker: "import", jobId: job.id });
-  const { importId } = job.data as ImportJobData;
+  const { importId } = ImportJobData.parse(job.data);
   if (!importId) throw new Error(`job ${job.id}: missing importId in data`);
 
   const result = await importHistory(importId);
@@ -82,7 +75,7 @@ async function processImportJob(job: Job): Promise<unknown> {
 async function processEnrichJob(job: Job): Promise<unknown> {
   const start = Date.now();
   const wlog = log.child({ worker: "enrich", jobId: job.id });
-  const { userId } = job.data as EnrichJobData;
+  const { userId } = EnrichJobData.parse(job.data);
   if (!userId) throw new Error(`job ${job.id}: missing userId in data`);
 
   const result = await enrichMetadata(userId);
