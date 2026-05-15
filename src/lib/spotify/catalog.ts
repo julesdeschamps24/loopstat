@@ -11,12 +11,12 @@ import type {
   SpotifyTrack,
 } from "./types";
 
-function pickImage(images: { url: string }[] | undefined): string | null {
+export function pickImage(images: { url: string }[] | undefined): string | null {
   if (!images || images.length === 0) return null;
   return images[0]?.url ?? null;
 }
 
-function normalizeReleaseDate(
+export function normalizeReleaseDate(
   date: string | undefined,
   precision: SpotifyAlbumSimple["release_date_precision"],
 ): string | null {
@@ -26,7 +26,7 @@ function normalizeReleaseDate(
   return date;
 }
 
-function uniqById<T extends { id: string }>(items: T[]): T[] {
+export function uniqById<T extends { id: string }>(items: T[]): T[] {
   const map = new Map<string, T>();
   for (const item of items) map.set(item.id, item);
   return Array.from(map.values());
