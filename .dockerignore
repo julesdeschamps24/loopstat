@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env*
+!.env.production.example
+.import-tmp
+.claude
+.agents
+skills-lock.json
+.DS_Store
+*.log
+README.md
+deploy/README.md

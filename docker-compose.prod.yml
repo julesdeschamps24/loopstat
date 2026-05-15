@@ -1,0 +1,83 @@
+# Prod stack: Postgres + Redis + Next.js app + BullMQ worker.
+# Run on the VPS with: docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+#
+# Postgres and Redis are NOT exposed publicly — only reachable on the internal
+# Docker network. The app is bound to 127.0.0.1:3001 (Caddy reverse-proxies
+# loopstat.tech → localhost:3001).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: loopstat_postgres_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: loopstat
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: loopstat
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loopstat -d loopstat"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: loopstat_redis_prod
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: loopstat:latest
+    container_name: loopstat_app
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://loopstat:${POSTGRES_PASSWORD}@postgres:5432/loopstat
+      REDIS_URL: redis://redis:6379
+      AUTH_URL: ${AUTH_URL:?AUTH_URL is required (e.g. https://loopstat.tech)}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID:?SPOTIFY_CLIENT_ID is required}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET:?SPOTIFY_CLIENT_SECRET is required}
+      TOKEN_ENC_KEY: ${TOKEN_ENC_KEY:?TOKEN_ENC_KEY is required}
+    # Migrate the schema, then start the Next server. drizzle-kit reads
+    # DATABASE_URL from the environment (no .env.local needed here).
+    command: ["sh", "-c", "pnpm drizzle-kit migrate && pnpm start"]
+    ports:
+      - "127.0.0.1:3001:3000"
+
+  worker:
+    image: loopstat:latest
+    container_name: loopstat_worker
+    restart: unless-stopped
+    depends_on:
+      app: { condition: service_started }
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://loopstat:${POSTGRES_PASSWORD}@postgres:5432/loopstat
+      REDIS_URL: redis://redis:6379
+      AUTH_URL: ${AUTH_URL}
+      AUTH_SECRET: ${AUTH_SECRET}
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+      TOKEN_ENC_KEY: ${TOKEN_ENC_KEY}
+    command: ["pnpm", "tsx", "worker/index.ts"]
+
+volumes:
+  postgres_data:
+  redis_data:
