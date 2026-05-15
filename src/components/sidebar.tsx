@@ -1,0 +1,80 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Album,
+  Clock,
+  Download,
+  Home,
+  Music2,
+  Settings,
+  Users,
+} from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+const NAV_ITEMS = [
+  { href: "/dashboard", label: "Tableau de bord", icon: Home },
+  { href: "/top/tracks", label: "Top titres", icon: Music2 },
+  { href: "/top/artists", label: "Top artistes", icon: Users },
+  { href: "/top/albums", label: "Top albums", icon: Album },
+  { href: "/listening-clock", label: "Horloge d'écoute", icon: Clock },
+  { href: "/import", label: "Importer", icon: Download },
+  { href: "/settings", label: "Réglages", icon: Settings },
+] as const;
+
+// Pages publiques où la sidebar n'a aucun sens (on est avant le login).
+const PUBLIC_PATHS = new Set<string>(["/", "/login"]);
+
+/**
+ * Sidebar verticale 220 px, fixée à gauche sur >= md, masquée sur mobile.
+ * Met l'item actif en gradient cyan→magenta (palette nébuleuse).
+ */
+export function Sidebar() {
+  const pathname = usePathname();
+
+  // Pas de sidebar sur les pages publiques (landing + login) ni sur les
+  // routes d'erreur internes Next.
+  if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api")) return null;
+
+  return (
+    <aside className="hidden md:flex md:w-[220px] md:shrink-0 md:flex-col md:gap-1 md:border-r md:border-white/[0.06] md:bg-white/[0.03] md:backdrop-blur-xl md:p-4 md:sticky md:top-0 md:h-screen">
+      <Link
+        href="/dashboard"
+        className="mb-6 px-2 py-3 font-serif italic text-2xl tracking-tight"
+      >
+        loopstat
+      </Link>
+
+      <nav className="flex flex-col gap-0.5">
+        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          const active =
+            pathname === href ||
+            // Detail pages (/track/[id], /artist/[id]…) ne matchent aucun
+            // item de nav ; on laisse "Top X" actif quand on est dans un
+            // détail correspondant.
+            (href === "/top/tracks" && pathname.startsWith("/track/")) ||
+            (href === "/top/artists" && pathname.startsWith("/artist/")) ||
+            (href === "/top/albums" && pathname.startsWith("/album/"));
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
+                active
+                  ? "bg-linear-to-br from-[#5dd9ff] to-[#ff5dc8] text-black font-medium"
+                  : "text-muted-foreground hover:bg-white/[0.05] hover:text-foreground",
+              )}
+            >
+              <Icon className="size-4 shrink-0" />
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
