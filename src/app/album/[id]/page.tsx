@@ -42,6 +42,8 @@ export default async function AlbumDetailPage({
           <img
             src={image}
             alt=""
+            decoding="async"
+            fetchPriority="high"
             className="size-48 shrink-0 rounded-2xl object-cover shadow-lg"
           />
         ) : (

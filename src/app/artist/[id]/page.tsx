@@ -47,6 +47,8 @@ export default async function ArtistDetailPage({
           <img
             src={image}
             alt=""
+            decoding="async"
+            fetchPriority="high"
             className="size-48 shrink-0 rounded-full object-cover shadow-lg"
           />
         ) : (

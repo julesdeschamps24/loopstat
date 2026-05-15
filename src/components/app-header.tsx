@@ -14,6 +14,8 @@ export function AppHeader({ session }: { session: Session }) {
           <img
             src={session.user.image}
             alt=""
+            decoding="async"
+            fetchPriority="high"
             className="size-12 rounded-full"
           />
         ) : null}

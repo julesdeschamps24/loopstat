@@ -56,6 +56,8 @@ export default async function TrackDetailPage({
           <img
             src={albumImage}
             alt=""
+            decoding="async"
+            fetchPriority="high"
             className="size-48 shrink-0 rounded-2xl object-cover shadow-lg"
           />
         ) : (
