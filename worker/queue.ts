@@ -1,8 +1,12 @@
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
 
-const redisUrl = process.env.REDIS_URL;
-if (!redisUrl) throw new Error("REDIS_URL is not set");
+// During `next build`, Next 16 imports each route module to collect metadata
+// (and some routes import this file via `importQueue`). Env vars aren't set
+// then, and ioredis would otherwise try to connect at module-load. Use a
+// placeholder URL + lazyConnect so the connection is deferred until the
+// first real command — at runtime, docker-compose always provides REDIS_URL.
+const redisUrl = process.env.REDIS_URL ?? "redis://placeholder:6379";
 
 export const POLL_RECENT_QUEUE_NAME = "poll-recent";
 export const POLL_RECENT_FANOUT_SCHEDULER_ID = "poll-recent-fanout";
@@ -26,6 +30,7 @@ export const connection =
   globalCache.__loopstatRedis ??
   (globalCache.__loopstatRedis = new IORedis(redisUrl, {
     maxRetriesPerRequest: null,
+    lazyConnect: true,
   }));
 
 export const pollRecentQueue =
