@@ -1,0 +1,1 @@
+CREATE INDEX "imports_user_status_idx" ON "imports" USING btree ("user_id","status");

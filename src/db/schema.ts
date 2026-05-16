@@ -126,18 +126,25 @@ export const streams = pgTable(
   }),
 );
 
-export const imports = pgTable("imports", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  status: text("status").notNull().default("pending"),
-  filesCount: integer("files_count").notNull().default(0),
-  rowsImported: integer("rows_imported").notNull().default(0),
-  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
-  completedAt: timestamp("completed_at", { withTimezone: true }),
-  errorMessage: text("error_message"),
-});
+export const imports = pgTable(
+  "imports",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("pending"),
+    filesCount: integer("files_count").notNull().default(0),
+    rowsImported: integer("rows_imported").notNull().default(0),
+    startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    errorMessage: text("error_message"),
+  },
+  (t) => ({
+    // Sert hasCompletedImport() : SELECT ... WHERE user_id = ? AND status = ? LIMIT 1.
+    userStatusIdx: index("imports_user_status_idx").on(t.userId, t.status),
+  }),
+);
 
 export const topCache = pgTable(
   "top_cache",
