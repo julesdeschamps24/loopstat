@@ -1,7 +1,22 @@
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { streams, trackArtists, tracks } from "@/db/schema";
+import { albums, artists, streams, trackArtists, tracks } from "@/db/schema";
+import { periodSince, type StreamPeriod } from "@/lib/stats/period";
+
+/**
+ * What counts as a "real" play, matching Spotify's own definition:
+ * ms_played >= 30 000 (30 s) OR ms_played is null (= polling source where
+ * the duration isn't available, but Spotify has already counted the play
+ * server-side). Plays under 30 s are skips and don't count.
+ *
+ * Applied to every aggregation that reports play counts to the user. NOT
+ * applied to `getTrackPlayQuality` which explicitly inspects skip rate.
+ */
+const QUALIFYING_PLAY = or(
+  gte(streams.msPlayed, 30000),
+  isNull(streams.msPlayed),
+);
 
 type ListeningWindow = "7d" | "30d" | "lifetime";
 
@@ -18,8 +33,12 @@ export async function getListeningTotals(
   const results = await Promise.all(
     windows.map(async ({ window, since }) => {
       const where = since
-        ? and(eq(streams.userId, userId), gte(streams.playedAt, since))
-        : eq(streams.userId, userId);
+        ? and(
+            eq(streams.userId, userId),
+            gte(streams.playedAt, since),
+            QUALIFYING_PLAY,
+          )
+        : and(eq(streams.userId, userId), QUALIFYING_PLAY);
 
       const [row] = await db
         .select({
@@ -52,7 +71,13 @@ export async function getPlayCountsForTracks(
       count: sql<number>`count(*)::int`,
     })
     .from(streams)
-    .where(and(eq(streams.userId, userId), inArray(streams.trackId, trackIds)))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        inArray(streams.trackId, trackIds),
+        QUALIFYING_PLAY,
+      ),
+    )
     .groupBy(streams.trackId);
 
   return new Map(rows.map((r) => [r.trackId, Number(r.count)]));
@@ -71,7 +96,13 @@ export async function getPlayCountsForArtists(
     })
     .from(streams)
     .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
-    .where(and(eq(streams.userId, userId), inArray(trackArtists.artistId, artistIds)))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        inArray(trackArtists.artistId, artistIds),
+        QUALIFYING_PLAY,
+      ),
+    )
     .groupBy(trackArtists.artistId);
 
   return new Map(rows.map((r) => [r.artistId, Number(r.count)]));
@@ -88,7 +119,13 @@ export async function getTrackPlayStats(
       lastPlayedAt: sql<string | null>`max(${streams.playedAt})`,
     })
     .from(streams)
-    .where(and(eq(streams.userId, userId), eq(streams.trackId, trackId)));
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(streams.trackId, trackId),
+        QUALIFYING_PLAY,
+      ),
+    );
 
   return {
     count: Number(row?.count ?? 0),
@@ -105,7 +142,13 @@ export async function getArtistPlayStats(
     .select({ count: sql<number>`count(*)::int` })
     .from(streams)
     .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
-    .where(and(eq(streams.userId, userId), eq(trackArtists.artistId, artistId)));
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(trackArtists.artistId, artistId),
+        QUALIFYING_PLAY,
+      ),
+    );
 
   return { count: Number(row?.count ?? 0) };
 }
@@ -124,7 +167,13 @@ export async function getUserTopTracksByArtist(
     .from(streams)
     .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
-    .where(and(eq(streams.userId, userId), eq(trackArtists.artistId, artistId)))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(trackArtists.artistId, artistId),
+        QUALIFYING_PLAY,
+      ),
+    )
     .groupBy(streams.trackId, tracks.name)
     .orderBy(desc(sql`count(*)`))
     .limit(limit);
@@ -144,9 +193,291 @@ export async function getAlbumPlayStats(
     .select({ count: sql<number>`count(*)::int` })
     .from(streams)
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
-    .where(and(eq(streams.userId, userId), eq(tracks.albumId, albumId)));
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(tracks.albumId, albumId),
+        QUALIFYING_PLAY,
+      ),
+    );
 
   return { count: Number(row?.count ?? 0) };
+}
+
+/**
+ * Top tracks aggregated from the local streams table. Replaces the
+ * Spotify-API-backed top list for the /top/tracks page now that we have
+ * the full lifetime history imported. No 50-track cap, consistent counts
+ * across all windows including "all time".
+ *
+ * Returns the track id, name, album cover, joined artist names (ordered
+ * by position) and the play count for the window.
+ */
+export async function getTopTracksFromStreams(
+  userId: string,
+  since: Date | null,
+  limit: number,
+): Promise<
+  {
+    trackId: string;
+    name: string;
+    albumImageUrl: string | null;
+    artistNames: string[];
+    plays: number;
+  }[]
+> {
+  const where = since
+    ? and(
+        eq(streams.userId, userId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+      )
+    : and(eq(streams.userId, userId), QUALIFYING_PLAY);
+
+  const rows = await db
+    .select({
+      trackId: streams.trackId,
+      name: tracks.name,
+      albumImageUrl: albums.imageUrl,
+      plays: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .leftJoin(albums, eq(albums.id, tracks.albumId))
+    .where(where)
+    .groupBy(streams.trackId, tracks.name, albums.imageUrl)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+
+  if (rows.length === 0) return [];
+
+  // Second query: fetch artist names for these tracks in one shot, then
+  // join in JS. Doing this inline in the aggregation would multiply
+  // grouping rows by artist count and break the COUNT(*).
+  const trackIds = rows.map((r) => r.trackId);
+  const artistRows = await db
+    .select({
+      trackId: trackArtists.trackId,
+      name: artists.name,
+      position: trackArtists.position,
+    })
+    .from(trackArtists)
+    .innerJoin(artists, eq(artists.id, trackArtists.artistId))
+    .where(inArray(trackArtists.trackId, trackIds))
+    .orderBy(asc(trackArtists.trackId), asc(trackArtists.position));
+
+  const namesByTrack = new Map<string, string[]>();
+  for (const row of artistRows) {
+    const list = namesByTrack.get(row.trackId) ?? [];
+    list.push(row.name);
+    namesByTrack.set(row.trackId, list);
+  }
+
+  return rows.map((r) => ({
+    trackId: r.trackId,
+    name: r.name,
+    albumImageUrl: r.albumImageUrl,
+    artistNames: namesByTrack.get(r.trackId) ?? [],
+    plays: Number(r.plays),
+  }));
+}
+
+/**
+ * Per-window play counts for a single track. Used on the track detail
+ * page to show "4w / 6m / 1y / all" breakdown.
+ */
+export async function getTrackBreakdownByWindow(
+  userId: string,
+  trackId: string,
+): Promise<Record<StreamPeriod, number>> {
+  const windows: StreamPeriod[] = ["4w", "6m", "1y", "all"];
+
+  const results = await Promise.all(
+    windows.map(async (window) => {
+      const since = periodSince(window);
+      const where = since
+        ? and(
+            eq(streams.userId, userId),
+            eq(streams.trackId, trackId),
+            gte(streams.playedAt, since),
+            QUALIFYING_PLAY,
+          )
+        : and(
+            eq(streams.userId, userId),
+            eq(streams.trackId, trackId),
+            QUALIFYING_PLAY,
+          );
+
+      const [row] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(streams)
+        .where(where);
+
+      return [window, Number(row?.count ?? 0)] as const;
+    }),
+  );
+
+  return Object.fromEntries(results) as Record<StreamPeriod, number>;
+}
+
+/**
+ * Monthly play counts for a single track, ordered chronologically. Used
+ * for the sparkline on the track detail page. Months with zero plays are
+ * NOT returned — caller can gap-fill if a dense series is needed.
+ */
+export async function getTrackMonthlyPlays(
+  userId: string,
+  trackId: string,
+): Promise<{ month: Date; plays: number }[]> {
+  const rows = await db
+    .select({
+      month: sql<string>`date_trunc('month', ${streams.playedAt})::text`,
+      plays: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(streams.trackId, trackId),
+        QUALIFYING_PLAY,
+      ),
+    )
+    .groupBy(sql`date_trunc('month', ${streams.playedAt})`)
+    .orderBy(asc(sql`date_trunc('month', ${streams.playedAt})`));
+
+  return rows.map((r) => ({
+    month: new Date(r.month),
+    plays: Number(r.plays),
+  }));
+}
+
+/**
+ * Per-track listening distribution by hour of day (0-23). Same shape as
+ * `getListeningClock` but scoped to one track.
+ */
+export async function getTrackListeningHours(
+  userId: string,
+  trackId: string,
+): Promise<{ hour: number; count: number }[]> {
+  const rows = await db
+    .select({
+      hour: sql<number>`extract(hour from ${streams.playedAt})::int`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(streams.trackId, trackId),
+        QUALIFYING_PLAY,
+      ),
+    )
+    .groupBy(sql`extract(hour from ${streams.playedAt})`);
+
+  const counts = new Map(rows.map((r) => [Number(r.hour), Number(r.count)]));
+  return Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    count: counts.get(hour) ?? 0,
+  }));
+}
+
+/**
+ * "Quality" of plays for a track: avg ms played + skip rate. Skips are
+ * defined as plays under 30s (Spotify's own definition).
+ *
+ * Returns NULL for both if every stream for this track has
+ * `ms_played = null` (e.g. older polling sources didn't record duration).
+ */
+export async function getTrackPlayQuality(
+  userId: string,
+  trackId: string,
+): Promise<{ avgMs: number | null; skipRate: number | null }> {
+  const [row] = await db
+    .select({
+      avgMs: sql<string | null>`avg(${streams.msPlayed}) filter (where ${streams.msPlayed} is not null)`,
+      skipRate: sql<string | null>`
+        (sum(case when ${streams.msPlayed} < 30000 then 1 else 0 end)::float
+         / nullif(count(*) filter (where ${streams.msPlayed} is not null), 0))
+      `,
+    })
+    .from(streams)
+    .where(and(eq(streams.userId, userId), eq(streams.trackId, trackId)));
+
+  return {
+    avgMs: row?.avgMs != null ? Number(row.avgMs) : null,
+    skipRate: row?.skipRate != null ? Number(row.skipRate) : null,
+  };
+}
+
+/**
+ * ILIKE search on track names, restricted to tracks the user has actually
+ * streamed (so the sidebar search finds music from their own catalog, not
+ * random Spotify tracks). Ordered by play count desc.
+ *
+ * Caller is responsible for trimming + length-validating `query`.
+ */
+export async function searchTracks(
+  userId: string,
+  query: string,
+  limit: number,
+): Promise<
+  {
+    trackId: string;
+    name: string;
+    albumImageUrl: string | null;
+    artistNames: string[];
+    plays: number;
+  }[]
+> {
+  const rows = await db
+    .select({
+      trackId: tracks.id,
+      name: tracks.name,
+      albumImageUrl: albums.imageUrl,
+      plays: sql<number>`count(${streams.id})::int`,
+    })
+    .from(tracks)
+    .innerJoin(streams, eq(streams.trackId, tracks.id))
+    .leftJoin(albums, eq(albums.id, tracks.albumId))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        ilike(tracks.name, `%${query}%`),
+        QUALIFYING_PLAY,
+      ),
+    )
+    .groupBy(tracks.id, tracks.name, albums.imageUrl)
+    .orderBy(desc(sql`count(${streams.id})`))
+    .limit(limit);
+
+  if (rows.length === 0) return [];
+
+  const trackIds = rows.map((r) => r.trackId);
+  const artistRows = await db
+    .select({
+      trackId: trackArtists.trackId,
+      name: artists.name,
+      position: trackArtists.position,
+    })
+    .from(trackArtists)
+    .innerJoin(artists, eq(artists.id, trackArtists.artistId))
+    .where(inArray(trackArtists.trackId, trackIds))
+    .orderBy(asc(trackArtists.trackId), asc(trackArtists.position));
+
+  const namesByTrack = new Map<string, string[]>();
+  for (const row of artistRows) {
+    const list = namesByTrack.get(row.trackId) ?? [];
+    list.push(row.name);
+    namesByTrack.set(row.trackId, list);
+  }
+
+  return rows.map((r) => ({
+    trackId: r.trackId,
+    name: r.name,
+    albumImageUrl: r.albumImageUrl,
+    artistNames: namesByTrack.get(r.trackId) ?? [],
+    plays: Number(r.plays),
+  }));
 }
 
 /**
@@ -165,7 +496,7 @@ export async function getListeningClock(
       count: sql<number>`count(*)::int`,
     })
     .from(streams)
-    .where(eq(streams.userId, userId))
+    .where(and(eq(streams.userId, userId), QUALIFYING_PLAY))
     .groupBy(sql`extract(hour from ${streams.playedAt})`);
 
   const counts = new Map(rows.map((r) => [Number(r.hour), Number(r.count)]));

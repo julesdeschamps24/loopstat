@@ -1,11 +1,19 @@
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { spotifyFetch } from "@/lib/spotify/client";
 import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
 import type { SpotifyTrack } from "@/lib/spotify/types";
-import { getTrackPlayStats } from "@/db/queries/stats";
-import { formatNumber } from "@/lib/utils";
+import {
+  getTrackBreakdownByWindow,
+  getTrackListeningHours,
+  getTrackMonthlyPlays,
+  getTrackPlayQuality,
+  getTrackPlayStats,
+} from "@/db/queries/stats";
+import { STREAM_PERIODS } from "@/lib/stats/period";
+import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 
 // Spotify metadata is stable — re-fetch at most once an hour.
 export const revalidate = 3600;
@@ -16,6 +24,10 @@ function formatDate(date: Date): string {
     month: "long",
     year: "numeric",
   });
+}
+
+function formatPercent(ratio: number): string {
+  return `${Math.round(ratio * 100)} %`;
 }
 
 export default async function TrackDetailPage({
@@ -36,7 +48,13 @@ export default async function TrackDetailPage({
     notFound();
   }
 
-  const stats = await getTrackPlayStats(userId, id);
+  const [stats, breakdown, monthly, hours, quality] = await Promise.all([
+    getTrackPlayStats(userId, id),
+    getTrackBreakdownByWindow(userId, id),
+    getTrackMonthlyPlays(userId, id),
+    getTrackListeningHours(userId, id),
+    getTrackPlayQuality(userId, id),
+  ]);
 
   // Keep the catalog warm — best-effort, never block the render on it.
   try {
@@ -47,9 +65,11 @@ export default async function TrackDetailPage({
 
   const albumImage = track.album?.images?.[0]?.url;
   const artistNames = track.artists.map((a) => a.name).join(", ");
+  const hasPlays = stats.count > 0;
+  const maxHour = Math.max(...hours.map((h) => h.count), 1);
 
   return (
-    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
+    <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
         {albumImage ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -75,15 +95,18 @@ export default async function TrackDetailPage({
         </div>
       </div>
 
-      <section className="mt-10 rounded-2xl border bg-card p-6">
+      <section className={cn(glassCard, "p-6")}>
         <h2 className="text-lg font-semibold">Tes écoutes</h2>
-        {stats.count > 0 ? (
+        {hasPlays ? (
           <div className="mt-4 flex flex-col gap-2 text-sm">
-            <p className="text-2xl font-semibold">
-              {formatNumber(stats.count)} écoutes
+            <p className="font-display italic text-4xl leading-none tabular-nums">
+              {formatNumber(stats.count)}{" "}
+              <span className="font-sans not-italic text-base text-muted-foreground">
+                écoutes au total
+              </span>
             </p>
             {stats.firstPlayedAt ? (
-              <p className="text-muted-foreground">
+              <p className="mt-2 text-muted-foreground">
                 Première écoute : {formatDate(stats.firstPlayedAt)}
               </p>
             ) : null}
@@ -99,6 +122,99 @@ export default async function TrackDetailPage({
           </p>
         )}
       </section>
+
+      {hasPlays ? (
+        <>
+          <section className={cn(glassCard, "p-6")}>
+            <h2 className="text-lg font-semibold">Par période</h2>
+            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {STREAM_PERIODS.map(({ value, label }) => (
+                <div key={value} className="rounded-xl bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                    {label}
+                  </p>
+                  <p className="mt-2 font-display italic text-2xl leading-none tabular-nums">
+                    {formatNumber(breakdown[value])}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {monthly.length > 0 ? (
+            <section className={cn(glassCard, "p-6")}>
+              <h2 className="text-lg font-semibold">Évolution mensuelle</h2>
+              <div className="mt-4">
+                <SparklineMonthly data={monthly} />
+              </div>
+            </section>
+          ) : null}
+
+          <section className={cn(glassCard, "p-6")}>
+            <h2 className="text-lg font-semibold">Heure préférée</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Répartition des écoutes selon l&apos;heure de la journée.
+            </p>
+            <div className="mt-4 grid grid-cols-12 gap-1 sm:grid-cols-24">
+              {hours.map(({ hour, count }) => {
+                const intensity = count / maxHour;
+                return (
+                  <div
+                    key={hour}
+                    className="flex flex-col items-center gap-1"
+                    title={`${hour}h — ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
+                  >
+                    <div className="flex h-16 w-full items-end">
+                      <div
+                        className="w-full rounded-md bg-[#7c3aed]"
+                        style={{
+                          height: `${Math.max(intensity * 100, count > 0 ? 6 : 2)}%`,
+                          opacity:
+                            count > 0 ? 0.3 + intensity * 0.7 : 0.12,
+                        }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      {hour}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className={cn(glassCard, "p-6")}>
+            <h2 className="text-lg font-semibold">Qualité d&apos;écoute</h2>
+            {quality.avgMs == null || quality.skipRate == null ? (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Donnée indisponible pour cette source d&apos;écoute.
+              </p>
+            ) : (
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="rounded-xl bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Durée moyenne
+                  </p>
+                  <p className="mt-2 font-display italic text-2xl leading-none tabular-nums">
+                    {formatMs(quality.avgMs)}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Taux de skip
+                  </p>
+                  <p className="mt-2 font-display italic text-2xl leading-none tabular-nums">
+                    {formatPercent(quality.skipRate)}
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    Écoute &lt; 30 s
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
+        </>
+      ) : null}
     </main>
   );
 }

@@ -5,13 +5,18 @@ import { auth } from "@/auth";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
-import { fetchTopTracks, isTopPeriod, type TopPeriod } from "@/lib/spotify/top";
-import { getPlayCountsForTracks } from "@/db/queries/stats";
+import { getTopTracksFromStreams } from "@/db/queries/stats";
+import {
+  isStreamPeriod,
+  periodSince,
+  type StreamPeriod,
+} from "@/lib/stats/period";
 import { formatNumber } from "@/lib/utils";
 
-// Re-fetch the Spotify Top Read data at most once an hour; repeated navigation
-// between periods reuses the cached RSC payload instead of re-hitting Spotify.
-export const revalidate = 3600;
+// User-scoped local DB aggregation — always dynamic, no static caching.
+export const dynamic = "force-dynamic";
+
+const TOP_LIMIT = 100;
 
 export default async function TopTracksPage({
   searchParams,
@@ -23,13 +28,18 @@ export default async function TopTracksPage({
   const userId = session.user.id;
 
   const { period: rawPeriod } = await searchParams;
-  const period: TopPeriod = isTopPeriod(rawPeriod) ? rawPeriod : "4w";
+  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
-  const tracks = await fetchTopTracks(userId, period);
-  const playCounts = await getPlayCountsForTracks(
+  const tracks = await getTopTracksFromStreams(
     userId,
-    tracks.map((t) => t.id),
+    periodSince(period),
+    TOP_LIMIT,
   );
+
+  const emptyMessage =
+    period === "all"
+      ? "Aucune écoute enregistrée. Importe ton historique pour voir tes tops lifetime."
+      : "Aucun titre pour cette période.";
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
@@ -37,7 +47,7 @@ export default async function TopTracksPage({
         <h1 className="text-2xl font-semibold">Top titres</h1>
         <Suspense
           fallback={
-            <div className="h-10 w-[232px] rounded-full border bg-card" />
+            <div className="h-10 w-75 rounded-full border bg-card" />
           }
         >
           <PeriodSelector current={period} />
@@ -46,27 +56,22 @@ export default async function TopTracksPage({
 
       {tracks.length === 0 ? (
         <p className="rounded-2xl border bg-card p-8 text-center text-sm text-muted-foreground">
-          Aucun titre pour cette période.
+          {emptyMessage}
         </p>
       ) : (
         <StaggerList key={period} className="flex flex-col gap-1">
-          {tracks.map((track, index) => {
-            const count = playCounts.get(track.id) ?? 0;
-            return (
-              <StaggerItem key={track.id}>
-                <RankedRow
-                  rank={index + 1}
-                  title={track.name}
-                  href={`/track/${track.id}`}
-                  subtitle={track.artists.map((a) => a.name).join(", ")}
-                  imageUrl={track.album?.images?.[0]?.url}
-                  metric={
-                    count > 0 ? `${formatNumber(count)} écoutes` : undefined
-                  }
-                />
-              </StaggerItem>
-            );
-          })}
+          {tracks.map((track, index) => (
+            <StaggerItem key={track.trackId}>
+              <RankedRow
+                rank={index + 1}
+                title={track.name}
+                href={`/track/${track.trackId}`}
+                subtitle={track.artistNames.join(", ")}
+                imageUrl={track.albumImageUrl ?? undefined}
+                metric={`${formatNumber(track.plays)} écoutes`}
+              />
+            </StaggerItem>
+          ))}
         </StaggerList>
       )}
     </main>

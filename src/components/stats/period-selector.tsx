@@ -1,28 +1,32 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { TopPeriod } from "@/lib/spotify/top";
+import { STREAM_PERIODS, type StreamPeriod } from "@/lib/stats/period";
 import { cn, gradientCta } from "@/lib/utils";
 
-const PERIODS: { value: TopPeriod; label: string }[] = [
-  { value: "4w", label: "4 semaines" },
-  { value: "6m", label: "6 mois" },
-  { value: "1y", label: "1 an" },
-];
-
 /**
- * Period pills (4w / 6m / 1y) that sync the active period to the `?period=`
- * query param via a client-side navigation. Other query params are preserved.
+ * Period pills (4w / 6m / 1y / all) that sync the active period to the
+ * `?period=` query param via a client-side navigation. Other query params
+ * are preserved.
+ *
+ * Pages that don't yet support "all" (artists, albums — still on the
+ * Spotify-API path) can pass a subset via `periods`.
  *
  * The current period is owned by the parent (read from `searchParams`) and
  * passed down — this component is not the source of truth.
  */
-export function PeriodSelector({ current }: { current: TopPeriod }) {
+export function PeriodSelector({
+  current,
+  periods = STREAM_PERIODS,
+}: {
+  current: StreamPeriod;
+  periods?: { value: StreamPeriod; label: string }[];
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  function selectPeriod(period: TopPeriod) {
+  function selectPeriod(period: StreamPeriod) {
     if (period === current) return;
     const params = new URLSearchParams(searchParams.toString());
     params.set("period", period);
@@ -31,7 +35,7 @@ export function PeriodSelector({ current }: { current: TopPeriod }) {
 
   return (
     <div className="inline-flex gap-1 rounded-full border bg-card p-1">
-      {PERIODS.map(({ value, label }) => {
+      {periods.map(({ value, label }) => {
         const active = value === current;
         return (
           <button

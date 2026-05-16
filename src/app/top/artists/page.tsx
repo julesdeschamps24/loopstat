@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
+import { STREAM_PERIODS } from "@/lib/stats/period";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { fetchTopArtists, isTopPeriod, type TopPeriod } from "@/lib/spotify/top";
 import { getPlayCountsForArtists } from "@/db/queries/stats";
@@ -40,7 +41,10 @@ export default async function TopArtistsPage({
             <div className="h-10 w-[232px] rounded-full border bg-card" />
           }
         >
-          <PeriodSelector current={period} />
+          <PeriodSelector
+            current={period}
+            periods={STREAM_PERIODS.filter((p) => p.value !== "all")}
+          />
         </Suspense>
       </header>
 
