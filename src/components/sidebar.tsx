@@ -53,7 +53,11 @@ export function Sidebar({ hasImported }: { hasImported: boolean }) {
       </div>
 
       <nav className="flex flex-col gap-0.5">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {NAV_ITEMS.filter(
+          // Une fois importé, l'item "Importer" est remplacé par le petit
+          // lien "Mettre à jour mon historique" en bas. Évite la double CTA.
+          (item) => item.href !== "/import" || !hasImported,
+        ).map(({ href, label, icon: Icon }) => {
           const active =
             pathname === href ||
             // Detail pages (/track/[id], /artist/[id]…) ne matchent aucun

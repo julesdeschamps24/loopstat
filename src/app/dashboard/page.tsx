@@ -1,14 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  Album,
-  ChevronRight,
-  Clock,
-  Disc3,
-  Download,
-  Music2,
-  Users,
-} from "lucide-react";
+import { Album, ChevronRight, Clock, Music2, Users } from "lucide-react";
 
 import { auth } from "@/auth";
 import { AlbumWall } from "@/components/album-wall";
@@ -25,9 +17,10 @@ import { ImportBanner } from "@/components/import-banner";
 
 const WALL_CELLS = 40;
 
-// Re-fetch the Spotify Top Read data at most once an hour; repeated navigation
-// reuses the cached RSC payload instead of re-hitting Spotify.
-export const revalidate = 3600;
+// User-scoped (auth()) → la route est dynamique de toute façon ; un
+// revalidate ISR ici serait silencieusement no-op (Next force dynamic
+// dès qu'on lit la session). Pas de cache à expirer.
+export const dynamic = "force-dynamic";
 
 const WINDOW_LABELS: Record<"7d" | "30d" | "lifetime", string> = {
   "7d": "7 jours",
@@ -200,27 +193,6 @@ export default async function DashboardPage() {
               </Link>
             ))}
           </div>
-        </section>
-
-        {/* Import CTA */}
-        <section className="rounded-2xl border bg-card p-8 text-center space-y-4">
-          <div className="flex flex-col items-center space-y-2">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <Disc3 className="size-6 text-muted-foreground" />
-            </div>
-            <h2 className="text-xl font-semibold">Importer mon historique</h2>
-            <p className="max-w-md text-sm text-muted-foreground">
-              Ajoute ton historique d&apos;écoute Spotify complet pour des
-              statistiques plus riches.
-            </p>
-          </div>
-          <Link
-            href="/import"
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition"
-          >
-            <Download className="size-4" />
-            Importer mon historique
-          </Link>
         </section>
         </div>
       </main>
