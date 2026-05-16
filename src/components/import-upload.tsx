@@ -8,6 +8,12 @@ import { ImportProgress } from "@/components/import-progress";
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB — mirrors the route
 const MAX_FILES = 30; // mirrors the route
 
+// Seuls les fichiers `Streaming_History_Audio_*.json` contiennent des écoutes
+// de tracks. Les `Streaming_History_Video_*.json` sont des podcasts/vidéos
+// que le worker ignore, donc on les filtre côté client pour économiser le
+// transfert et clarifier l'UX.
+const AUDIO_FILENAME_RE = /^Streaming_History_Audio.*\.json$/i;
+
 // Maps the route's machine error codes (POST /api/import, 400 branch) to
 // user-facing French copy. Keep in sync with src/app/api/import/route.ts.
 const ERROR_MESSAGES: Record<string, string> = {
@@ -27,10 +33,14 @@ type Status =
 export function ImportUpload() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [skippedCount, setSkippedCount] = useState(0);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   function onFilesChange(list: FileList | null) {
-    setFiles(list ? Array.from(list) : []);
+    const all = list ? Array.from(list) : [];
+    const audio = all.filter((f) => AUDIO_FILENAME_RE.test(f.name));
+    setFiles(audio);
+    setSkippedCount(all.length - audio.length);
     setStatus({ kind: "idle" });
   }
 
@@ -101,6 +111,21 @@ export function ImportUpload() {
         return;
       }
 
+      if (res.status === 429) {
+        // Le serveur renvoie Retry-After en secondes (cf. rateLimitResponse).
+        const retryAfterSec = Number(res.headers.get("Retry-After")) || 60;
+        const minutes = Math.ceil(retryAfterSec / 60);
+        const wait =
+          retryAfterSec < 60
+            ? `${retryAfterSec} secondes`
+            : `${minutes} minute${minutes > 1 ? "s" : ""}`;
+        setStatus({
+          kind: "error",
+          message: `Trop d'imports récents. Réessaie dans ~${wait}.`,
+        });
+        return;
+      }
+
       setStatus({
         kind: "error",
         message: "L'import a échoué. Réessaie dans un instant.",
@@ -139,8 +164,15 @@ export function ImportUpload() {
         />
         {files.length > 0 ? (
           <p className="text-xs text-muted-foreground">
-            {files.length} fichier{files.length > 1 ? "s" : ""} sélectionné
-            {files.length > 1 ? "s" : ""}
+            {files.length} fichier{files.length > 1 ? "s" : ""} Audio
+            sélectionné{files.length > 1 ? "s" : ""}
+          </p>
+        ) : null}
+        {skippedCount > 0 ? (
+          <p className="text-xs text-amber-500">
+            {skippedCount} fichier{skippedCount > 1 ? "s" : ""} ignoré
+            {skippedCount > 1 ? "s" : ""} (seuls les{" "}
+            <code>Streaming_History_Audio_*.json</code> sont utiles).
           </p>
         ) : null}
       </div>

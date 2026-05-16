@@ -25,7 +25,9 @@ export async function POST(request: Request): Promise<Response> {
 
   const wlog = log.child({ route: "api/import", userId });
 
-  const rl = checkRateLimit(`import:${userId}`, 1, 60_000);
+  // 5 imports per 10 min : assez large pour un user qui ré-essaie après une
+  // erreur ou clique 2× pendant un gros upload, mais coupe les bots.
+  const rl = checkRateLimit(`import:${userId}`, 5, 10 * 60_000);
   if (!rl.ok) {
     wlog.warn({ retryAfterMs: rl.retryAfterMs }, "rate-limited");
     return rateLimitResponse(rl.retryAfterMs);

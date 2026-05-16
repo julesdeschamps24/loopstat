@@ -122,7 +122,13 @@ export default async function ImportPage() {
               <code className="text-foreground">
                 Streaming_History_Audio_*.json
               </code>{" "}
-              (un par tranche d&apos;années). Dépose-les ici-dessous.
+              (un par tranche d&apos;années).{" "}
+              <strong className="text-foreground">
+                Seuls ceux-ci sont utiles
+              </strong>{" "}
+              — les <code>Video_*.json</code> et le PDF sont automatiquement
+              filtrés. Tu peux tout sélectionner d&apos;un coup, loopstat ne
+              garde que les Audio.
             </p>
           </Step>
 
