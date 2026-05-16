@@ -7,6 +7,8 @@ import {
   Inter,
 } from "next/font/google";
 import "./globals.css";
+import { auth } from "@/auth";
+import { hasCompletedImport } from "@/db/queries/imports";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -57,9 +59,14 @@ export const viewport: Viewport = {
   themeColor: "#1ed760",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const session = await auth();
+  const hasImported = session?.user?.id
+    ? await hasCompletedImport(session.user.id)
+    : false;
+
   return (
     <html
       lang="fr"
@@ -80,7 +87,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-h-screen">
-            <Sidebar />
+            <Sidebar hasImported={hasImported} />
             <div className="flex min-w-0 flex-1 flex-col">{children}</div>
           </div>
         </ThemeProvider>

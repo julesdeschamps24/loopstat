@@ -21,6 +21,7 @@ import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { fetchTopArtists, fetchTopTracks } from "@/lib/spotify/top";
 import { getListeningTotals } from "@/db/queries/stats";
 import { formatMs, formatNumber } from "@/lib/utils";
+import { ImportBanner } from "@/components/import-banner";
 
 const WALL_CELLS = 40;
 
@@ -83,6 +84,8 @@ export default async function DashboardPage() {
         <AppHeader session={session} />
 
       <div className="flex flex-col gap-12">
+        <ImportBanner />
+
         {/* CurrentlyPlaying */}
         <section>
           <CurrentlyPlaying />
