@@ -3,7 +3,7 @@ import path from "node:path";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { imports, tracks, type NewStream } from "@/db/schema";
-import { insertStreams } from "@/db/queries/streams";
+import { insertStreams, pruneOverlappingApiStreams } from "@/db/queries/streams";
 import { enrichQueue } from "../queue";
 
 // Temp dir layout written by POST /api/import: <projectRoot>/.import-tmp/<importId>/<file>.
@@ -116,6 +116,22 @@ export async function importHistory(
     // insertStreams chunks by 1000 and onConflictDoNothing against the unique
     // index (user_id, played_at, track_id) — dedup vs DB and within the dump.
     const rowsImported = await insertStreams(streamRows);
+
+    // Nettoie les streams `api` (worker polling) qui chevauchent la fenêtre
+    // qu'on vient d'importer. La UNIQUE constraint ne les attrape pas à cause
+    // du drift de timestamp seconde-vs-ms entre les deux sources. Voir
+    // pruneOverlappingApiStreams() pour le détail.
+    if (streamRows.length > 0) {
+      const playedAts = streamRows.map((r) => r.playedAt.getTime());
+      const since = new Date(Math.min(...playedAts));
+      const until = new Date(Math.max(...playedAts));
+      const pruned = await pruneOverlappingApiStreams(userId, since, until);
+      if (pruned > 0) {
+        console.log(
+          `[importHistory] import=${importId} user=${userId} pruned ${pruned} overlapping api streams`,
+        );
+      }
+    }
 
     await db
       .update(imports)
