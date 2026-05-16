@@ -17,7 +17,7 @@ export function StatCard({ label, value, sublabel }: StatCardProps) {
   return (
     <div className={cn(glassCard, "p-6")}>
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 font-serif italic text-5xl leading-none tracking-tight tabular-nums">
+      <p className="mt-1 font-display italic text-5xl leading-none tracking-tight tabular-nums">
         {value}
       </p>
       {sublabel ? (

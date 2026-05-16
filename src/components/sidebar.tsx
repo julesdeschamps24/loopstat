@@ -42,7 +42,7 @@ export function Sidebar() {
     <aside className="hidden md:flex md:w-55 md:shrink-0 md:flex-col md:gap-1 md:border-r md:border-white/6 md:bg-white/3 md:backdrop-blur-xl md:p-4 md:sticky md:top-0 md:h-screen">
       <Link
         href="/dashboard"
-        className="mb-6 px-2 py-3 font-serif italic text-2xl tracking-tight"
+        className="mb-6 px-2 py-3 font-brand font-bold text-4xl tracking-tight"
       >
         loopstat
       </Link>
