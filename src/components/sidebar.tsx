@@ -32,7 +32,7 @@ const PUBLIC_PATHS = new Set<string>(["/", "/login"]);
  * Sidebar verticale 220 px, fixée à gauche sur >= md, masquée sur mobile.
  * Met l'item actif en gradient cyan→magenta (palette nébuleuse).
  */
-export function Sidebar() {
+export function Sidebar({ hasImported }: { hasImported: boolean }) {
   const pathname = usePathname();
 
   // Pas de sidebar sur les pages publiques (landing + login) ni sur les
@@ -80,6 +80,15 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {hasImported ? (
+        <Link
+          href="/import"
+          className="mt-auto border-t border-white/5 px-3 pt-4 text-xs text-muted-foreground transition hover:text-foreground"
+        >
+          Mettre à jour mon historique
+        </Link>
+      ) : null}
     </aside>
   );
 }
