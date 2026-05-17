@@ -1,10 +1,81 @@
-import { isNull } from "drizzle-orm";
+import { isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { tracks } from "@/db/schema";
+import { spotifyTokens, tracks } from "@/db/schema";
 import { log } from "@/lib/log";
 import { SpotifyError, spotifyFetch } from "@/lib/spotify/client";
 import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
 import type { SpotifyTrack } from "@/lib/spotify/types";
+import { enrichQueue } from "../queue";
+
+export interface SelfHealResult {
+  unenrichedCount: number;
+  enqueued: boolean;
+}
+
+/**
+ * Idempotent health check : if any track has no metadata yet AND no enrich
+ * job is currently active or queued, picks any user with valid Spotify creds
+ * and re-enqueues an enrich job. Used by the hourly self-heal scheduler so
+ * that a previously-failed enrich (Spotify ban > BullMQ attempts, worker
+ * crash, etc.) doesn't leave the catalog permanently incomplete.
+ *
+ * Removes any stale failed enrich job before enqueueing — otherwise the
+ * jobId dedup would block the new attempt for the next 24 h (removeOnFail).
+ */
+export async function selfHealEnrich(): Promise<SelfHealResult> {
+  const slog = log.child({ job: "enrich-self-heal" });
+
+  const [unenriched] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(tracks)
+    .where(isNull(tracks.durationMs));
+  const unenrichedCount = Number(unenriched?.n ?? 0);
+
+  if (unenrichedCount === 0) {
+    slog.info({ unenrichedCount }, "catalog fully enriched, no action");
+    return { unenrichedCount, enqueued: false };
+  }
+
+  const [creds] = await db
+    .select({ userId: spotifyTokens.userId })
+    .from(spotifyTokens)
+    .limit(1);
+  if (!creds) {
+    slog.warn(
+      { unenrichedCount },
+      "tracks need enrichment but no user has Spotify creds — skipping",
+    );
+    return { unenrichedCount, enqueued: false };
+  }
+
+  // Clear any stale terminal-failed job blocking our jobId, so the new add()
+  // actually queues a fresh attempt.
+  const existing = await enrichQueue.getJob("enrich-metadata-global");
+  if (existing) {
+    const state = await existing.getState();
+    if (state === "failed") {
+      slog.info({ jobId: existing.id, state }, "removing stale failed job");
+      await existing.remove();
+    } else {
+      slog.info(
+        { jobId: existing.id, state, unenrichedCount },
+        "enrich already pending — no re-enqueue",
+      );
+      return { unenrichedCount, enqueued: false };
+    }
+  }
+
+  await enrichQueue.add(
+    "enrich-metadata",
+    { userId: creds.userId },
+    { jobId: "enrich-metadata-global" },
+  );
+  slog.info(
+    { unenrichedCount, userId: creds.userId },
+    "self-heal enqueued enrich-metadata",
+  );
+  return { unenrichedCount, enqueued: true };
+}
 
 // The batched GET /tracks?ids= endpoint returns 403 for this app's Spotify
 // credentials, so we fetch one at a time via GET /tracks/{id}.

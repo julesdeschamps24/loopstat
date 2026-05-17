@@ -7,6 +7,8 @@ import { imports } from "@/db/schema";
 import { log } from "@/lib/log";
 import {
   ENRICH_QUEUE_NAME,
+  ENRICH_SELF_HEAL_EVERY_MS,
+  ENRICH_SELF_HEAL_SCHEDULER_ID,
   IMPORT_QUEUE_NAME,
   POLL_RECENT_FANOUT_EVERY_MS,
   POLL_RECENT_FANOUT_SCHEDULER_ID,
@@ -19,7 +21,7 @@ import {
 import { pollUserRecentPlays } from "./jobs/pollRecent";
 import { fanoutPolls } from "./jobs/fanout";
 import { importHistory } from "./jobs/importHistory";
-import { enrichMetadata } from "./jobs/enrichMetadata";
+import { enrichMetadata, selfHealEnrich } from "./jobs/enrichMetadata";
 import {
   PollUserJobData,
   ImportJobData,
@@ -186,11 +188,29 @@ async function processImportJob(job: Job): Promise<unknown> {
   return result;
 }
 
-// Enrich queue: one job kind, "enrich-metadata", payload { userId }. Backfills
-// full track metadata for tracks importHistory inserted minimal.
+// Enrich queue: two job kinds, distinguished by `job.name`:
+//   - "enrich-metadata"   — payload { userId }. Backfills full track metadata
+//                           for every track importHistory inserted minimal.
+//   - "enrich-self-heal"  — payload {}, fired by the hourly scheduler. Checks
+//                           if any un-enriched tracks remain and (if so)
+//                           re-enqueues "enrich-metadata" with any user's
+//                           Spotify creds, even if a previous attempt failed
+//                           terminally. Guards against permanent catalog
+//                           coverage loss.
 async function processEnrichJob(job: Job): Promise<unknown> {
   const start = Date.now();
   const wlog = log.child({ worker: "enrich", jobId: job.id });
+
+  if (job.name === "enrich-self-heal") {
+    const result = await selfHealEnrich();
+    const duration = Date.now() - start;
+    wlog.info(
+      { unenriched: result.unenrichedCount, enqueued: result.enqueued, ms: duration },
+      "self-heal complete",
+    );
+    return result;
+  }
+
   const { userId } = EnrichJobData.parse(job.data);
   if (!userId) throw new Error(`job ${job.id}: missing userId in data`);
 
@@ -268,6 +288,19 @@ async function bootstrap(): Promise<void> {
     {
       scheduler: POLL_RECENT_FANOUT_SCHEDULER_ID,
       intervalMinutes: POLL_RECENT_FANOUT_EVERY_MS / 60000,
+    },
+    "scheduler registered",
+  );
+
+  await enrichQueue.upsertJobScheduler(
+    ENRICH_SELF_HEAL_SCHEDULER_ID,
+    { every: ENRICH_SELF_HEAL_EVERY_MS },
+    { name: "enrich-self-heal", data: {} },
+  );
+  log.info(
+    {
+      scheduler: ENRICH_SELF_HEAL_SCHEDULER_ID,
+      intervalMinutes: ENRICH_SELF_HEAL_EVERY_MS / 60000,
     },
     "scheduler registered",
   );

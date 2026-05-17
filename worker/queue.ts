@@ -17,6 +17,13 @@ export const POLL_RECENT_FANOUT_EVERY_MS = 30 * 60 * 1000;
 export const IMPORT_QUEUE_NAME = "import";
 export const ENRICH_QUEUE_NAME = "enrich";
 
+// Self-heal: every hour the worker checks for un-enriched tracks and re-enqueues
+// the enrich job if needed. Guards against permanent loss of catalog coverage
+// when a previous enrich job died terminally (Spotify ban longer than
+// attempts × backoff, worker crash mid-flight, etc.).
+export const ENRICH_SELF_HEAL_SCHEDULER_ID = "enrich-self-heal";
+export const ENRICH_SELF_HEAL_EVERY_MS = 60 * 60 * 1000;
+
 const globalCache = globalThis as unknown as {
   __loopstatRedis?: IORedis;
   __loopstatPollRecentQueue?: Queue;
@@ -66,7 +73,10 @@ export const enrichQueue =
     defaultJobOptions: {
       // Enrichment is idempotent (enriched tracks have duration_ms set, so a
       // retry won't re-select them) — safe to retry transient Spotify 5xx.
-      attempts: 3,
+      // attempts=10 with exp backoff gives ~85 min of cumulative retry window
+      // (5s+10s+20s+...+2560s), enough to ride out a long Spotify 429 ban.
+      // If 10 attempts still fail, the hourly self-heal scheduler re-enqueues.
+      attempts: 10,
       backoff: { type: "exponential", delay: 5_000 },
       removeOnComplete: { age: 3600, count: 1000 },
       removeOnFail: { age: 24 * 3600 },
