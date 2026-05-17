@@ -4,6 +4,10 @@
  * Spotify en préservant les cookies).
  *
  * Doit être appelé uniquement côté client (utilise document/window).
+ *
+ * Note : la promesse résout après `form.submit()`, mais le navigateur peut
+ * naviguer avant qu'un éventuel `.then()` ne s'exécute — ne pas y attacher
+ * de logique post-redirection.
  */
 export async function startSpotifySignin(callbackPath: string): Promise<void> {
   const csrfRes = await fetch("/api/auth/csrf", { credentials: "include" });
