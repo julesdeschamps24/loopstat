@@ -73,3 +73,41 @@ export async function setIsPublic(
 ): Promise<void> {
   await db.update(users).set({ isPublic }).where(eq(users.id, userId));
 }
+
+export type PublicProfile = {
+  id: string;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+};
+
+/**
+ * Lookup d'un user par son username. Retourne null si pas trouvé OU si le
+ * profil n'est pas public — l'appelant n'a pas à distinguer les deux (404
+ * uniforme pour ne pas leaker l'existence d'un compte privé).
+ */
+export const getPublicProfileByUsername = cache(
+  async (username: string): Promise<PublicProfile | null> => {
+    const normalized = username.trim().toLowerCase();
+    if (!normalized) return null;
+
+    const row = await db.query.users.findFirst({
+      where: eq(users.username, normalized),
+      columns: {
+        id: true,
+        username: true,
+        displayName: true,
+        avatarUrl: true,
+        isPublic: true,
+      },
+    });
+    if (!row || !row.isPublic || !row.username) return null;
+
+    return {
+      id: row.id,
+      username: row.username,
+      displayName: row.displayName,
+      avatarUrl: row.avatarUrl,
+    };
+  },
+);
