@@ -33,26 +33,27 @@ export async function POST(req: Request) {
     case "customer.subscription.created":
     case "customer.subscription.updated": {
       const sub = event.data.object;
+      // In Stripe API v22 (dahlia), current_period_end is on
+      // SubscriptionItem, not the Subscription itself. Fall through:
+      //   trial → first item's period → omit periodEnd entirely so
+      //   updateBillingFromWebhook only patches the columns we have.
       const periodEndSec =
-        sub.trial_end ??
-        ((sub as unknown as { current_period_end?: number }).current_period_end) ??
-        sub.items.data[0]?.current_period_end;
+        sub.trial_end ?? sub.items.data[0]?.current_period_end;
       await updateBillingFromWebhook(sub.customer as string, {
         subscriptionId: sub.id,
         status: sub.status,
-        periodEnd: new Date(periodEndSec * 1000),
+        periodEnd: periodEndSec ? new Date(periodEndSec * 1000) : undefined,
       });
       break;
     }
     case "customer.subscription.deleted": {
       const sub = event.data.object;
+      const endSec = sub.items.data[0]?.current_period_end;
       await updateBillingFromWebhook(sub.customer as string, {
         status: "canceled",
-        periodEnd: new Date(
-          (((sub as unknown as { current_period_end?: number }).current_period_end) ??
-            sub.items.data[0]?.current_period_end ??
-            0) * 1000
-        ),
+        // No-op periodEnd if Stripe omitted it on the deleted event —
+        // the previously-persisted premiumUntil keeps governing access.
+        periodEnd: endSec ? new Date(endSec * 1000) : undefined,
       });
       break;
     }

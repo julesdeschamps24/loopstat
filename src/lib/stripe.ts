@@ -18,6 +18,14 @@ export const stripe = stripeKey
  * Get the persisted Stripe customer id for a user, or create one and
  * persist it. Email is best-effort (DB column may be null for older
  * accounts). Throws if Stripe is not configured.
+ *
+ * Handles the concurrent-checkout race: if two requests both pass the
+ * "no existing customer" check and both call stripe.customers.create,
+ * only one UPDATE will land thanks to the UNIQUE constraint on
+ * stripe_customer_id. The other catches the unique violation, re-reads
+ * the now-persisted customer id, and discards its own orphan Stripe
+ * customer (best-effort delete — Stripe doesn't bill on orphan customers
+ * so a delete failure is acceptable).
  */
 export async function getOrCreateStripeCustomer(
   userId: string,
@@ -42,10 +50,32 @@ export async function getOrCreateStripeCustomer(
     metadata: { userId },
   });
 
-  await db
-    .update(users)
-    .set({ stripeCustomerId: customer.id })
-    .where(eq(users.id, userId));
+  try {
+    await db
+      .update(users)
+      .set({ stripeCustomerId: customer.id })
+      .where(eq(users.id, userId));
+    return customer.id;
+  } catch (err) {
+    // Postgres unique_violation = 23505 — another request beat us.
+    const isUniqueViolation =
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code: string }).code === "23505";
+    if (!isUniqueViolation) throw err;
 
-  return customer.id;
+    // Re-read the winning customer id, and clean up our orphan Stripe customer.
+    const reread = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { stripeCustomerId: true },
+    });
+    void stripe.customers.del(customer.id).catch(() => {
+      /* orphan cleanup is best-effort */
+    });
+    if (!reread?.stripeCustomerId) {
+      throw new Error("Race lost but no persisted customer id");
+    }
+    return reread.stripeCustomerId;
+  }
 }
