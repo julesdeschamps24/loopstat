@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { eq } from "drizzle-orm";
+import { and, asc, eq, ilike, isNotNull, or } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
@@ -111,3 +111,53 @@ export const getPublicProfileByUsername = cache(
     };
   },
 );
+
+export type PublicProfileSummary = {
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+};
+
+/**
+ * Escape Postgres LIKE wildcards (% and _) and the escape char itself
+ * so user input is treated as literal text. Without this, typing "_"
+ * or "%" would match anything.
+ */
+export function escapeLikePattern(raw: string): string {
+  return raw.replace(/[\\%_]/g, "\\$&");
+}
+
+/**
+ * Search public profiles by username OR displayName, case-insensitive.
+ * Returns up to `limit` rows ordered by username.
+ *
+ * Caller MUST pre-trim/lowercase the query and enforce min length.
+ * `is_public=true` is enforced server-side so private accounts are
+ * never enumerated.
+ */
+export async function searchPublicProfiles(
+  query: string,
+  limit: number,
+): Promise<PublicProfileSummary[]> {
+  const pattern = `%${escapeLikePattern(query)}%`;
+  const rows = await db
+    .select({
+      username: users.username,
+      displayName: users.displayName,
+      avatarUrl: users.avatarUrl,
+    })
+    .from(users)
+    .where(
+      and(
+        eq(users.isPublic, true),
+        isNotNull(users.username),
+        // No explicit isNotNull on display_name: `NULL ILIKE ...` is
+        // NULL (falsy) in Postgres, so the username arm of the OR
+        // carries those rows safely.
+        or(ilike(users.username, pattern), ilike(users.displayName, pattern)),
+      ),
+    )
+    .orderBy(asc(users.username))
+    .limit(limit);
+  return rows.filter((r): r is PublicProfileSummary => r.username !== null);
+}
