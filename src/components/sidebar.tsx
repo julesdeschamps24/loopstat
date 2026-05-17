@@ -93,6 +93,26 @@ export function Sidebar({ hasImported }: { hasImported: boolean }) {
           Mettre à jour mon historique
         </Link>
       ) : null}
+
+      <div
+        className={cn(
+          "flex flex-wrap gap-x-3 gap-y-1 border-t border-white/5 px-3 pt-3 text-[10px] text-muted-foreground/70",
+          // Si hasImported a déjà poussé son lien en mt-auto, ce bloc se
+          // colle juste en dessous (mt-3). Sinon on l'envoie tout en bas
+          // avec mt-auto pour qu'il colle au bottom de la sidebar.
+          hasImported ? "mt-3" : "mt-auto",
+        )}
+      >
+        <Link href="/legal" className="hover:text-foreground transition">
+          Mentions légales
+        </Link>
+        <Link href="/privacy" className="hover:text-foreground transition">
+          Confidentialité
+        </Link>
+        <Link href="/terms" className="hover:text-foreground transition">
+          CGU
+        </Link>
+      </div>
     </aside>
   );
 }

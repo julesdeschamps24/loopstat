@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ExternalLink, Music } from "lucide-react";
 import { isSpotifyConfigured } from "@/auth";
+import { LegalFooter } from "@/components/legal-footer";
 import { SpotifyLoginButton } from "@/components/spotify-login-button";
 
 // Force dynamic rendering so isSpotifyConfigured() is evaluated at each
@@ -14,23 +15,34 @@ export default function LoginPage() {
   }
 
   return (
-    <main id="main" className="flex-1 flex flex-col items-center justify-center px-6 py-16">
-      <div className="w-full max-w-sm rounded-2xl border bg-card p-8 text-center space-y-6">
-        <div className="space-y-2">
-          <div className="mx-auto size-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Music className="size-6 text-primary" />
+    <>
+      <main id="main" className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+        <div className="w-full max-w-sm rounded-2xl border bg-card p-8 text-center space-y-6">
+          <div className="space-y-2">
+            <div className="mx-auto size-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Music className="size-6 text-primary" />
+            </div>
+            <h1 className="text-2xl font-semibold">Bienvenue 👋</h1>
+            <p className="text-sm text-muted-foreground">
+              Connecte-toi avec ton compte Spotify pour voir tes stats.
+            </p>
           </div>
-          <h1 className="text-2xl font-semibold">Bienvenue 👋</h1>
-          <p className="text-sm text-muted-foreground">
-            Connecte-toi avec ton compte Spotify pour voir tes stats.
+          <SpotifyLoginButton />
+          <p className="text-xs text-muted-foreground">
+            En te connectant, tu acceptes nos{" "}
+            <Link href="/terms" className="underline hover:text-foreground">
+              CGU
+            </Link>{" "}
+            et notre{" "}
+            <Link href="/privacy" className="underline hover:text-foreground">
+              politique de confidentialité
+            </Link>
+            .
           </p>
         </div>
-        <SpotifyLoginButton />
-        <p className="text-xs text-muted-foreground">
-          Aucune publicité. Tes données restent sur ton instance.
-        </p>
-      </div>
-    </main>
+      </main>
+      <LegalFooter />
+    </>
   );
 }
 
