@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { imports } from "@/db/schema";
+import { log } from "@/lib/log";
 
 // Reads per-user import state and depends on the session cookie — never cached.
 export const dynamic = "force-dynamic";
@@ -47,12 +48,9 @@ export async function GET(
       { status: 200 },
     );
   } catch (err) {
-    console.error(
-      "[api/import/status] failed to read import",
-      importId,
-      "for user",
-      userId,
-      err,
+    log.error(
+      { route: "api/import/status", importId, userId, err },
+      "failed to read import",
     );
     return Response.json({ error: "status_failed" }, { status: 500 });
   }

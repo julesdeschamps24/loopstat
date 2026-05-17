@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { imports, tracks, type NewStream } from "@/db/schema";
 import { insertStreams, pruneOverlappingApiStreams } from "@/db/queries/streams";
+import { log } from "@/lib/log";
 import { enrichQueue } from "../queue";
 
 // Temp dir layout written by POST /api/import: <projectRoot>/.import-tmp/<importId>/<file>.
@@ -30,6 +31,7 @@ const TRACK_URI_PREFIX = "spotify:track:";
 export async function importHistory(
   importId: string,
 ): Promise<ImportHistoryResult> {
+  const wlog = log.child({ job: "import-history", importId });
   const importRow = await db.query.imports.findFirst({
     where: eq(imports.id, importId),
     columns: { id: true, userId: true },
@@ -59,7 +61,7 @@ export async function importHistory(
       const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) {
         // Not a Spotify history array (e.g. a JSON object) — skip, don't fail.
-        console.warn(`[importHistory] skipping ${fileName}: not a JSON array`);
+        wlog.warn({ fileName }, "skipping file: not a JSON array");
         continue;
       }
 
@@ -127,9 +129,7 @@ export async function importHistory(
       const until = new Date(Math.max(...playedAts));
       const pruned = await pruneOverlappingApiStreams(userId, since, until);
       if (pruned > 0) {
-        console.log(
-          `[importHistory] import=${importId} user=${userId} pruned ${pruned} overlapping api streams`,
-        );
+        wlog.info({ userId, pruned }, "pruned overlapping api streams");
       }
     }
 
@@ -152,9 +152,9 @@ export async function importHistory(
     try {
       await enrichQueue.add("enrich-metadata", { userId }, { jobId: "enrich-metadata-global" });
     } catch (enqueueErr) {
-      console.error(
-        `[importHistory] import=${importId} user=${userId} failed to enqueue enrich job:`,
-        enqueueErr,
+      wlog.error(
+        { userId, err: enqueueErr },
+        "failed to enqueue enrich job after import",
       );
     }
 

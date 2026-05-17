@@ -6,8 +6,15 @@ import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 
 const POLL_INTERVAL_MS = 2000;
-const STALL_THRESHOLD_MS = 5 * 60 * 1000;
-const STALL_TICK_MS = 30 * 1000;
+
+// Seuils de "ça bloque" différents selon le statut :
+// - `pending` = pas encore pris en compte par le worker. BullMQ pick-up est
+//   normalement < 5 s ; au-delà de 60 s on suspecte un worker down.
+// - `processing` = worker bosse activement. Un gros import (150k+ rows) peut
+//   prendre quelques minutes ; on n'alerte qu'au-delà de 5 min.
+const PENDING_STALL_MS = 60 * 1000;
+const PROCESSING_STALL_MS = 5 * 60 * 1000;
+const STALL_TICK_MS = 5 * 1000;
 
 type ImportStatus = "pending" | "processing" | "completed" | "failed";
 
@@ -140,18 +147,30 @@ export function ImportProgress({ importId }: { importId: string }) {
   }
 
   // loading / running — animated indicator, plus a stalled banner when the
-  // import has been pending/processing for more than STALL_THRESHOLD_MS.
+  // import has been pending/processing past its status-specific threshold.
   const elapsedMs = now - mountedAt;
-  const isStalled =
-    state.kind === "running" &&
-    (state.status === "pending" || state.status === "processing") &&
-    elapsedMs > STALL_THRESHOLD_MS;
+  const stalledKind =
+    state.kind === "running" && state.status === "pending" && elapsedMs > PENDING_STALL_MS
+      ? "pending"
+      : state.kind === "running" &&
+          state.status === "processing" &&
+          elapsedMs > PROCESSING_STALL_MS
+        ? "processing"
+        : null;
 
   return (
     <div className="flex flex-col gap-2">
-      {isStalled ? (
+      {stalledKind === "pending" ? (
         <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-300">
-          L&apos;import semble bloqué. Le worker BullMQ tourne-t-il&nbsp;?
+          Aucun worker ne semble disponible pour traiter ton import. Si tu es
+          en dev, lance <code>pnpm worker</code> ; sinon réessaie dans
+          quelques minutes.
+        </div>
+      ) : null}
+      {stalledKind === "processing" ? (
+        <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-300">
+          Le worker traite ton import depuis plus de 5 minutes. Pour un gros
+          historique c&apos;est normal, sinon il a peut-être crashé.
         </div>
       ) : null}
       <p className="flex items-center gap-2 text-muted-foreground">
