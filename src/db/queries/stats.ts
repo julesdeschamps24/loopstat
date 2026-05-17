@@ -695,3 +695,130 @@ export async function getListeningClock(
     count: counts.get(hour) ?? 0,
   }));
 }
+
+/**
+ * Nombre de plays sur l'album, ventilé par fenêtre (4w / 6m / 1y / all).
+ * Pattern identique à getTrackBreakdownByWindow avec tracks.albumId = ?.
+ */
+export async function getAlbumBreakdownByWindow(
+  userId: string,
+  albumId: string,
+): Promise<Record<StreamPeriod, number>> {
+  const windows: StreamPeriod[] = ["4w", "6m", "1y", "all"];
+
+  const results = await Promise.all(
+    windows.map(async (window) => {
+      const since = periodSince(window);
+      const where = since
+        ? and(
+            eq(streams.userId, userId),
+            eq(tracks.albumId, albumId),
+            gte(streams.playedAt, since),
+            QUALIFYING_PLAY,
+          )
+        : and(
+            eq(streams.userId, userId),
+            eq(tracks.albumId, albumId),
+            QUALIFYING_PLAY,
+          );
+
+      const [row] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(streams)
+        .innerJoin(tracks, eq(tracks.id, streams.trackId))
+        .where(where);
+
+      return [window, Number(row?.count ?? 0)] as const;
+    }),
+  );
+
+  return Object.fromEntries(results) as Record<StreamPeriod, number>;
+}
+
+/**
+ * Plays mensuels agrégés au niveau album, ordre chronologique. Mois à 0 plays
+ * NON retournés.
+ */
+export async function getAlbumMonthlyPlays(
+  userId: string,
+  albumId: string,
+): Promise<{ month: Date; plays: number }[]> {
+  const rows = await db
+    .select({
+      month: sql<string>`date_trunc('month', ${streams.playedAt})::text`,
+      plays: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(tracks.albumId, albumId),
+        QUALIFYING_PLAY,
+      ),
+    )
+    .groupBy(sql`date_trunc('month', ${streams.playedAt})`)
+    .orderBy(asc(sql`date_trunc('month', ${streams.playedAt})`));
+
+  return rows.map((r) => ({
+    month: new Date(r.month),
+    plays: Number(r.plays),
+  }));
+}
+
+/**
+ * Distribution des écoutes de l'album par heure de la journée (0-23). Retourne
+ * toujours 24 entrées (heures sans écoute = count 0).
+ */
+export async function getAlbumListeningHours(
+  userId: string,
+  albumId: string,
+): Promise<{ hour: number; count: number }[]> {
+  const rows = await db
+    .select({
+      hour: sql<number>`extract(hour from ${streams.playedAt})::int`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(tracks.albumId, albumId),
+        QUALIFYING_PLAY,
+      ),
+    )
+    .groupBy(sql`extract(hour from ${streams.playedAt})`);
+
+  const counts = new Map(rows.map((r) => [Number(r.hour), Number(r.count)]));
+  return Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    count: counts.get(hour) ?? 0,
+  }));
+}
+
+/**
+ * "Qualité" d'écoute de l'album : durée moyenne + taux de skip (< 30s).
+ * NULL si aucun stream n'a de ms_played enregistré.
+ */
+export async function getAlbumPlayQuality(
+  userId: string,
+  albumId: string,
+): Promise<{ avgMs: number | null; skipRate: number | null }> {
+  const [row] = await db
+    .select({
+      avgMs: sql<string | null>`avg(${streams.msPlayed}) filter (where ${streams.msPlayed} is not null)`,
+      skipRate: sql<string | null>`
+        (sum(case when ${streams.msPlayed} < 30000 then 1 else 0 end)::float
+         / nullif(count(*) filter (where ${streams.msPlayed} is not null), 0))
+      `,
+    })
+    .from(streams)
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .where(and(eq(streams.userId, userId), eq(tracks.albumId, albumId)));
+
+  return {
+    avgMs: row?.avgMs != null ? Number(row.avgMs) : null,
+    skipRate: row?.skipRate != null ? Number(row.skipRate) : null,
+  };
+}
