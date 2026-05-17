@@ -1,7 +1,7 @@
-import { rm } from "node:fs/promises";
+import { readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { Worker, type Job } from "bullmq";
-import { and, inArray, lt } from "drizzle-orm";
+import { and, eq, lt, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { imports } from "@/db/schema";
 import { log } from "@/lib/log";
@@ -28,55 +28,113 @@ import {
 
 // Same layout as worker/jobs/importHistory.ts: <projectRoot>/.import-tmp/<importId>/.
 const IMPORT_TMP_DIR = path.join(process.cwd(), ".import-tmp");
-const STALE_IMPORT_THRESHOLD_MS = 30 * 60 * 1000;
+
+// Seuils différenciés par statut :
+// - pending : BullMQ devrait pick-up en < 5 s. 1 h sans pickup = queue
+//   cassée ou row créé pendant que le worker était down. Failed.
+// - processing : un import de 150 k rows prend < 1 min. 6 h en
+//   processing = worker crashé en cours. Failed.
+const PENDING_TTL_MS = 60 * 60 * 1000;
+const PROCESSING_TTL_MS = 6 * 60 * 60 * 1000;
 
 // One-shot sweep run at worker boot to recover from a previous worker process
-// that died mid-job: any `imports` row still in pending/processing after the
-// stale threshold gets marked failed and its temp dir is removed. This avoids
-// the UI hanging on a "Traitement en cours…" spinner forever.
+// that died mid-job. Two passes :
+//   1) Mark stale `imports` rows as failed (TTLs above) so the UI stops
+//      spinning on "Traitement en cours…" forever.
+//   2) Remove leftover `.import-tmp/<id>/` directories whose `<id>` is not
+//      currently associated with an active (pending/processing) import.
+//      Covers both orphans (no row at all) and dirs left over by a previous
+//      failed cleanup.
 async function sweepStaleImports(): Promise<void> {
   const slog = log.child({ worker: "startup-sweep" });
-  const cutoff = new Date(Date.now() - STALE_IMPORT_THRESHOLD_MS);
+  const now = Date.now();
 
-  const stale = await db
-    .select({ id: imports.id })
-    .from(imports)
-    .where(
-      and(
-        inArray(imports.status, ["pending", "processing"]),
-        lt(imports.startedAt, cutoff),
-      ),
-    );
+  let markedFailedPending = 0;
+  let markedFailedProcessing = 0;
+  let tmpDirsRemoved = 0;
 
-  if (stale.length === 0) return;
+  try {
+    const pendingCutoff = new Date(now - PENDING_TTL_MS);
+    const processingCutoff = new Date(now - PROCESSING_TTL_MS);
 
-  for (const { id } of stale) {
-    await db
+    const stalePending = await db
       .update(imports)
       .set({
         status: "failed",
-        errorMessage: "Worker restarted while job was running",
+        errorMessage: "Stale import (no worker pickup within 1h)",
         completedAt: new Date(),
       })
       .where(
         and(
-          inArray(imports.status, ["pending", "processing"]),
-          lt(imports.startedAt, cutoff),
-          // Re-narrow by id to avoid clobbering rows that flipped state
-          // between the SELECT and this UPDATE.
-          inArray(imports.id, [id]),
+          eq(imports.status, "pending"),
+          lt(imports.startedAt, pendingCutoff),
         ),
-      );
+      )
+      .returning({ id: imports.id });
+    markedFailedPending = stalePending.length;
 
-    const tmp = path.join(IMPORT_TMP_DIR, id);
-    try {
-      await rm(tmp, { recursive: true, force: true });
-    } catch (err) {
-      slog.warn({ importId: id, tmp, err }, "failed to remove stale tmp dir");
-    }
+    const staleProcessing = await db
+      .update(imports)
+      .set({
+        status: "failed",
+        errorMessage: "Stale import (worker crashed mid-processing)",
+        completedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(imports.status, "processing"),
+          lt(imports.startedAt, processingCutoff),
+        ),
+      )
+      .returning({ id: imports.id });
+    markedFailedProcessing = staleProcessing.length;
+  } catch (err) {
+    slog.warn({ err }, "DB cleanup failed (non-fatal)");
   }
 
-  slog.info({ count: stale.length }, "stale imports swept");
+  try {
+    // readdir throws ENOENT si .import-tmp/ n'existe pas — état normal
+    // si aucun import n'a tourné depuis le boot précédent.
+    const dirs = await readdir(IMPORT_TMP_DIR).catch(() => [] as string[]);
+    if (dirs.length > 0) {
+      const active = await db
+        .select({ id: imports.id })
+        .from(imports)
+        .where(
+          or(
+            eq(imports.status, "pending"),
+            eq(imports.status, "processing"),
+          ),
+        );
+      const activeIds = new Set(active.map((r) => r.id));
+
+      for (const dir of dirs) {
+        if (activeIds.has(dir)) continue;
+        try {
+          await rm(path.join(IMPORT_TMP_DIR, dir), {
+            recursive: true,
+            force: true,
+          });
+          tmpDirsRemoved += 1;
+        } catch (err) {
+          slog.warn({ dir, err }, "failed to remove stale tmp dir");
+        }
+      }
+    }
+  } catch (err) {
+    slog.warn({ err }, "tmp dir cleanup failed (non-fatal)");
+  }
+
+  if (
+    markedFailedPending > 0 ||
+    markedFailedProcessing > 0 ||
+    tmpDirsRemoved > 0
+  ) {
+    slog.info(
+      { markedFailedPending, markedFailedProcessing, tmpDirsRemoved },
+      "stale imports swept",
+    );
+  }
 }
 
 // poll-recent queue processor. Handles two job kinds, distinguished by

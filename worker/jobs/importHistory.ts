@@ -13,6 +13,18 @@ const IMPORT_TMP_DIR = path.join(process.cwd(), ".import-tmp");
 
 const ERROR_MESSAGE_MAX = 1000;
 
+// Hardening au parse : défense en profondeur contre des JSONs forgés ou
+// corrompus qui satureraient la RAM ou pollueraient la DB avec des
+// valeurs aberrantes.
+const MAX_NAME_LEN = 500;
+const MAX_ARRAY_ENTRIES = 1_000_000;
+// Spotify a été lancé le 7 octobre 2008. Toute écoute datée avant ça est
+// forcément corrompue.
+const SPOTIFY_LAUNCH = new Date("2008-10-07T00:00:00Z");
+// On accepte un léger drift d'horloge entre le client Spotify et notre
+// serveur (max 24 h dans le futur). Au-delà, c'est forcément corrompu.
+const MAX_FUTURE_MS = 24 * 60 * 60 * 1000;
+
 export interface ImportHistoryResult {
   rowsImported: number;
 }
@@ -56,12 +68,24 @@ export async function importHistory(
     const trackNames = new Map<string, string>();
     const streamRows: NewStream[] = [];
 
+    const nowMs = Date.now();
+
     for (const fileName of fileNames) {
       const raw = await readFile(path.join(dir, fileName), "utf8");
       const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) {
         // Not a Spotify history array (e.g. a JSON object) — skip, don't fail.
         wlog.warn({ fileName }, "skipping file: not a JSON array");
+        continue;
+      }
+      if (parsed.length > MAX_ARRAY_ENTRIES) {
+        // Bombe array : un export Spotify normal max 100k entries par
+        // fichier. Au-delà du million, c'est forgé. Skip plutôt que
+        // potentiellement saturer la RAM en parcourant chaque entry.
+        wlog.warn(
+          { fileName, entries: parsed.length },
+          `skipping file: array too large (> ${MAX_ARRAY_ENTRIES})`,
+        );
         continue;
       }
 
@@ -80,6 +104,9 @@ export async function importHistory(
         if (typeof name !== "string" || name.length === 0) {
           continue;
         }
+        // Bombe RAM via noms démesurés (Spotify limite déjà côté API ;
+        // cap défensif pour un JSON forgé).
+        if (name.length > MAX_NAME_LEN) continue;
         if (typeof item.ts !== "string") continue;
 
         const trackId = uri.slice(TRACK_URI_PREFIX.length);
@@ -88,7 +115,29 @@ export async function importHistory(
         // Skip entries with a malformed ts — an Invalid Date would otherwise
         // blow up the whole batch insert.
         const playedAt = new Date(item.ts);
-        if (Number.isNaN(playedAt.getTime())) continue;
+        const playedAtMs = playedAt.getTime();
+        if (Number.isNaN(playedAtMs)) continue;
+        // Sanity range : avant Spotify ou trop loin dans le futur = corruption.
+        if (
+          playedAt < SPOTIFY_LAUNCH ||
+          playedAtMs > nowMs + MAX_FUTURE_MS
+        ) {
+          continue;
+        }
+
+        // ms_played : on tolère null (source polling) ; sinon doit être un
+        // entier positif dans la range JS safe. Hors-range → null, pas
+        // skip de l'entrée (ms_played est nullable, l'écoute reste valide).
+        let msPlayed: number | null = null;
+        if (typeof item.ms_played === "number") {
+          if (
+            Number.isFinite(item.ms_played) &&
+            item.ms_played >= 0 &&
+            item.ms_played <= Number.MAX_SAFE_INTEGER
+          ) {
+            msPlayed = item.ms_played;
+          }
+        }
 
         trackNames.set(trackId, name);
 
@@ -96,8 +145,7 @@ export async function importHistory(
           userId,
           trackId,
           playedAt,
-          msPlayed:
-            typeof item.ms_played === "number" ? item.ms_played : null,
+          msPlayed,
           source: "import",
         });
       }
