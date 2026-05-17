@@ -15,17 +15,10 @@ import {
   getTrackPlayStats,
 } from "@/db/queries/stats";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
+import { formatDate } from "@/lib/format/date";
 
 // Spotify metadata is stable — re-fetch at most once an hour.
 export const revalidate = 3600;
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
 
 function formatPercent(ratio: number): string {
   return `${Math.round(ratio * 100)} %`;
