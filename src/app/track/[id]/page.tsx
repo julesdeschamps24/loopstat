@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { spotifyFetch } from "@/lib/spotify/client";
 import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
@@ -66,7 +67,6 @@ export default async function TrackDetailPage({
   const albumImage = track.album?.images?.[0]?.url;
   const artistNames = track.artists.map((a) => a.name).join(", ");
   const hasPlays = stats.count > 0;
-  const maxHour = Math.max(...hours.map((h) => h.count), 1);
 
   return (
     <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
@@ -155,32 +155,7 @@ export default async function TrackDetailPage({
             <p className="mt-1 text-xs text-muted-foreground">
               Répartition des écoutes selon l&apos;heure de la journée.
             </p>
-            <div className="mt-4 grid grid-cols-12 gap-1 sm:grid-cols-24">
-              {hours.map(({ hour, count }) => {
-                const intensity = count / maxHour;
-                return (
-                  <div
-                    key={hour}
-                    className="flex flex-col items-center gap-1"
-                    title={`${hour}h — ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
-                  >
-                    <div className="flex h-16 w-full items-end">
-                      <div
-                        className="w-full rounded-md bg-[#7c3aed]"
-                        style={{
-                          height: `${Math.max(intensity * 100, count > 0 ? 6 : 2)}%`,
-                          opacity:
-                            count > 0 ? 0.3 + intensity * 0.7 : 0.12,
-                        }}
-                      />
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      {hour}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            <HourHeatmap data={hours} />
           </section>
 
           <section className={cn(glassCard, "p-6")}>
