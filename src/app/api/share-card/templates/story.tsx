@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 
-import type {
-  ShareBackground,
-  ShareCardConfig,
-} from "@/lib/share/card-config";
+import type { ShareCardConfig } from "@/lib/share/card-config";
 
 import {
   Background,
@@ -65,7 +62,7 @@ export function StoryTemplate({
       }}
     >
       <Background
-        variant={config.bg as ShareBackground}
+        variant={config.bg}
         width={STORY_SIZE.width}
         height={STORY_SIZE.height}
         covers={covers}

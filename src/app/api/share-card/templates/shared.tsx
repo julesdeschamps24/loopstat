@@ -1,3 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
+// Templates here are consumed by `next/og` (Satori) which renders to PNG
+// server-side; the Next image optimizer doesn't apply, so the native
+// <img> tag is the correct primitive.
 import type { ReactNode } from "react";
 
 import type { ShareBackground, SharePeriod } from "@/lib/share/card-config";

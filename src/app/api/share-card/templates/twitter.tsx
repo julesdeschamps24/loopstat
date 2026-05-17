@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 
-import type {
-  ShareBackground,
-  ShareCardConfig,
-} from "@/lib/share/card-config";
+import type { ShareCardConfig } from "@/lib/share/card-config";
 
 import {
   Background,
@@ -54,7 +51,7 @@ export function TwitterTemplate({
       }}
     >
       <Background
-        variant={config.bg as ShareBackground}
+        variant={config.bg}
         width={TWITTER_SIZE.width}
         height={TWITTER_SIZE.height}
         covers={covers}

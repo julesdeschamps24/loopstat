@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 
-import type {
-  ShareBackground,
-  ShareCardConfig,
-} from "@/lib/share/card-config";
+import type { ShareCardConfig } from "@/lib/share/card-config";
 
 import {
   Background,
@@ -54,7 +51,7 @@ export function PostTemplate({
       }}
     >
       <Background
-        variant={config.bg as ShareBackground}
+        variant={config.bg}
         width={POST_SIZE.width}
         height={POST_SIZE.height}
         covers={covers}
