@@ -4,10 +4,12 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
+import { ShareButton } from "@/components/share-button";
 import { EmptyState } from "@/components/stats/empty-state";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { getTopAlbumsFromStreams } from "@/db/queries/stats";
 import { hasCompletedImport } from "@/db/queries/imports";
+import { getProfile } from "@/db/queries/users";
 import {
   isStreamPeriod,
   periodSince,
@@ -31,10 +33,13 @@ export default async function TopAlbumsPage({
   const { period: rawPeriod } = await searchParams;
   const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
-  const [albums, imported] = await Promise.all([
+  const [albums, imported, profile] = await Promise.all([
     getTopAlbumsFromStreams(userId, periodSince(period), TOP_LIMIT),
     hasCompletedImport(userId),
+    getProfile(userId),
   ]);
+  const shareUsername =
+    profile?.isPublic && profile.username ? profile.username : undefined;
 
   const emptyDescription =
     period === "all" && !imported
@@ -45,13 +50,16 @@ export default async function TopAlbumsPage({
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
       <header className="mb-2 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Top albums</h1>
-        <Suspense
-          fallback={
-            <div className="h-10 w-75 rounded-full border bg-card" />
-          }
-        >
-          <PeriodSelector current={period} />
-        </Suspense>
+        <div className="flex flex-wrap items-center gap-2">
+          {shareUsername ? <ShareButton username={shareUsername} /> : null}
+          <Suspense
+            fallback={
+              <div className="h-10 w-75 rounded-full border bg-card" />
+            }
+          >
+            <PeriodSelector current={period} />
+          </Suspense>
+        </div>
       </header>
 
       <p className="mb-8 text-sm text-muted-foreground">

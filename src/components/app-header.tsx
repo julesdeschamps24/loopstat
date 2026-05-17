@@ -3,9 +3,16 @@ import { Settings } from "lucide-react";
 import type { Session } from "next-auth";
 
 import { signOut } from "@/auth";
+import { ShareButton } from "@/components/share-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-export function AppHeader({ session }: { session: Session }) {
+export function AppHeader({
+  session,
+  shareUsername,
+}: {
+  session: Session;
+  shareUsername?: string;
+}) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-4 mb-12">
       <div className="flex items-center gap-3">
@@ -27,6 +34,7 @@ export function AppHeader({ session }: { session: Session }) {
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
+        {shareUsername ? <ShareButton username={shareUsername} /> : null}
         <ThemeToggle />
         <Link
           href="/settings"
