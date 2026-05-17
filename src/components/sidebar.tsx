@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 import {
   Album,
   Clock,
+  Crown,
   Download,
   Home,
   Music2,
@@ -13,6 +15,7 @@ import {
   UserSearch,
 } from "lucide-react";
 
+import type { BillingState } from "@/db/queries/billing";
 import { SearchBar } from "@/components/search-bar";
 import { cn } from "@/lib/utils";
 
@@ -38,12 +41,28 @@ export function Sidebar({
   hasImported,
   username,
   isPublic,
+  billingTier,
+  premiumExpiresAt,
 }: {
   hasImported: boolean;
   username?: string;
   isPublic?: boolean;
+  billingTier?: BillingState["tier"];
+  premiumExpiresAt?: Date;
 }) {
   const pathname = usePathname();
+
+  const now = useMemo(() => new Date(), []);
+  const trialDaysLeft =
+    billingTier === "trial" && premiumExpiresAt
+      ? Math.max(
+          0,
+          Math.ceil(
+            (premiumExpiresAt.getTime() - now.getTime()) /
+              (1000 * 60 * 60 * 24),
+          ),
+        )
+      : null;
 
   // Pas de sidebar sur les pages publiques (landing + login + profils
   // partagés) ni sur les routes d'erreur internes Next.
@@ -98,6 +117,33 @@ export function Sidebar({
             </Link>
           );
         })}
+        <Link
+          href={billingTier && billingTier !== "free" ? "/settings/billing" : "/pricing"}
+          aria-current={
+            pathname === "/pricing" || pathname.startsWith("/settings/billing")
+              ? "page"
+              : undefined
+          }
+          className={cn(
+            "mt-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
+            pathname === "/pricing" || pathname.startsWith("/settings/billing")
+              ? "bg-[#7c3aed] text-white font-medium"
+              : billingTier === "free" || !billingTier
+                ? "text-[#c4b5fd] hover:bg-white/5"
+                : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
+          )}
+        >
+          <Crown className="size-4 shrink-0" />
+          {billingTier === "trial" && trialDaysLeft !== null
+            ? `Essai · J-${trialDaysLeft}`
+            : billingTier === "active"
+              ? "Mon Premium"
+              : billingTier === "past_due"
+                ? "Paiement échoué"
+                : billingTier === "canceled"
+                  ? "Premium · annulé"
+                  : "Premium"}
+        </Link>
       </nav>
 
       {hasImported ? (

@@ -1,14 +1,19 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { AppHeader } from "@/components/app-header";
+import { AppearanceForm } from "@/components/profile/appearance-form";
+import { PremiumGate } from "@/components/premium-gate";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { isPremium } from "@/db/queries/billing";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { deriveUsername } from "@/lib/derive-username";
+import { isAccent, isBackground } from "@/lib/profile/appearance";
 
 // No Spotify calls here — keep the standard revalidate window for consistency
 // with the other authenticated pages.
@@ -28,8 +33,14 @@ export default async function SettingsPage() {
       spotifyId: true,
       username: true,
       isPublic: true,
+      profileSettings: true,
     },
   });
+
+  const premium = await isPremium(session.user.id);
+  const settings = userRow?.profileSettings ?? {};
+  const initialBackground = isBackground(settings.background) ? settings.background : "mesh";
+  const initialAccent = isAccent(settings.accent) ? settings.accent : "violet";
 
   const displayName = userRow?.displayName ?? session.user.name ?? userRow?.spotifyId ?? "";
   const email = userRow?.email ?? null;
@@ -69,6 +80,28 @@ export default async function SettingsPage() {
         </section>
 
         <section>
+          <h2 className="mb-2 text-lg font-semibold">Apparence du profil</h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Customise le fond et la couleur d&apos;accent de ton profil public.
+          </p>
+          <PremiumGate isPremium={premium}>
+            {userRow?.username ? (
+              <AppearanceForm
+                username={userRow.username}
+                displayName={displayName}
+                initialBackground={initialBackground}
+                initialAccent={initialAccent}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Choisis d&apos;abord un pseudo dans la section &quot;Profil public&quot;
+                ci-dessus.
+              </p>
+            )}
+          </PremiumGate>
+        </section>
+
+        <section>
           <h2 className="mb-2 text-lg font-semibold">Compte</h2>
           <p className="mb-4 text-sm text-muted-foreground">
             Identité Spotify utilisée pour te connecter à loopstat.
@@ -84,6 +117,12 @@ export default async function SettingsPage() {
             ) : null}
           </dl>
           <DeleteAccountForm />
+          <Link
+            href="/settings/billing"
+            className="self-start text-sm text-[#c4b5fd] hover:underline"
+          >
+            Mon abonnement →
+          </Link>
         </section>
       </div>
     </main>

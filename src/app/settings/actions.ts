@@ -7,6 +7,8 @@ import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { ensureUsernamePersisted, setIsPublic } from "@/db/queries/users";
+import { isPremium } from "@/db/queries/billing";
+import { isAccent, isBackground } from "@/lib/profile/appearance";
 
 export type ProfileFormState =
   | { status: "idle" }
@@ -56,4 +58,54 @@ export async function updateProfileAction(
       : "Profil mis à jour (privé).",
     username: ensured.username,
   };
+}
+
+export type AppearanceFormState =
+  | { status: "idle" }
+  | { status: "ok"; message: string }
+  | { status: "error"; error: string };
+
+export async function updateAppearanceAction(
+  _prev: AppearanceFormState,
+  formData: FormData,
+): Promise<AppearanceFormState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { status: "error", error: "Tu dois être connecté." };
+  }
+
+  if (!(await isPremium(session.user.id))) {
+    return {
+      status: "error",
+      error: "Cette personnalisation est réservée Premium.",
+    };
+  }
+
+  const background = formData.get("background");
+  const accent = formData.get("accent");
+  if (!isBackground(background) || !isAccent(accent)) {
+    return { status: "error", error: "Choix invalides." };
+  }
+
+  const row = await db.query.users.findFirst({
+    where: eq(users.id, session.user.id),
+    columns: { profileSettings: true, username: true },
+  });
+  if (!row) return { status: "error", error: "Compte introuvable." };
+
+  await db
+    .update(users)
+    .set({
+      profileSettings: {
+        ...(row.profileSettings ?? {}),
+        background,
+        accent,
+      },
+    })
+    .where(eq(users.id, session.user.id));
+
+  revalidatePath("/settings");
+  if (row.username) revalidatePath(`/u/${row.username}`);
+
+  return { status: "ok", message: "Apparence mise à jour." };
 }

@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 
+import { isPremium } from "@/db/queries/billing";
 import { getTopTracksFromStreams } from "@/db/queries/stats";
 import { getPublicProfileByUsername } from "@/db/queries/users";
 import { periodSince } from "@/lib/stats/period";
@@ -43,6 +44,8 @@ export default async function Image({
       size,
     );
   }
+
+  const hideWatermark = await isPremium(profile.id);
 
   const tracks = await getTopTracksFromStreams(
     profile.id,
@@ -186,17 +189,19 @@ export default async function Image({
           )}
         </div>
 
-        <div
-          style={{
-            marginTop: "auto",
-            display: "flex",
-            justifyContent: "flex-end",
-            fontSize: 22,
-            color: TEXT_MUTED,
-          }}
-        >
-          loopstat.tech/u/{profile.username}
-        </div>
+        {!hideWatermark ? (
+          <div
+            style={{
+              marginTop: "auto",
+              display: "flex",
+              justifyContent: "flex-end",
+              fontSize: 22,
+              color: TEXT_MUTED,
+            }}
+          >
+            loopstat.tech/u/{profile.username}
+          </div>
+        ) : null}
       </div>
     ),
     size,
