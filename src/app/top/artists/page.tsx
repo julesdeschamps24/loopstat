@@ -4,15 +4,19 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
-import { STREAM_PERIODS } from "@/lib/stats/period";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
-import { fetchTopArtists, isTopPeriod, type TopPeriod } from "@/lib/spotify/top";
-import { getPlayCountsForArtists } from "@/db/queries/stats";
+import { getTopArtistsFromStreams } from "@/db/queries/stats";
+import { hasCompletedImport } from "@/db/queries/imports";
+import {
+  isStreamPeriod,
+  periodSince,
+  type StreamPeriod,
+} from "@/lib/stats/period";
 import { formatNumber } from "@/lib/utils";
 
-// Re-fetch the Spotify Top Read data at most once an hour; repeated navigation
-// between periods reuses the cached RSC payload instead of re-hitting Spotify.
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+
+const TOP_LIMIT = 100;
 
 export default async function TopArtistsPage({
   searchParams,
@@ -24,13 +28,17 @@ export default async function TopArtistsPage({
   const userId = session.user.id;
 
   const { period: rawPeriod } = await searchParams;
-  const period: TopPeriod = isTopPeriod(rawPeriod) ? rawPeriod : "4w";
+  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
-  const artists = await fetchTopArtists(userId, period);
-  const playCounts = await getPlayCountsForArtists(
-    userId,
-    artists.map((a) => a.id),
-  );
+  const [artists, imported] = await Promise.all([
+    getTopArtistsFromStreams(userId, periodSince(period), TOP_LIMIT),
+    hasCompletedImport(userId),
+  ]);
+
+  const emptyMessage =
+    period === "all" && !imported
+      ? "Aucune écoute lifetime enregistrée. Importe ton historique Spotify pour débloquer tes tops all-time."
+      : "Aucun artiste pour cette période.";
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
@@ -38,38 +46,30 @@ export default async function TopArtistsPage({
         <h1 className="text-2xl font-semibold">Top artistes</h1>
         <Suspense
           fallback={
-            <div className="h-10 w-[232px] rounded-full border bg-card" />
+            <div className="h-10 w-75 rounded-full border bg-card" />
           }
         >
-          <PeriodSelector
-            current={period}
-            periods={STREAM_PERIODS.filter((p) => p.value !== "all")}
-          />
+          <PeriodSelector current={period} />
         </Suspense>
       </header>
 
       {artists.length === 0 ? (
         <p className="rounded-2xl border bg-card p-8 text-center text-sm text-muted-foreground">
-          Aucun artiste pour cette période.
+          {emptyMessage}
         </p>
       ) : (
         <StaggerList key={period} className="flex flex-col gap-1">
-          {artists.map((artist, index) => {
-            const count = playCounts.get(artist.id) ?? 0;
-            return (
-              <StaggerItem key={artist.id}>
-                <RankedRow
-                  rank={index + 1}
-                  title={artist.name}
-                  href={`/artist/${artist.id}`}
-                  imageUrl={artist.images?.[0]?.url}
-                  metric={
-                    count > 0 ? `${formatNumber(count)} écoutes` : undefined
-                  }
-                />
-              </StaggerItem>
-            );
-          })}
+          {artists.map((artist, index) => (
+            <StaggerItem key={artist.artistId}>
+              <RankedRow
+                rank={index + 1}
+                title={artist.name}
+                href={`/artist/${artist.artistId}`}
+                imageUrl={artist.imageUrl ?? undefined}
+                metric={`${formatNumber(artist.plays)} écoutes`}
+              />
+            </StaggerItem>
+          ))}
         </StaggerList>
       )}
     </main>

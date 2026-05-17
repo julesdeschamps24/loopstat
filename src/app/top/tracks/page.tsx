@@ -6,6 +6,7 @@ import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { getTopTracksFromStreams } from "@/db/queries/stats";
+import { hasCompletedImport } from "@/db/queries/imports";
 import {
   isStreamPeriod,
   periodSince,
@@ -30,16 +31,15 @@ export default async function TopTracksPage({
   const { period: rawPeriod } = await searchParams;
   const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
-  const tracks = await getTopTracksFromStreams(
-    userId,
-    periodSince(period),
-    TOP_LIMIT,
-  );
+  const [tracks, imported] = await Promise.all([
+    getTopTracksFromStreams(userId, periodSince(period), TOP_LIMIT),
+    hasCompletedImport(userId),
+  ]);
 
   const emptyMessage =
-    period === "all"
-      ? "Aucune écoute enregistrée. Importe ton historique pour voir tes tops lifetime."
-      : "Aucun titre pour cette période.";
+    period === "all" && !imported
+      ? "Aucune écoute lifetime enregistrée. Importe ton historique Spotify pour débloquer tes tops all-time."
+      : "Aucun titre pour cette période — écoute quelques sons puis reviens dans ~30 min (le polling synchronise automatiquement).";
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">

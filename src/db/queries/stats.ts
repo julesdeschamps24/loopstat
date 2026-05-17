@@ -283,6 +283,150 @@ export async function getTopTracksFromStreams(
 }
 
 /**
+ * Top artistes agrégés depuis la table streams locale. Même approche que
+ * getTopTracksFromStreams : COUNT(*) sur les streams qualifying, JOIN sur
+ * trackArtists pour obtenir l'artiste, puis fetch en seconde passe le name +
+ * imageUrl. Pas de limite à 50, "all time" trivial, chiffres cohérents avec
+ * la période sélectionnée.
+ */
+export async function getTopArtistsFromStreams(
+  userId: string,
+  since: Date | null,
+  limit: number,
+): Promise<
+  {
+    artistId: string;
+    name: string;
+    imageUrl: string | null;
+    plays: number;
+  }[]
+> {
+  const where = since
+    ? and(
+        eq(streams.userId, userId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+      )
+    : and(eq(streams.userId, userId), QUALIFYING_PLAY);
+
+  const rows = await db
+    .select({
+      artistId: trackArtists.artistId,
+      plays: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
+    .where(where)
+    .groupBy(trackArtists.artistId)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+
+  if (rows.length === 0) return [];
+
+  // Seconde query pour name + imageUrl en un round-trip.
+  const artistIds = rows.map((r) => r.artistId);
+  const meta = await db
+    .select({
+      id: artists.id,
+      name: artists.name,
+      imageUrl: artists.imageUrl,
+    })
+    .from(artists)
+    .where(inArray(artists.id, artistIds));
+
+  const metaById = new Map(meta.map((a) => [a.id, a]));
+
+  return rows.map((r) => {
+    const m = metaById.get(r.artistId);
+    return {
+      artistId: r.artistId,
+      name: m?.name ?? r.artistId,
+      imageUrl: m?.imageUrl ?? null,
+      plays: Number(r.plays),
+    };
+  });
+}
+
+/**
+ * Top albums agrégés depuis la table streams locale. JOIN streams → tracks
+ * → albums pour récupérer l'album_id, puis COUNT par album. Skip les
+ * streams dont le track n'a pas d'album_id (track non encore enrichi par
+ * le worker — leur album sera comptabilisé quand l'enrich aura tourné).
+ */
+export async function getTopAlbumsFromStreams(
+  userId: string,
+  since: Date | null,
+  limit: number,
+): Promise<
+  {
+    albumId: string;
+    name: string;
+    imageUrl: string | null;
+    artistNames: string[];
+    plays: number;
+  }[]
+> {
+  const where = since
+    ? and(
+        eq(streams.userId, userId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+      )
+    : and(eq(streams.userId, userId), QUALIFYING_PLAY);
+
+  const rows = await db
+    .select({
+      albumId: tracks.albumId,
+      name: albums.name,
+      imageUrl: albums.imageUrl,
+      plays: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .innerJoin(albums, eq(albums.id, tracks.albumId))
+    .where(where)
+    .groupBy(tracks.albumId, albums.name, albums.imageUrl)
+    .orderBy(desc(sql`count(*)`))
+    .limit(limit);
+
+  if (rows.length === 0) return [];
+
+  // Récupère les noms d'artistes par album (en seconde passe pour les
+  // mêmes raisons que dans getTopTracksFromStreams).
+  const albumIds = rows
+    .map((r) => r.albumId)
+    .filter((id): id is string => id !== null);
+  const artistRows = await db
+    .select({
+      albumId: sql<string>`${tracks.albumId}`,
+      name: artists.name,
+      position: trackArtists.position,
+    })
+    .from(tracks)
+    .innerJoin(trackArtists, eq(trackArtists.trackId, tracks.id))
+    .innerJoin(artists, eq(artists.id, trackArtists.artistId))
+    .where(inArray(tracks.albumId, albumIds))
+    .orderBy(asc(tracks.albumId), asc(trackArtists.position));
+
+  // Dédup les artistes par album (un album a typiquement N tracks × M
+  // artistes = potentiellement beaucoup de doublons via le JOIN).
+  const namesByAlbum = new Map<string, Set<string>>();
+  for (const row of artistRows) {
+    const set = namesByAlbum.get(row.albumId) ?? new Set<string>();
+    set.add(row.name);
+    namesByAlbum.set(row.albumId, set);
+  }
+
+  return rows.map((r) => ({
+    albumId: r.albumId as string,
+    name: r.name,
+    imageUrl: r.imageUrl,
+    artistNames: Array.from(namesByAlbum.get(r.albumId as string) ?? []),
+    plays: Number(r.plays),
+  }));
+}
+
+/**
  * Per-window play counts for a single track. Used on the track detail
  * page to show "4w / 6m / 1y / all" breakdown.
  */

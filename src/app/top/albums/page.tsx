@@ -4,66 +4,20 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
-import { STREAM_PERIODS } from "@/lib/stats/period";
 import { EmptyState } from "@/components/stats/empty-state";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
-import { fetchTopTracks, isTopPeriod, type TopPeriod } from "@/lib/spotify/top";
-import type { SpotifyTrack } from "@/lib/spotify/types";
+import { getTopAlbumsFromStreams } from "@/db/queries/stats";
+import { hasCompletedImport } from "@/db/queries/imports";
+import {
+  isStreamPeriod,
+  periodSince,
+  type StreamPeriod,
+} from "@/lib/stats/period";
+import { formatNumber } from "@/lib/utils";
 
-// Re-fetch the Spotify Top Read data at most once an hour; repeated navigation
-// between periods reuses the cached RSC payload instead of re-hitting Spotify.
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
-type DerivedAlbum = {
-  id: string;
-  name: string;
-  imageUrl?: string;
-  artistNames?: string;
-  /** How many of the user's top tracks belong to this album. */
-  trackCount: number;
-  /** Best (lowest) top-tracks index among the contributing tracks. */
-  bestIndex: number;
-};
-
-/**
- * Spotify has no /me/top/albums endpoint, so we derive a ranking in-memory
- * from the top-tracks payload: group tracks by album id, then rank albums by
- * how many top tracks they contribute, tie-broken by the best (lowest) track
- * index among those contributors. Tracks with no resolvable album are skipped.
- */
-function deriveTopAlbums(tracks: SpotifyTrack[]): DerivedAlbum[] {
-  const byId = new Map<string, DerivedAlbum>();
-
-  tracks.forEach((track, index) => {
-    const album = track.album;
-    if (!album?.id) return;
-
-    const existing = byId.get(album.id);
-    if (existing) {
-      existing.trackCount += 1;
-      if (index < existing.bestIndex) existing.bestIndex = index;
-      return;
-    }
-
-    const artistNames =
-      album.artists?.map((a) => a.name).join(", ") ||
-      track.artists.map((a) => a.name).join(", ") ||
-      undefined;
-
-    byId.set(album.id, {
-      id: album.id,
-      name: album.name,
-      imageUrl: album.images?.[0]?.url,
-      artistNames,
-      trackCount: 1,
-      bestIndex: index,
-    });
-  });
-
-  return [...byId.values()].sort(
-    (a, b) => b.trackCount - a.trackCount || a.bestIndex - b.bestIndex,
-  );
-}
+const TOP_LIMIT = 100;
 
 export default async function TopAlbumsPage({
   searchParams,
@@ -75,10 +29,17 @@ export default async function TopAlbumsPage({
   const userId = session.user.id;
 
   const { period: rawPeriod } = await searchParams;
-  const period: TopPeriod = isTopPeriod(rawPeriod) ? rawPeriod : "4w";
+  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
-  const tracks = await fetchTopTracks(userId, period);
-  const albums = deriveTopAlbums(tracks);
+  const [albums, imported] = await Promise.all([
+    getTopAlbumsFromStreams(userId, periodSince(period), TOP_LIMIT),
+    hasCompletedImport(userId),
+  ]);
+
+  const emptyDescription =
+    period === "all" && !imported
+      ? "Importe ton historique Spotify pour débloquer tes tops albums lifetime."
+      : "Écoute quelques titres puis reviens — les tops se construisent automatiquement.";
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
@@ -86,39 +47,34 @@ export default async function TopAlbumsPage({
         <h1 className="text-2xl font-semibold">Top albums</h1>
         <Suspense
           fallback={
-            <div className="h-10 w-[232px] rounded-full border bg-card" />
+            <div className="h-10 w-75 rounded-full border bg-card" />
           }
         >
-          <PeriodSelector
-            current={period}
-            periods={STREAM_PERIODS.filter((p) => p.value !== "all")}
-          />
+          <PeriodSelector current={period} />
         </Suspense>
       </header>
 
       <p className="mb-8 text-sm text-muted-foreground">
-        Classement dérivé de tes top titres — Spotify ne fournit pas de
-        palmarès d&apos;albums.
+        Agrégé depuis tes écoutes locales — un album compte chaque fois
+        qu&apos;un de ses titres a été joué.
       </p>
 
       {albums.length === 0 ? (
         <EmptyState
-          title="Aucun album pour cette période."
-          description="Écoutez quelques titres et revenez plus tard."
+          title="Aucun album pour cette période"
+          description={emptyDescription}
         />
       ) : (
         <StaggerList key={period} className="flex flex-col gap-1">
           {albums.map((album, index) => (
-            <StaggerItem key={album.id}>
+            <StaggerItem key={album.albumId}>
               <RankedRow
                 rank={index + 1}
                 title={album.name}
-                href={`/album/${album.id}`}
-                subtitle={album.artistNames}
-                imageUrl={album.imageUrl}
-                metric={`${album.trackCount} ${
-                  album.trackCount > 1 ? "titres" : "titre"
-                }`}
+                href={`/album/${album.albumId}`}
+                subtitle={album.artistNames.join(", ")}
+                imageUrl={album.imageUrl ?? undefined}
+                metric={`${formatNumber(album.plays)} écoutes`}
               />
             </StaggerItem>
           ))}
