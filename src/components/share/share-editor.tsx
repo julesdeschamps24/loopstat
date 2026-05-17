@@ -61,6 +61,13 @@ function useIsClient(): boolean {
   );
 }
 
+// Debounce delay (ms) between the user's last tweak and the actual
+// preview re-fetch. Each /api/share-card hit does a DB query + Satori
+// render + 1-37 Spotify CDN image fetches, so rapid chip clicking
+// without debounce piles up wasted requests. 300ms feels instant after
+// the user stops moving but kills the spam.
+const PREVIEW_DEBOUNCE_MS = 300;
+
 export function ShareEditor({
   initialConfig,
   username,
@@ -69,24 +76,44 @@ export function ShareEditor({
   username: string;
 }) {
   const [config, setConfig] = useState<ShareCardConfig>(initialConfig);
+  const [committedConfig, setCommittedConfig] =
+    useState<ShareCardConfig>(initialConfig);
   const [copied, setCopied] = useState(false);
   const isClient = useIsClient();
 
-  // Mirror config → URL (no full nav).
+  // Debounce: UI controls update `config` immediately (chips light up
+  // right away), but `committedConfig` only catches up after the user
+  // stops interacting for PREVIEW_DEBOUNCE_MS. The preview URL + the
+  // browser URL both follow `committedConfig`.
+  useEffect(() => {
+    const t = setTimeout(() => setCommittedConfig(config), PREVIEW_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [config]);
+
+  // Mirror committed config → URL (no full nav).
   useEffect(() => {
     if (!isClient) return;
     const sp = new URLSearchParams({
-      mode: config.mode,
-      type: config.type,
-      n: String(config.n),
-      period: config.period,
-      format: config.format,
-      bg: config.bg,
+      mode: committedConfig.mode,
+      type: committedConfig.type,
+      n: String(committedConfig.n),
+      period: committedConfig.period,
+      format: committedConfig.format,
+      bg: committedConfig.bg,
     });
     window.history.replaceState(null, "", `?${sp.toString()}`);
-  }, [config, isClient]);
+  }, [committedConfig, isClient]);
 
-  const cardUrl = useMemo(
+  // Preview URL follows the debounced config (avoids spamming the
+  // render endpoint mid-tweak).
+  const previewUrl = useMemo(
+    () => buildShareCardUrl(committedConfig, username),
+    [committedConfig, username],
+  );
+  // Download + native share use the LIVE config: the user clicking
+  // "Download" wants exactly what they last clicked, not what was
+  // committed 300ms ago.
+  const liveUrl = useMemo(
     () => buildShareCardUrl(config, username),
     [config, username],
   );
@@ -117,7 +144,7 @@ export function ShareEditor({
   async function nativeShare() {
     if (!("share" in navigator)) return;
     try {
-      const res = await fetch(cardUrl);
+      const res = await fetch(liveUrl);
       const blob = await res.blob();
       const file = new File([blob], `loopstat-${username}-${config.format}.png`, {
         type: "image/png",
@@ -138,7 +165,7 @@ export function ShareEditor({
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_340px]">
       <div className="flex items-center justify-center rounded-2xl border border-white/8 bg-[linear-gradient(135deg,rgba(124,58,237,0.06),transparent_60%),repeating-linear-gradient(45deg,rgba(255,255,255,0.02)_0_8px,transparent_8px_16px)] p-6 min-h-[460px]">
-        <Preview src={cardUrl} format={config.format} />
+        <Preview src={previewUrl} format={committedConfig.format} />
       </div>
 
       <div className="flex flex-col gap-5">
@@ -209,7 +236,7 @@ export function ShareEditor({
 
         <div className="flex flex-col gap-2 border-t border-white/8 pt-4">
           <a
-            href={cardUrl}
+            href={liveUrl}
             download={`loopstat-${username}-${config.format}.png`}
             className="flex items-center justify-center gap-2 rounded-xl bg-[#7c3aed] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6d28d9]"
           >

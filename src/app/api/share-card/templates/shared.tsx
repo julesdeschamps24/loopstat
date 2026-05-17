@@ -344,10 +344,19 @@ function WallBackground({
   height: number;
   covers: string[];
 }) {
-  // 6 columns × ceil(N/6) rows, no gap, slight scale + opacity so the
-  // covers tile feels like an ambient texture not a photo grid.
+  // 6 columns × ceil(height/tileSize) rows, no gap, slight opacity so
+  // the covers tile feels like an ambient texture not a photo grid.
+  // If the caller provided fewer covers than the canvas can fit, we
+  // repeat them — better to see the same album twice than to leave
+  // the bottom half on the bare background color.
   const cols = 6;
   const tileSize = Math.ceil(width / cols);
+  const needed = cols * Math.ceil(height / tileSize);
+  const tiles: string[] = [];
+  if (covers.length > 0) {
+    while (tiles.length < needed) tiles.push(...covers);
+    tiles.length = needed;
+  }
   return (
     <div
       style={{
@@ -369,7 +378,7 @@ function WallBackground({
           opacity: 0.22,
         }}
       >
-        {covers.slice(0, cols * Math.ceil(height / tileSize)).map((url, i) => (
+        {tiles.map((url, i) => (
           <img
             key={`${i}-${url}`}
             src={url}

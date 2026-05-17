@@ -11,6 +11,7 @@ import {
   RECAP_N_BY_FORMAT,
   parseShareCardParams,
   type ShareCardConfig,
+  type ShareFormat,
 } from "@/lib/share/card-config";
 import { periodSince } from "@/lib/stats/period";
 
@@ -37,7 +38,16 @@ const SIZE_BY_FORMAT = {
   story: STORY_SIZE,
 } as const;
 
-const WALL_COVER_LIMIT = 36;
+// Wall background tiles: 6 cols × ceil(height/180) rows. Story is
+// 1080x1920 → 11 rows = 66 tiles. Post is 1080x1080 → 6 rows = 36.
+// Twitter is 1200x630 → 4 rows = 24. Closes follow-up issue #16
+// (story wall was leaving the bottom half empty at the previous
+// flat WALL_COVER_LIMIT=36).
+const WALL_COVER_LIMITS: Record<ShareFormat, number> = {
+  twitter: 24,
+  post: 36,
+  story: 72,
+};
 
 function trackToItem(t: {
   trackId: string;
@@ -140,7 +150,11 @@ export async function GET(req: Request) {
       ? fetchFocus(profile.id, config)
       : fetchRecap(profile.id, config),
     config.bg === "wall"
-      ? getWallCovers(profile.id, periodSince(config.period), WALL_COVER_LIMIT)
+      ? getWallCovers(
+          profile.id,
+          periodSince(config.period),
+          WALL_COVER_LIMITS[config.format],
+        )
       : Promise.resolve([] as string[]),
   ]);
 
