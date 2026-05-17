@@ -93,7 +93,7 @@ export default async function DashboardPage() {
     <>
       <AlbumWall covers={wallCovers} />
       <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
-        <AppHeader session={session} shareUsername={shareUsername} />
+        <AppHeader session={session} shareUsername={shareUsername} shareContext="dashboard" />
 
       <div className="flex flex-col gap-12">
         <ImportBanner />

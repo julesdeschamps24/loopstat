@@ -6,10 +6,12 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Check, Download, Link as LinkIcon, Share2 } from "lucide-react";
+import { Check, Download, Link as LinkIcon, Share2, Sparkles } from "lucide-react";
+import type { ShareContext } from "@/lib/share/card-config";
 
 type Props = {
   username: string;
+  context?: ShareContext;
 };
 
 // Évite le setState-in-effect anti-pattern (React 19 strict) tout en
@@ -24,7 +26,7 @@ function useIsClient(): boolean {
   );
 }
 
-export function ShareButton({ username }: Props) {
+export function ShareButton({ username, context }: Props) {
   const isClient = useIsClient();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -99,6 +101,21 @@ export function ShareButton({ username }: Props) {
           role="menu"
           className="absolute right-0 top-full z-20 mt-2 flex w-64 flex-col gap-0.5 rounded-xl border bg-popover p-1.5 shadow-xl"
         >
+          <a
+            href={`/share${context ? `?context=${context}` : ""}`}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 rounded-lg bg-[#7c3aed]/10 px-3 py-2 text-left text-sm text-[#c4b5fd] transition hover:bg-[#7c3aed]/20"
+          >
+            <Sparkles className="size-4" />
+            <span className="flex flex-col">
+              <span className="font-medium">Personnaliser ma carte…</span>
+              <span className="text-xs opacity-70">
+                Choisis le format, la période, les items
+              </span>
+            </span>
+          </a>
+          <div className="my-1 border-t border-white/8" />
           <button
             type="button"
             role="menuitem"

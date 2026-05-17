@@ -50,7 +50,7 @@ export default async function TopArtistsPage({
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Top artistes</h1>
         <div className="flex flex-wrap items-center gap-2">
-          {shareUsername ? <ShareButton username={shareUsername} /> : null}
+          {shareUsername ? <ShareButton username={shareUsername} context="artists" /> : null}
           <Suspense
             fallback={
               <div className="h-10 w-75 rounded-full border bg-card" />
