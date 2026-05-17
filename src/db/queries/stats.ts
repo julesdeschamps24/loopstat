@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, ilike, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { albums, artists, streams, trackArtists, tracks } from "@/db/schema";
@@ -821,4 +821,48 @@ export async function getAlbumPlayQuality(
     avgMs: row?.avgMs != null ? Number(row.avgMs) : null,
     skipRate: row?.skipRate != null ? Number(row.skipRate) : null,
   };
+}
+
+/**
+ * Autres albums d'un artiste donné qu'a écouté l'utilisateur, triés par plays
+ * desc. Exclut l'album fourni en paramètre. Utilisé par le carousel "Autres
+ * albums de [artiste]" sur la page detail album.
+ */
+export async function getOtherAlbumsByArtist(
+  userId: string,
+  artistId: string,
+  excludeAlbumId: string,
+  limit = 10,
+): Promise<
+  { albumId: string; name: string; imageUrl: string | null; plays: number }[]
+> {
+  const rows = await db
+    .select({
+      albumId: albums.id,
+      name: albums.name,
+      imageUrl: albums.imageUrl,
+      plays: sql<number>`count(${streams.id})::int`,
+    })
+    .from(streams)
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .innerJoin(albums, eq(albums.id, tracks.albumId))
+    .innerJoin(trackArtists, eq(trackArtists.trackId, tracks.id))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(trackArtists.artistId, artistId),
+        ne(albums.id, excludeAlbumId),
+        QUALIFYING_PLAY,
+      ),
+    )
+    .groupBy(albums.id, albums.name, albums.imageUrl)
+    .orderBy(desc(sql`count(${streams.id})`))
+    .limit(limit);
+
+  return rows.map((r) => ({
+    albumId: r.albumId,
+    name: r.name,
+    imageUrl: r.imageUrl,
+    plays: Number(r.plays),
+  }));
 }
