@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { HourHeatmap } from "@/components/stats/hour-heatmap";
+import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { spotifyFetch } from "@/lib/spotify/client";
 import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
@@ -13,7 +14,6 @@ import {
   getTrackPlayQuality,
   getTrackPlayStats,
 } from "@/db/queries/stats";
-import { STREAM_PERIODS } from "@/lib/stats/period";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 
 // Spotify metadata is stable — re-fetch at most once an hour.
@@ -127,18 +127,7 @@ export default async function TrackDetailPage({
         <>
           <section className={cn(glassCard, "p-6")}>
             <h2 className="text-lg font-semibold">Par période</h2>
-            <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {STREAM_PERIODS.map(({ value, label }) => (
-                <div key={value} className="rounded-xl bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                    {label}
-                  </p>
-                  <p className="mt-2 font-display italic text-2xl leading-none tabular-nums">
-                    {formatNumber(breakdown[value])}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <PeriodBreakdownGrid data={breakdown} />
           </section>
 
           {monthly.length > 0 ? (
