@@ -20,9 +20,8 @@ const bytea = customType<{ data: Buffer; default: false }>({
 });
 
 export type ProfileSettings = {
-  background?: string;
-  theme?: string;
-  pinnedSections?: string[];
+  background?: "mesh" | "wall" | "noir" | "mauve";
+  accent?: "violet" | "blue" | "rose" | "green" | "orange" | "mono";
 };
 
 export const users = pgTable("users", {
@@ -44,6 +43,10 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  stripeCustomerId: text("stripe_customer_id").unique(),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  premiumStatus: text("premium_status"),
+  premiumUntil: timestamp("premium_until", { withTimezone: true }),
 });
 
 export const spotifyTokens = pgTable("spotify_tokens", {
