@@ -3,7 +3,8 @@
  * `time_range` (short/medium/long) because we now compute top tracks from
  * our own streams table — no 50-track limit, "all" is trivial.
  */
-export type StreamPeriod = "4w" | "6m" | "1y" | "all";
+export const STREAM_PERIOD_VALUES = ["4w", "6m", "1y", "all"] as const;
+export type StreamPeriod = (typeof STREAM_PERIOD_VALUES)[number];
 
 export const STREAM_PERIODS: { value: StreamPeriod; label: string }[] = [
   { value: "4w", label: "4 semaines" },
