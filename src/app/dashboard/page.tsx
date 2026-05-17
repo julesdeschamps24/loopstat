@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/stats/empty-state";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { fetchTopArtists, fetchTopTracks } from "@/lib/spotify/top";
 import { getListeningTotals } from "@/db/queries/stats";
+import { getProfile } from "@/db/queries/users";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 import { ImportBanner } from "@/components/import-banner";
 
@@ -48,12 +49,16 @@ export default async function DashboardPage() {
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
-  const [totals, topTracks, topArtists, topTracks1y] = await Promise.all([
-    getListeningTotals(userId),
-    fetchTopTracks(userId, "4w").catch(() => []),
-    fetchTopArtists(userId, "4w").catch(() => []),
-    fetchTopTracks(userId, "1y").catch(() => []),
-  ]);
+  const [totals, topTracks, topArtists, topTracks1y, profile] =
+    await Promise.all([
+      getListeningTotals(userId),
+      fetchTopTracks(userId, "4w").catch(() => []),
+      fetchTopArtists(userId, "4w").catch(() => []),
+      fetchTopTracks(userId, "1y").catch(() => []),
+      getProfile(userId),
+    ]);
+  const shareUsername =
+    profile?.isPublic && profile.username ? profile.username : undefined;
 
   const totalsByWindow = new Map(totals.map((t) => [t.window, t]));
   const orderedWindows: ("7d" | "30d" | "lifetime")[] = [
@@ -88,7 +93,7 @@ export default async function DashboardPage() {
     <>
       <AlbumWall covers={wallCovers} />
       <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
-        <AppHeader session={session} />
+        <AppHeader session={session} shareUsername={shareUsername} shareContext="dashboard" />
 
       <div className="flex flex-col gap-12">
         <ImportBanner />

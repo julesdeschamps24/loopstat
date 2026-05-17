@@ -35,9 +35,14 @@ const PUBLIC_PATHS = new Set<string>(["/", "/login"]);
 export function Sidebar({ hasImported }: { hasImported: boolean }) {
   const pathname = usePathname();
 
-  // Pas de sidebar sur les pages publiques (landing + login) ni sur les
-  // routes d'erreur internes Next.
-  if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api")) return null;
+  // Pas de sidebar sur les pages publiques (landing + login + profils
+  // partagés) ni sur les routes d'erreur internes Next.
+  if (
+    PUBLIC_PATHS.has(pathname) ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/u/")
+  )
+    return null;
 
   return (
     <aside className="hidden md:flex md:w-55 md:shrink-0 md:flex-col md:gap-1 md:border-r md:border-white/6 md:bg-white/3 md:backdrop-blur-xl md:p-4 md:sticky md:top-0 md:h-screen">

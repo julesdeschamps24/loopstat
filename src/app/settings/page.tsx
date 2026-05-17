@@ -4,9 +4,11 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { AppHeader } from "@/components/app-header";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
+import { ProfileForm } from "@/components/settings/profile-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
+import { deriveUsername } from "@/lib/derive-username";
 
 // No Spotify calls here — keep the standard revalidate window for consistency
 // with the other authenticated pages.
@@ -20,11 +22,22 @@ export default async function SettingsPage() {
   // propagated by the current JWT session callback
   const userRow = await db.query.users.findFirst({
     where: eq(users.id, session.user.id),
-    columns: { email: true, displayName: true, spotifyId: true },
+    columns: {
+      email: true,
+      displayName: true,
+      spotifyId: true,
+      username: true,
+      isPublic: true,
+    },
   });
 
   const displayName = userRow?.displayName ?? session.user.name ?? userRow?.spotifyId ?? "";
   const email = userRow?.email ?? null;
+  // Preview du pseudo si pas encore persisté. La résolution réelle (incl. la
+  // gestion de collision) se fait dans la server action au moment du save.
+  const previewUsername =
+    userRow?.username ??
+    deriveUsername(userRow?.displayName ?? null, userRow?.spotifyId ?? "");
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
@@ -41,6 +54,18 @@ export default async function SettingsPage() {
             <span className="text-sm font-medium">Thème</span>
             <ThemeToggle />
           </div>
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-lg font-semibold">Profil public</h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Choisis un pseudo et active ton profil public pour partager tes
+            stats avec qui tu veux via une URL canonique.
+          </p>
+          <ProfileForm
+            username={previewUsername}
+            initialIsPublic={userRow?.isPublic ?? false}
+          />
         </section>
 
         <section>

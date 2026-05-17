@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
+import { ShareButton } from "@/components/share-button";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { getTopTracksFromStreams } from "@/db/queries/stats";
 import { hasCompletedImport } from "@/db/queries/imports";
+import { getProfile } from "@/db/queries/users";
 import {
   isStreamPeriod,
   periodSince,
@@ -31,10 +33,13 @@ export default async function TopTracksPage({
   const { period: rawPeriod } = await searchParams;
   const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
-  const [tracks, imported] = await Promise.all([
+  const [tracks, imported, profile] = await Promise.all([
     getTopTracksFromStreams(userId, periodSince(period), TOP_LIMIT),
     hasCompletedImport(userId),
+    getProfile(userId),
   ]);
+  const shareUsername =
+    profile?.isPublic && profile.username ? profile.username : undefined;
 
   const emptyMessage =
     period === "all" && !imported
@@ -45,13 +50,16 @@ export default async function TopTracksPage({
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Top titres</h1>
-        <Suspense
-          fallback={
-            <div className="h-10 w-75 rounded-full border bg-card" />
-          }
-        >
-          <PeriodSelector current={period} />
-        </Suspense>
+        <div className="flex flex-wrap items-center gap-2">
+          {shareUsername ? <ShareButton username={shareUsername} context="tracks" /> : null}
+          <Suspense
+            fallback={
+              <div className="h-10 w-75 rounded-full border bg-card" />
+            }
+          >
+            <PeriodSelector current={period} />
+          </Suspense>
+        </div>
       </header>
 
       {tracks.length === 0 ? (
