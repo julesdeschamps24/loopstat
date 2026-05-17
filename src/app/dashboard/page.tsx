@@ -23,6 +23,7 @@ import { getListeningTotals } from "@/db/queries/stats";
 import { getProfile } from "@/db/queries/users";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 import { ImportBanner } from "@/components/import-banner";
+import { OwnProfileCard } from "@/components/profile/own-profile-card";
 
 const WALL_CELLS = 40;
 
@@ -96,6 +97,7 @@ export default async function DashboardPage() {
         <AppHeader session={session} shareUsername={shareUsername} shareContext="dashboard" />
 
       <div className="flex flex-col gap-12">
+        <OwnProfileCard profile={profile} />
         <ImportBanner />
 
         {isFreshUser ? (
