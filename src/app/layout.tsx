@@ -9,6 +9,7 @@ import {
 import "./globals.css";
 import { auth } from "@/auth";
 import { hasCompletedImport } from "@/db/queries/imports";
+import { getProfile } from "@/db/queries/users";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -63,9 +64,10 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
-  const hasImported = session?.user?.id
-    ? await hasCompletedImport(session.user.id)
-    : false;
+  const userId = session?.user?.id;
+  const [hasImported, profile] = userId
+    ? await Promise.all([hasCompletedImport(userId), getProfile(userId)])
+    : ([false, null] as const);
 
   return (
     <html
@@ -87,7 +89,11 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-h-screen">
-            <Sidebar hasImported={hasImported} />
+            <Sidebar
+              hasImported={hasImported}
+              username={profile?.username ?? undefined}
+              isPublic={profile?.isPublic ?? false}
+            />
             <div className="flex min-w-0 flex-1 flex-col">{children}</div>
           </div>
         </ThemeProvider>

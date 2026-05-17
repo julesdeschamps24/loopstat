@@ -58,6 +58,24 @@ export function ProfileForm({ username, initialIsPublic }: Props) {
         </span>
       </label>
 
+      {/*
+        Gate on initialIsPublic (DB-persisted state) not isPublic (local
+        form state): if the user just checked the box without saving,
+        showing the link would lead to a 404 since /u/<username> still
+        returns null until the DB is updated. After a successful save,
+        the page revalidates and initialIsPublic catches up.
+      */}
+      {initialIsPublic && displayUsername ? (
+        <a
+          href={`/u/${displayUsername}`}
+          target="_blank"
+          rel="noopener"
+          className="self-start text-sm text-[#c4b5fd] hover:underline"
+        >
+          Voir mon profil public →
+        </a>
+      ) : null}
+
       {state.status === "error" ? (
         <p role="alert" className="text-xs text-red-500">
           {state.error}

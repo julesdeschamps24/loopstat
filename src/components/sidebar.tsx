@@ -10,6 +10,7 @@ import {
   Music2,
   Settings,
   Users,
+  UserSearch,
 } from "lucide-react";
 
 import { SearchBar } from "@/components/search-bar";
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/top/tracks", label: "Top titres", icon: Music2 },
   { href: "/top/artists", label: "Top artistes", icon: Users },
   { href: "/top/albums", label: "Top albums", icon: Album },
+  { href: "/find", label: "Trouver des amis", icon: UserSearch },
   { href: "/listening-clock", label: "Horloge d'écoute", icon: Clock },
   { href: "/import", label: "Importer", icon: Download },
   { href: "/settings", label: "Réglages", icon: Settings },
@@ -32,7 +34,15 @@ const PUBLIC_PATHS = new Set<string>(["/", "/login"]);
  * Sidebar verticale 220 px, fixée à gauche sur >= md, masquée sur mobile.
  * Met l'item actif en gradient cyan→magenta (palette nébuleuse).
  */
-export function Sidebar({ hasImported }: { hasImported: boolean }) {
+export function Sidebar({
+  hasImported,
+  username,
+  isPublic,
+}: {
+  hasImported: boolean;
+  username?: string;
+  isPublic?: boolean;
+}) {
   const pathname = usePathname();
 
   // Pas de sidebar sur les pages publiques (landing + login + profils
@@ -118,6 +128,22 @@ export function Sidebar({ hasImported }: { hasImported: boolean }) {
           CGU
         </Link>
       </div>
+      {username ? (
+        <Link
+          href={isPublic ? `/u/${username}` : "/settings"}
+          className={cn(
+            "mt-2 px-3 text-[11px] font-mono text-muted-foreground/50 transition hover:text-foreground",
+            !isPublic && "italic",
+          )}
+          title={
+            isPublic
+              ? "Ouvre ton profil public"
+              : "Profil privé — clique pour activer"
+          }
+        >
+          @{username}
+        </Link>
+      ) : null}
     </aside>
   );
 }
