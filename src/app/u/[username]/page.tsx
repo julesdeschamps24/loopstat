@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@/auth";
 import { RankedRow } from "@/components/stats/ranked-list";
 import {
   getTopAlbumsFromStreams,
@@ -64,6 +65,9 @@ export default async function PublicProfilePage({
   const profile = await getPublicProfileByUsername(username);
   if (!profile) notFound();
 
+  const session = await auth();
+  const isOwnProfile = session?.user?.id === profile.id;
+
   const since = periodSince(DEFAULT_PERIOD);
   const [tracks, artists, albums] = await Promise.all([
     getTopTracksFromStreams(profile.id, since, TOP_LIMIT),
@@ -79,6 +83,23 @@ export default async function PublicProfilePage({
       id="main"
       className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full"
     >
+      {isOwnProfile ? (
+        <aside
+          role="status"
+          className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#7c3aed]/30 bg-[#7c3aed]/10 px-4 py-3 text-sm"
+        >
+          <span>
+            👤 Tu visites ton propre profil — c&apos;est ce que voient les
+            autres.
+          </span>
+          <Link
+            href="/settings"
+            className="font-medium text-[#c4b5fd] hover:underline"
+          >
+            Modifier mes réglages →
+          </Link>
+        </aside>
+      ) : null}
       <header className="mb-10 flex flex-col items-center gap-4 text-center">
         {profile.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
