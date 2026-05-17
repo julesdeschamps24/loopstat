@@ -188,9 +188,19 @@ export async function getUserTopTracksByArtist(
 export async function getAlbumPlayStats(
   userId: string,
   albumId: string,
-): Promise<{ count: number }> {
+): Promise<{
+  count: number;
+  firstPlayedAt: Date | null;
+  lastPlayedAt: Date | null;
+  totalMsPlayed: number;
+}> {
   const [row] = await db
-    .select({ count: sql<number>`count(*)::int` })
+    .select({
+      count: sql<number>`count(*)::int`,
+      firstPlayedAt: sql<string | null>`min(${streams.playedAt})`,
+      lastPlayedAt: sql<string | null>`max(${streams.playedAt})`,
+      totalMsPlayed: sql<string | null>`coalesce(sum(${streams.msPlayed}), 0)`,
+    })
     .from(streams)
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
     .where(
@@ -201,7 +211,43 @@ export async function getAlbumPlayStats(
       ),
     );
 
-  return { count: Number(row?.count ?? 0) };
+  return {
+    count: Number(row?.count ?? 0),
+    firstPlayedAt: row?.firstPlayedAt ? new Date(row.firstPlayedAt) : null,
+    lastPlayedAt: row?.lastPlayedAt ? new Date(row.lastPlayedAt) : null,
+    totalMsPlayed: Number(row?.totalMsPlayed ?? 0),
+  };
+}
+
+/**
+ * Pour chaque track de l'album, son nombre de plays par l'utilisateur (incluant
+ * les tracks à 0 plays via LEFT JOIN streams). Tri par `track_number` ASC
+ * (ordre album). Utilisé par la tracklist avec barres de proportion.
+ */
+export async function getAlbumTrackPlays(
+  userId: string,
+  albumId: string,
+): Promise<
+  { trackId: string; name: string; trackNumber: number | null; plays: number }[]
+> {
+  const rows = await db
+    .select({
+      trackId: tracks.id,
+      name: tracks.name,
+      plays: sql<number>`coalesce(count(${streams.id}) filter (where ${streams.userId} = ${userId} and ${QUALIFYING_PLAY}), 0)::int`,
+    })
+    .from(tracks)
+    .leftJoin(streams, eq(streams.trackId, tracks.id))
+    .where(eq(tracks.albumId, albumId))
+    .groupBy(tracks.id, tracks.name)
+    .orderBy(asc(tracks.name));
+
+  return rows.map((r) => ({
+    trackId: r.trackId,
+    name: r.name,
+    trackNumber: null,
+    plays: Number(r.plays),
+  }));
 }
 
 /**
