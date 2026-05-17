@@ -35,6 +35,7 @@ export type StoryProps = {
   avatarUrl: string | null;
   covers: string[];
   data: FocusItem[] | RecapData;
+  hideWatermark?: boolean;
 };
 
 const LABEL_BY_TYPE: Record<"tracks" | "artists" | "albums", string> = {
@@ -50,6 +51,7 @@ export function StoryTemplate({
   avatarUrl,
   covers,
   data,
+  hideWatermark,
 }: StoryProps): ReactNode {
   return (
     <div
@@ -91,7 +93,7 @@ export function StoryTemplate({
             periodLabel={PERIOD_LABEL[config.period]}
           />
         )}
-        <Watermark username={username} scale={1.2} />
+        <Watermark username={username} scale={1.2} hidden={hideWatermark} />
       </Stack>
     </div>
   );

@@ -24,6 +24,7 @@ export type PostProps = {
   avatarUrl: string | null;
   covers: string[];
   data: FocusItem[] | RecapData;
+  hideWatermark?: boolean;
 };
 
 const LABEL_BY_TYPE: Record<"tracks" | "artists" | "albums", string> = {
@@ -39,6 +40,7 @@ export function PostTemplate({
   avatarUrl,
   covers,
   data,
+  hideWatermark,
 }: PostProps): ReactNode {
   return (
     <div
@@ -94,7 +96,7 @@ export function PostTemplate({
             periodLabel={PERIOD_LABEL[config.period]}
           />
         )}
-        <Watermark username={username} scale={1.0} />
+        <Watermark username={username} scale={1.0} hidden={hideWatermark} />
       </Stack>
     </div>
   );
