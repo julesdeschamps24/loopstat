@@ -10,6 +10,7 @@ import "./globals.css";
 import { auth } from "@/auth";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
+import { getBillingState } from "@/db/queries/billing";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -65,9 +66,13 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
   const userId = session?.user?.id;
-  const [hasImported, profile] = userId
-    ? await Promise.all([hasCompletedImport(userId), getProfile(userId)])
-    : ([false, null] as const);
+  const [hasImported, profile, billingState] = userId
+    ? await Promise.all([
+        hasCompletedImport(userId),
+        getProfile(userId),
+        getBillingState(userId),
+      ])
+    : ([false, null, { tier: "free" as const }] as const);
 
   return (
     <html
@@ -93,6 +98,16 @@ export default async function RootLayout({
               hasImported={hasImported}
               username={profile?.username ?? undefined}
               isPublic={profile?.isPublic ?? false}
+              billingTier={billingState.tier}
+              premiumExpiresAt={
+                billingState.tier === "trial"
+                  ? billingState.trialEndsAt
+                  : billingState.tier === "active"
+                    ? billingState.renewsAt
+                    : billingState.tier === "past_due" || billingState.tier === "canceled"
+                      ? billingState.expiresAt
+                      : undefined
+              }
             />
             <div className="flex min-w-0 flex-1 flex-col">{children}</div>
           </div>
