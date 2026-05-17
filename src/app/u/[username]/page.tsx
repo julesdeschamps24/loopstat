@@ -83,8 +83,10 @@ export default async function PublicProfilePage({
     columns: { profileSettings: true },
   });
   const settings = settingsRow?.profileSettings ?? {};
-  const background = isBackground(settings.background) ? settings.background : "mesh";
-  const accent = isAccent(settings.accent) ? settings.accent : "violet";
+  const background =
+    ownerIsPremium && isBackground(settings.background) ? settings.background : "mesh";
+  const accent =
+    ownerIsPremium && isAccent(settings.accent) ? settings.accent : "violet";
   const accentHex = ACCENT_HEX[accent];
 
   const wallCovers =
