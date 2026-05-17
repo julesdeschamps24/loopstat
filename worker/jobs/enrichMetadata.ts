@@ -80,11 +80,15 @@ export async function selfHealEnrich(): Promise<SelfHealResult> {
 // The batched GET /tracks?ids= endpoint returns 403 for this app's Spotify
 // credentials, so we fetch one at a time via GET /tracks/{id}.
 //
-// Pourquoi 500 ms : Spotify cap à ~180 requêtes par fenêtre glissante de 30 s
-// au niveau app. 500 ms = ~60 req / 30 s, large marge. Avec 150 ms on tenait
-// quelques secondes puis on se prenait des 429 + un ban temporaire de 15-30 min.
-// Tradeoff : 11 000 tracks × 500 ms ≈ 92 min, mais zéro crash.
-const RATE_DELAY_MS = 500;
+// Pourquoi 2000 ms : Spotify cap à ~180 requêtes par fenêtre glissante de 30 s
+// au niveau app, mais cette fenêtre est en réalité plus longue (sliding 60-90 s
+// observé empiriquement). À 500 ms = 2 req/s on tenait des heures puis on se
+// prenait quand même un 429 et l'enrich loop entrait dans une boucle de retry
+// qui maintenait l'app au-dessus du quota indéfiniment (chaque retry compte).
+// À 2000 ms = 0.5 req/s on reste sous tout seuil raisonnable, et un 429 isolé
+// se résorbe avant le call suivant.
+// Tradeoff : 11 000 tracks × 2000 ms ≈ 6 h en background, mais zéro 429.
+const RATE_DELAY_MS = 2000;
 
 // Persiste progressivement plutôt que de tout upsert à la fin : un crash
 // (429, réseau) au milieu d'une boucle de 27 minutes ne perd pas tout le
