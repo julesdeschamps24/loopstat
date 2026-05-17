@@ -13,22 +13,18 @@ import {
   type ShareCardConfig,
   type ShareFormat,
 } from "@/lib/share/card-config";
+import { prefetchImages } from "@/lib/share/prefetch-images";
 import { periodSince } from "@/lib/stats/period";
+import { shrinkAlbumCoverUrl } from "@/lib/spotify/image-url";
 
-import {
-  POST_SIZE,
-  PostTemplate,
-} from "./templates/post";
+import { POST_SIZE, PostTemplate } from "./templates/post";
 import {
   STORY_SIZE,
   StoryTemplate,
   type FocusItem,
   type RecapData,
 } from "./templates/story";
-import {
-  TWITTER_SIZE,
-  TwitterTemplate,
-} from "./templates/twitter";
+import { TWITTER_SIZE, TwitterTemplate } from "./templates/twitter";
 
 export const dynamic = "force-dynamic";
 
@@ -40,9 +36,7 @@ const SIZE_BY_FORMAT = {
 
 // Wall background tiles: 6 cols × ceil(height/180) rows. Story is
 // 1080x1920 → 11 rows = 66 tiles. Post is 1080x1080 → 6 rows = 36.
-// Twitter is 1200x630 → 4 rows = 24. Closes follow-up issue #16
-// (story wall was leaving the bottom half empty at the previous
-// flat WALL_COVER_LIMIT=36).
+// Twitter is 1200x630 → 4 rows = 24.
 const WALL_COVER_LIMITS: Record<ShareFormat, number> = {
   twitter: 24,
   post: 36,
@@ -124,6 +118,26 @@ async function fetchRecap(
   };
 }
 
+// Apply Spotify CDN size shrinking + inline as data URL using the
+// prefetch cache. Returns the original URL if no cached version is
+// available (Satori will fall back to its own network fetch).
+function inline(
+  raw: string | null | undefined,
+  size: "medium" | "small",
+  cache: Map<string, string>,
+): string | null {
+  if (!raw) return null;
+  const shrunk = shrinkAlbumCoverUrl(raw, size) ?? raw;
+  return cache.get(shrunk) ?? shrunk;
+}
+
+function inlineItems(
+  items: FocusItem[],
+  cache: Map<string, string>,
+): FocusItem[] {
+  return items.map((it) => ({ ...it, imageUrl: inline(it.imageUrl, "medium", cache) }));
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const username = url.searchParams.get("username");
@@ -145,7 +159,7 @@ export async function GET(req: Request) {
   const config = parseShareCardParams(url.searchParams);
   const size = SIZE_BY_FORMAT[config.format];
 
-  const [data, covers] = await Promise.all([
+  const [data, rawCovers] = await Promise.all([
     config.mode === "focus"
       ? fetchFocus(profile.id, config)
       : fetchRecap(profile.id, config),
@@ -158,14 +172,52 @@ export async function GET(req: Request) {
       : Promise.resolve([] as string[]),
   ]);
 
+  // Collect every URL that needs to land in the PNG, shrink them to
+  // the right CDN size, then prefetch in parallel into data URLs.
+  // Bypasses Satori's serial image loader (the wall background alone
+  // was ~70 sequential fetches = ~5s per render).
+  const wallShrunk = rawCovers
+    .map((u) => shrinkAlbumCoverUrl(u, "small"))
+    .filter((u): u is string => u !== null);
+  const itemsForUrls: FocusItem[] =
+    config.mode === "focus"
+      ? (data as FocusItem[])
+      : [
+          ...(data as RecapData).tracks,
+          ...(data as RecapData).artists,
+          ...(data as RecapData).albums,
+        ];
+  const itemShrunk = itemsForUrls
+    .map((it) => (it.imageUrl ? shrinkAlbumCoverUrl(it.imageUrl, "medium") : null))
+    .filter((u): u is string => u !== null);
+  const allUrls = [
+    ...(profile.avatarUrl ? [profile.avatarUrl] : []),
+    ...itemShrunk,
+    ...wallShrunk,
+  ];
+  const cache = await prefetchImages(allUrls);
+
   const displayName = profile.displayName ?? profile.username;
+  const inlinedAvatar = profile.avatarUrl
+    ? cache.get(profile.avatarUrl) ?? profile.avatarUrl
+    : null;
+  const inlinedCovers = wallShrunk.map((u) => cache.get(u) ?? u);
+  const inlinedData =
+    config.mode === "focus"
+      ? inlineItems(data as FocusItem[], cache)
+      : {
+          tracks: inlineItems((data as RecapData).tracks, cache),
+          artists: inlineItems((data as RecapData).artists, cache),
+          albums: inlineItems((data as RecapData).albums, cache),
+        };
+
   const props = {
     config,
     username: profile.username,
     displayName,
-    avatarUrl: profile.avatarUrl,
-    covers,
-    data,
+    avatarUrl: inlinedAvatar,
+    covers: inlinedCovers,
+    data: inlinedData,
   };
 
   try {
