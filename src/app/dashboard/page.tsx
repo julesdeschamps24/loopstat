@@ -19,6 +19,7 @@ import { StatCard } from "@/components/stats/stat-card";
 import { EmptyState } from "@/components/stats/empty-state";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { fetchTopArtists, fetchTopTracks } from "@/lib/spotify/top";
+import { isPremium } from "@/db/queries/billing";
 import { getListeningTotals } from "@/db/queries/stats";
 import { getProfile } from "@/db/queries/users";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
@@ -50,13 +51,14 @@ export default async function DashboardPage() {
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
-  const [totals, topTracks, topArtists, topTracks1y, profile] =
+  const [totals, topTracks, topArtists, topTracks1y, profile, premium] =
     await Promise.all([
       getListeningTotals(userId),
       fetchTopTracks(userId, "4w").catch(() => []),
       fetchTopArtists(userId, "4w").catch(() => []),
       fetchTopTracks(userId, "1y").catch(() => []),
       getProfile(userId),
+      isPremium(userId),
     ]);
   const shareUsername =
     profile?.isPublic && profile.username ? profile.username : undefined;
@@ -97,7 +99,7 @@ export default async function DashboardPage() {
         <AppHeader session={session} shareUsername={shareUsername} shareContext="dashboard" />
 
       <div className="flex flex-col gap-12">
-        <OwnProfileCard profile={profile} />
+        <OwnProfileCard profile={profile} isPremium={premium} />
         <ImportBanner />
 
         {isFreshUser ? (

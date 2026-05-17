@@ -1,11 +1,17 @@
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { Crown, ExternalLink } from "lucide-react";
 
 import { CopyProfileLinkButton } from "@/components/profile/own-profile-card-actions";
 import type { ProfileRow } from "@/db/queries/users";
 import { cn, glassCard } from "@/lib/utils";
 
-export function OwnProfileCard({ profile }: { profile: ProfileRow | null }) {
+export function OwnProfileCard({
+  profile,
+  isPremium,
+}: {
+  profile: ProfileRow | null;
+  isPremium: boolean;
+}) {
   if (!profile?.username) return null;
 
   if (!profile.isPublic) {
@@ -41,12 +47,28 @@ export function OwnProfileCard({ profile }: { profile: ProfileRow | null }) {
     <section className={cn(glassCard, "flex flex-col gap-4 p-5")}>
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium">Mon profil public</p>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
-          <span className="size-1.5 rounded-full bg-emerald-400" />
-          Public
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+            <span className="size-1.5 rounded-full bg-emerald-400" />
+            Public
+          </span>
+          {isPremium ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#7c3aed]/15 px-2.5 py-0.5 text-xs font-medium text-[#c4b5fd]">
+              <Crown className="size-3" />
+              Premium
+            </span>
+          ) : null}
+        </div>
       </div>
       <p className="font-mono text-sm text-muted-foreground">{url}</p>
+      {!isPremium ? (
+        <p className="text-xs text-muted-foreground">
+          💡 Passe Premium pour retirer le watermark des cartes téléchargées ·{" "}
+          <Link href="/pricing" className="underline hover:text-foreground">
+            Découvrir →
+          </Link>
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         <CopyProfileLinkButton username={profile.username} />
         <Link

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
+import { isPremium } from "@/db/queries/billing";
 import { AlbumWall } from "@/components/album-wall";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { db } from "@/db/client";
@@ -73,6 +74,7 @@ export default async function PublicProfilePage({
 
   const session = await auth();
   const isOwnProfile = session?.user?.id === profile.id;
+  const ownerIsPremium = await isPremium(profile.id);
 
   // `getPublicProfileByUsername` returns the short summary used by the rest
   // of the page — we need a fresh DB hit for the appearance settings.
@@ -130,22 +132,22 @@ export default async function PublicProfilePage({
         {isOwnProfile ? (
           <aside
             role="status"
-            className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm"
             style={{
-              borderWidth: "1px",
-              borderStyle: "solid",
               borderColor: "color-mix(in srgb, var(--ls-accent, #7c3aed) 30%, transparent)",
               background: "color-mix(in srgb, var(--ls-accent, #7c3aed) 10%, transparent)",
             }}
+            className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm"
           >
             <span>
-              👤 Tu visites ton propre profil — c&apos;est ce que voient les
-              autres.
+              {ownerIsPremium ? "👑" : "👤"}{" "}
+              {ownerIsPremium
+                ? "Profil Premium"
+                : "Tu visites ton propre profil — c’est ce que voient les autres."}
             </span>
             <Link
               href="/settings"
-              className="font-medium hover:underline"
               style={{ color: "var(--ls-accent, #7c3aed)" }}
+              className="font-medium hover:underline"
             >
               Modifier mes réglages →
             </Link>
