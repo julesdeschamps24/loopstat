@@ -19,6 +19,12 @@ const bytea = customType<{ data: Buffer; default: false }>({
   dataType: () => "bytea",
 });
 
+export type ProfileSettings = {
+  background?: string;
+  theme?: string;
+  pinnedSections?: string[];
+};
+
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   spotifyId: text("spotify_id").notNull().unique(),
@@ -27,6 +33,14 @@ export const users = pgTable("users", {
   avatarUrl: text("avatar_url"),
   country: text("country"),
   product: text("product"),
+  // Stocké en lowercase (validation côté server action). Nullable : seuls les
+  // users qui activent leur profil public en choisissent un.
+  username: text("username").unique(),
+  isPublic: boolean("is_public").notNull().default(false),
+  profileSettings: jsonb("profile_settings")
+    .$type<ProfileSettings>()
+    .notNull()
+    .default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
