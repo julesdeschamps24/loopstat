@@ -11,7 +11,20 @@ const url =
   process.env.DATABASE_URL ??
   "postgres://placeholder:placeholder@placeholder:5432/placeholder";
 
-const queryClient = postgres(url, { max: 10 });
+// Cache du pool postgres-js sur globalThis pour survivre au HMR Next : sans
+// ça, chaque hot-reload ré-instancie un pool (max=10) sans fermer le
+// précédent, et Postgres finit par renvoyer "too many clients already".
+// Pareil pour BullMQ dans worker/queue.ts.
+const globalForDb = globalThis as unknown as {
+  __pgQueryClient?: ReturnType<typeof postgres>;
+};
+
+const queryClient =
+  globalForDb.__pgQueryClient ?? postgres(url, { max: 10 });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForDb.__pgQueryClient = queryClient;
+}
 
 export const db = drizzle(queryClient, { schema, casing: "snake_case" });
 export type DB = typeof db;
