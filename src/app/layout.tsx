@@ -94,21 +94,23 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-h-screen">
-            <Sidebar
-              hasImported={hasImported}
-              username={profile?.username ?? undefined}
-              isPublic={profile?.isPublic ?? false}
-              billingTier={billingState.tier}
-              premiumExpiresAt={
-                billingState.tier === "trial"
-                  ? billingState.trialEndsAt
-                  : billingState.tier === "active"
-                    ? billingState.renewsAt
-                    : billingState.tier === "past_due" || billingState.tier === "canceled"
-                      ? billingState.expiresAt
-                      : undefined
-              }
-            />
+            {userId && (
+              <Sidebar
+                hasImported={hasImported}
+                username={profile?.username ?? undefined}
+                isPublic={profile?.isPublic ?? false}
+                billingTier={billingState.tier}
+                premiumExpiresAt={
+                  billingState.tier === "trial"
+                    ? billingState.trialEndsAt
+                    : billingState.tier === "active"
+                      ? billingState.renewsAt
+                      : billingState.tier === "past_due" || billingState.tier === "canceled"
+                        ? billingState.expiresAt
+                        : undefined
+                }
+              />
+            )}
             <div className="flex min-w-0 flex-1 flex-col">{children}</div>
           </div>
         </ThemeProvider>
