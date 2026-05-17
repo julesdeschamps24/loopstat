@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       const sub = event.data.object;
       const periodEndSec =
         sub.trial_end ??
-        ((sub as any).current_period_end as number | undefined) ??
+        ((sub as unknown as { current_period_end?: number }).current_period_end) ??
         sub.items.data[0]?.current_period_end;
       await updateBillingFromWebhook(sub.customer as string, {
         subscriptionId: sub.id,
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       await updateBillingFromWebhook(sub.customer as string, {
         status: "canceled",
         periodEnd: new Date(
-          (((sub as any).current_period_end as number | undefined) ??
+          (((sub as unknown as { current_period_end?: number }).current_period_end) ??
             sub.items.data[0]?.current_period_end ??
             0) * 1000
         ),
