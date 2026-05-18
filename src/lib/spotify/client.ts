@@ -152,7 +152,18 @@ export async function spotifyFetch<T>(
     const retryAfterMs = parseRetryAfter(res.headers.get("Retry-After"));
     log.warn({ path, retryAfterMs }, "Spotify 429, retrying once");
     await sleep(retryAfterMs);
+    // Le sleep ci-dessus peut durer jusqu'à 1 h sur ban prolongé. Les access
+    // tokens Spotify durent ~1 h aussi → fortes chances qu'il ait expiré
+    // pendant l'attente. Refresh inconditionnellement avant le retry.
+    token = await getValidAccessToken(userId);
     res = await doFetch(token);
+
+    if (res.status === 401) {
+      // Edge case : le token venait juste d'expirer après notre refresh check
+      // mais avant l'arrivée de la réponse Spotify. Refresh + retry une dernière fois.
+      token = await refreshAccessToken(userId);
+      res = await doFetch(token);
+    }
 
     if (res.status === 429) {
       const bodyText = await res.text();
