@@ -182,7 +182,11 @@ export async function enrichMetadata(
       // the already-flushed chunks are durable so we resume cleanly.
       while (fetched === null) {
         try {
-          fetched = await spotifyFetch<SpotifyTrack>(userId, `/tracks/${id}`);
+          fetched = await spotifyFetch<SpotifyTrack>(userId, `/tracks/${id}`, {
+            // Worker bg : respecter de longs Retry-After plutôt que de hammer
+            // Spotify dans une boucle (cf. spotifyFetch options).
+            maxRetryAfterMs: 3_600_000,
+          });
         } catch (err) {
           if (
             err instanceof SpotifyError &&

@@ -19,22 +19,18 @@ export class SpotifyError extends Error {
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 const API_BASE = "https://api.spotify.com/v1";
 const REFRESH_THRESHOLD_MS = 60_000;
-// Cap à 1 h : Spotify peut renvoyer un Retry-After de plusieurs dizaines de
-// minutes lors d'un ban prolongé. L'ancien cap à 10 s nous faisait taper
-// Spotify dès la fin de leur fenêtre courte, ce qui prolongeait le ban
-// indéfiniment (chaque hit pendant le ban réinitialise leur compteur).
-// 1 h couvre tous les bans observés en pratique.
-const MAX_RETRY_AFTER_MS = 3_600_000;
+// Cap par défaut pour user-facing pages : 10 s. Si Spotify renvoie un
+// Retry-After plus long (ban prolongé), on l'ignore et on throw rapidement —
+// vaut mieux une page qui fail vite qu'un spinner d'1 h. Le worker bg passe
+// `maxRetryAfterMs: 3_600_000` pour respecter de longs bans (cf. enrichMetadata).
+const DEFAULT_MAX_RETRY_AFTER_MS = 10_000;
 const DEFAULT_RETRY_AFTER_MS = 1_000;
 
-/**
- * Parse Retry-After header as integer seconds, capped at 1 h, default 1 s.
- */
-function parseRetryAfter(header: string | null): number {
+function parseRetryAfter(header: string | null, capMs: number): number {
   if (!header) return DEFAULT_RETRY_AFTER_MS;
   const seconds = parseInt(header, 10);
   if (isNaN(seconds) || seconds <= 0) return DEFAULT_RETRY_AFTER_MS;
-  return Math.min(seconds * 1000, MAX_RETRY_AFTER_MS);
+  return Math.min(seconds * 1000, capMs);
 }
 
 /**
@@ -80,7 +76,7 @@ async function refreshAccessToken(userId: string): Promise<string> {
   let res = await doTokenRequest();
 
   if (res.status === 429) {
-    const retryAfterMs = parseRetryAfter(res.headers.get("Retry-After"));
+    const retryAfterMs = parseRetryAfter(res.headers.get("Retry-After"), DEFAULT_MAX_RETRY_AFTER_MS);
     log.warn({ path: "/api/token", retryAfterMs }, "Spotify 429, retrying once");
     await sleep(retryAfterMs);
     res = await doTokenRequest();
@@ -126,16 +122,28 @@ export async function getValidAccessToken(userId: string): Promise<string> {
   return refreshAccessToken(userId);
 }
 
+export interface SpotifyFetchOptions extends RequestInit {
+  /**
+   * Cap maximum sur le Retry-After respecté (en ms). Au-delà, on throw au
+   * lieu d'attendre. Default 10 s pour user-facing pages (fail-fast). Le
+   * worker bg passe `3_600_000` pour respecter de longs bans.
+   */
+  maxRetryAfterMs?: number;
+}
+
 export async function spotifyFetch<T>(
   userId: string,
   path: string,
-  init?: RequestInit,
+  init?: SpotifyFetchOptions,
 ): Promise<T> {
+  const { maxRetryAfterMs = DEFAULT_MAX_RETRY_AFTER_MS, ...fetchInit } =
+    init ?? {};
+
   const doFetch = async (token: string) =>
     fetch(`${API_BASE}${path}`, {
-      ...init,
+      ...fetchInit,
       headers: {
-        ...init?.headers,
+        ...fetchInit.headers,
         Authorization: `Bearer ${token}`,
       },
     });
@@ -149,18 +157,20 @@ export async function spotifyFetch<T>(
   }
 
   if (res.status === 429) {
-    const retryAfterMs = parseRetryAfter(res.headers.get("Retry-After"));
+    const retryAfterMs = parseRetryAfter(
+      res.headers.get("Retry-After"),
+      maxRetryAfterMs,
+    );
     log.warn({ path, retryAfterMs }, "Spotify 429, retrying once");
     await sleep(retryAfterMs);
-    // Le sleep ci-dessus peut durer jusqu'à 1 h sur ban prolongé. Les access
-    // tokens Spotify durent ~1 h aussi → fortes chances qu'il ait expiré
-    // pendant l'attente. Refresh inconditionnellement avant le retry.
+    // Le sleep peut durer jusqu'à maxRetryAfterMs. Les access tokens Spotify
+    // durent ~1 h ; si le sleep approche ce seuil, le token a sûrement
+    // expiré. Refresh inconditionnellement avant le retry.
     token = await getValidAccessToken(userId);
     res = await doFetch(token);
 
     if (res.status === 401) {
-      // Edge case : le token venait juste d'expirer après notre refresh check
-      // mais avant l'arrivée de la réponse Spotify. Refresh + retry une dernière fois.
+      // Edge case : token expiré entre le refresh check et la réponse Spotify.
       token = await refreshAccessToken(userId);
       res = await doFetch(token);
     }
