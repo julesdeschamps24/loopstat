@@ -80,15 +80,15 @@ export async function selfHealEnrich(): Promise<SelfHealResult> {
 // The batched GET /tracks?ids= endpoint returns 403 for this app's Spotify
 // credentials, so we fetch one at a time via GET /tracks/{id}.
 //
-// Pourquoi 2000 ms : Spotify cap à ~180 requêtes par fenêtre glissante de 30 s
-// au niveau app, mais cette fenêtre est en réalité plus longue (sliding 60-90 s
-// observé empiriquement). À 500 ms = 2 req/s on tenait des heures puis on se
-// prenait quand même un 429 et l'enrich loop entrait dans une boucle de retry
-// qui maintenait l'app au-dessus du quota indéfiniment (chaque retry compte).
-// À 2000 ms = 0.5 req/s on reste sous tout seuil raisonnable, et un 429 isolé
-// se résorbe avant le call suivant.
-// Tradeoff : 11 000 tracks × 2000 ms ≈ 6 h en background, mais zéro 429.
-const RATE_DELAY_MS = 2000;
+// Pourquoi 30 000 ms (0.033 req/s) : observé empiriquement, l'app en dev tier
+// se faisait toujours bannir 1 h à 2 s/track quand un catalog massif (~10k
+// tracks) était enrichi à froid. À 30 s on est sûr de ne jamais déclencher le
+// throttle, MÊME en bg continu. Tradeoff : 10k tracks × 30 s ≈ 87 h ≈ 3.6 j,
+// mais ça tourne en arrière-plan sans urgence — les pages /album/[id] que
+// l'utilisateur visite sont enrichies à la volée à 0 appel Spotify
+// supplémentaire (cf. lazy enrich dans src/app/album/[id]/page.tsx).
+// Demander l'Extended Quota Mode à Spotify pour baisser ce délai.
+const RATE_DELAY_MS = 30_000;
 
 // Persiste progressivement plutôt que de tout upsert à la fin : un crash
 // (429, réseau) au milieu d'une boucle de 27 minutes ne perd pas tout le

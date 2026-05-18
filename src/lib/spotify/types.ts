@@ -29,11 +29,22 @@ export interface SpotifyAlbumSimple {
 
 /**
  * Album-detail response (`GET /albums/{id}`). Extends the simple shape with
- * the embedded tracklist — only the fields the album page actually renders.
+ * the embedded tracklist. Spotify renvoie les tracks "simplifiés" qui
+ * contiennent assez pour enrichir notre catalog SANS appel /tracks/{id}
+ * supplémentaire (seul `popularity` est absent — non critique).
  */
 export interface SpotifyAlbum extends SpotifyAlbumSimple {
   tracks?: {
-    items: { id: string; name: string; track_number?: number }[];
+    items: {
+      id: string;
+      name: string;
+      track_number?: number;
+      duration_ms?: number;
+      explicit?: boolean;
+      preview_url?: string | null;
+      artists?: SpotifyArtistSimple[];
+      external_ids?: { isrc?: string };
+    }[];
   };
 }
 

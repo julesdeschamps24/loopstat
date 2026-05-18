@@ -9,8 +9,9 @@ import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { formatDate, formatRelativeDate } from "@/lib/format/date";
+import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
 import { spotifyFetch } from "@/lib/spotify/client";
-import type { SpotifyAlbum } from "@/lib/spotify/types";
+import type { SpotifyAlbum, SpotifyTrack } from "@/lib/spotify/types";
 import {
   getAlbumBreakdownByWindow,
   getAlbumListeningHours,
@@ -49,6 +50,40 @@ export default async function AlbumDetailPage({
 
   const primaryArtist = album.artists?.[0];
   const primaryArtistId = primaryArtist?.id ?? null;
+
+  // Lazy-enrich : la réponse Spotify /albums/{id} contient déjà tous les champs
+  // dont upsertCatalogFromTracks a besoin (sauf popularity, non critique).
+  // On enrichit donc tous les tracks de cet album en 0 appel Spotify
+  // supplémentaire. Permet à la page d'afficher les bons artistes/durées sans
+  // attendre que le bulk worker arrive jusqu'à cet album.
+  // Best-effort : un échec ne bloque pas le render (le worker rattrapera).
+  try {
+    const albumSimple = {
+      id: album.id,
+      name: album.name,
+      release_date: album.release_date,
+      release_date_precision: album.release_date_precision,
+      images: album.images,
+      total_tracks: album.total_tracks,
+      album_type: album.album_type,
+      artists: album.artists,
+    };
+    const lazyTracks: SpotifyTrack[] = (album.tracks?.items ?? [])
+      .filter((t) => t.duration_ms != null)
+      .map((t) => ({
+        id: t.id,
+        name: t.name,
+        duration_ms: t.duration_ms!,
+        explicit: t.explicit,
+        preview_url: t.preview_url,
+        external_ids: t.external_ids,
+        artists: t.artists ?? album.artists ?? [],
+        album: albumSimple,
+      }));
+    if (lazyTracks.length > 0) await upsertCatalogFromTracks(lazyTracks);
+  } catch {
+    // Best-effort, ne pas bloquer le render
+  }
 
   const [stats, trackPlays, breakdown, monthly, hours, quality, otherAlbums] =
     await Promise.all([
