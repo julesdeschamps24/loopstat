@@ -88,7 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               .insert(users)
               .values({
                 spotifyId,
-                email: profile.email ?? null,
+                email: profile.email ?? `spotify_${spotifyId}@placeholder.invalid`,
                 displayName: (profile as { display_name?: string }).display_name ?? null,
                 avatarUrl:
                   (profile as { images?: { url: string }[] }).images?.[0]?.url ?? null,
@@ -128,7 +128,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         if (u) {
           token.userId = u.id;
-          token.spotifyId = u.spotifyId;
+          token.spotifyId = u.spotifyId ?? undefined;
           token.displayName = u.displayName;
           token.avatarUrl = u.avatarUrl;
         }

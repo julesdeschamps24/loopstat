@@ -46,7 +46,7 @@ export async function getOrCreateStripeCustomer(
 
   const customer = await stripe.customers.create({
     email: row.email ?? undefined,
-    name: row.displayName ?? row.spotifyId,
+    name: row.displayName ?? row.spotifyId ?? undefined,
     metadata: { userId },
   });
 
