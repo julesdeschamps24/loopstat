@@ -19,11 +19,16 @@ export class SpotifyError extends Error {
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 const API_BASE = "https://api.spotify.com/v1";
 const REFRESH_THRESHOLD_MS = 60_000;
-const MAX_RETRY_AFTER_MS = 10_000;
+// Cap à 1 h : Spotify peut renvoyer un Retry-After de plusieurs dizaines de
+// minutes lors d'un ban prolongé. L'ancien cap à 10 s nous faisait taper
+// Spotify dès la fin de leur fenêtre courte, ce qui prolongeait le ban
+// indéfiniment (chaque hit pendant le ban réinitialise leur compteur).
+// 1 h couvre tous les bans observés en pratique.
+const MAX_RETRY_AFTER_MS = 3_600_000;
 const DEFAULT_RETRY_AFTER_MS = 1_000;
 
 /**
- * Parse Retry-After header as integer seconds, capped at 10s, default 1s.
+ * Parse Retry-After header as integer seconds, capped at 1 h, default 1 s.
  */
 function parseRetryAfter(header: string | null): number {
   if (!header) return DEFAULT_RETRY_AFTER_MS;
