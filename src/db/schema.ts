@@ -47,7 +47,6 @@ export const artists = pgTable("artists", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   imageUrl: text("image_url"),
-  genres: jsonb("genres").$type<string[]>().default([]).notNull(),
   mbid: uuid("mbid"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
