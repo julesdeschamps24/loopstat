@@ -234,10 +234,20 @@ export async function importHistory(
     // du drift de timestamp seconde-vs-ms entre les deux sources. Voir
     // pruneOverlappingApiStreams() pour le détail.
     if (streamRows.length > 0) {
-      const playedAts = streamRows.map((r) => r.playedAt.getTime());
-      const since = new Date(Math.min(...playedAts));
-      const until = new Date(Math.max(...playedAts));
-      const pruned = await pruneOverlappingApiStreams(userId, since, until);
+      // Loop instead of Math.min(...arr) — with 100k+ stream rows the spread
+      // hits V8's max-arg limit and throws "Maximum call stack size exceeded".
+      let minMs = Number.POSITIVE_INFINITY;
+      let maxMs = Number.NEGATIVE_INFINITY;
+      for (const row of streamRows) {
+        const t = row.playedAt.getTime();
+        if (t < minMs) minMs = t;
+        if (t > maxMs) maxMs = t;
+      }
+      const pruned = await pruneOverlappingApiStreams(
+        userId,
+        new Date(minMs),
+        new Date(maxMs),
+      );
       if (pruned > 0) {
         wlog.info({ userId, pruned }, "pruned overlapping api streams");
       }
