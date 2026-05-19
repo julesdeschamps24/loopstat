@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { Music } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ArtistAvatar } from "@/components/ui/artist-avatar";
 
 /**
  * A single numbered entity row (track, artist, album, genre…).
  *
  * Renders as a `next/link` when `href` is provided, otherwise a plain `div`.
  * The image is optional — when absent a neutral placeholder is shown.
+ * When `avatarName` is set (artist rows), a gradient avatar is shown instead
+ * of the generic music-note placeholder.
  */
 export type RankedRowProps = {
   /** 1-based rank, displayed on the left. */
@@ -17,6 +20,8 @@ export type RankedRowProps = {
   subtitle?: string;
   /** Optional artwork URL. When omitted a placeholder icon is rendered. */
   imageUrl?: string;
+  /** When set and no imageUrl, renders an ArtistAvatar with this name. */
+  avatarName?: string;
   /** Optional right-side content, e.g. a playcount badge. */
   metric?: React.ReactNode;
   /** When set, the whole row becomes a link to this href. */
@@ -28,6 +33,7 @@ export function RankedRow({
   title,
   subtitle,
   imageUrl,
+  avatarName,
   metric,
   href,
 }: RankedRowProps) {
@@ -45,6 +51,8 @@ export function RankedRow({
           decoding="async"
           className="size-12 shrink-0 rounded-lg object-cover"
         />
+      ) : avatarName ? (
+        <ArtistAvatar name={avatarName} size={48} className="rounded-lg" />
       ) : (
         <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted">
           <Music className="size-5 text-muted-foreground" />
