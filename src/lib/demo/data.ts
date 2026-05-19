@@ -132,3 +132,244 @@ export const DEMO_LISTENING_HOURS: { hour: number; count: number }[] = [
 
 export const DEMO_TOTAL_PLAYS = 12_847;
 export const DEMO_TOTAL_HOURS_LISTENED = 423;
+
+// =================================================================
+// Detail-level helpers : synthesize per-entity stats from base fixtures
+// for the demo mode on /track/[id], /artist/[id], /album/[id] pages.
+// All synthesis is deterministic (seeded by entity ID) so the same demo
+// entity always shows the same stats across renders.
+// =================================================================
+
+/**
+ * Returns true if the given ID starts with "demo:" — used by detail pages
+ * to detect when to render demo data instead of querying the real DB.
+ */
+export function isDemoId(id: string): boolean {
+  return id.startsWith("demo:");
+}
+
+function seedFromString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (h * 31 + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+function synthesizeFirstLastDates(seed: number): {
+  firstPlayedAt: Date;
+  lastPlayedAt: Date;
+} {
+  const now = new Date();
+  // First play between 6 and 24 months ago (deterministic from seed)
+  const firstMonthsAgo = 6 + (seed % 18);
+  const firstPlayedAt = new Date(
+    now.getFullYear(),
+    now.getMonth() - firstMonthsAgo,
+    1 + (seed % 28),
+  );
+  // Last play within the last 14 days (deterministic from seed)
+  const lastDaysAgo = (seed % 14) + 1;
+  const lastPlayedAt = new Date(
+    now.getTime() - lastDaysAgo * 24 * 60 * 60 * 1000,
+  );
+  return { firstPlayedAt, lastPlayedAt };
+}
+
+function synthesizePeriodBreakdown(
+  totalPlays: number,
+): Record<"4w" | "6m" | "1y" | "all", number> {
+  return {
+    "4w": Math.round(totalPlays * 0.08),
+    "6m": Math.round(totalPlays * 0.3),
+    "1y": Math.round(totalPlays * 0.75),
+    all: totalPlays,
+  };
+}
+
+function synthesizeMonthlyPlays(
+  totalPlays: number,
+): { month: Date; plays: number }[] {
+  // 18 months ago to now, with a bell-shaped distribution centered on month 12
+  // (= 6 months ago). Plays sum approximately to totalPlays.
+  const result: { month: Date; plays: number }[] = [];
+  const now = new Date();
+  const months = 18;
+  const weights: number[] = [];
+  for (let i = 0; i < months; i++) {
+    const x = (i - 12) / 4;
+    weights.push(Math.exp((-x * x) / 2));
+  }
+  const weightSum = weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < months; i++) {
+    const month = new Date(
+      now.getFullYear(),
+      now.getMonth() - (months - 1 - i),
+      1,
+    );
+    const plays = Math.max(1, Math.round((weights[i] / weightSum) * totalPlays));
+    result.push({ month, plays });
+  }
+  return result;
+}
+
+function synthesizeHours(
+  totalPlays: number,
+): { hour: number; count: number }[] {
+  // Scale DEMO_LISTENING_HOURS so it sums approximately to totalPlays
+  const baseSum = DEMO_LISTENING_HOURS.reduce((a, b) => a + b.count, 0);
+  const scale = totalPlays / baseSum;
+  return DEMO_LISTENING_HOURS.map((h) => ({
+    hour: h.hour,
+    count: Math.max(0, Math.round(h.count * scale)),
+  }));
+}
+
+function synthesizeQuality(seed: number): {
+  avgMs: number;
+  skipRate: number;
+} {
+  // avgMs : 180s to 220s (plausible track listen duration)
+  const avgMs = 180_000 + ((seed * 7) % 40_000);
+  // skipRate : 3% to 18% (plausible)
+  const skipRate = 0.03 + ((seed % 15) / 100);
+  return { avgMs, skipRate };
+}
+
+/**
+ * Demo track detail : returns null if id isn't a known demo track,
+ * otherwise the full shape needed by /track/[id] in demo mode.
+ */
+export function getDemoTrack(id: string): {
+  track: (typeof DEMO_TOP_TRACKS)[number];
+  stats: { count: number; firstPlayedAt: Date; lastPlayedAt: Date };
+  breakdown: Record<"4w" | "6m" | "1y" | "all", number>;
+  monthly: { month: Date; plays: number }[];
+  hours: { hour: number; count: number }[];
+  quality: { avgMs: number; skipRate: number };
+} | null {
+  if (!isDemoId(id)) return null;
+  const track = DEMO_TOP_TRACKS.find((t) => t.trackId === id);
+  if (!track) return null;
+  const seed = seedFromString(id);
+  return {
+    track,
+    stats: {
+      count: track.plays,
+      ...synthesizeFirstLastDates(seed),
+    },
+    breakdown: synthesizePeriodBreakdown(track.plays),
+    monthly: synthesizeMonthlyPlays(track.plays),
+    hours: synthesizeHours(track.plays),
+    quality: synthesizeQuality(seed),
+  };
+}
+
+/**
+ * Demo artist detail : returns null if id isn't a known demo artist,
+ * otherwise the artist + top tracks of that artist (filtered from
+ * DEMO_TOP_TRACKS by name match).
+ */
+export function getDemoArtist(id: string): {
+  artist: (typeof DEMO_TOP_ARTISTS)[number];
+  stats: { count: number };
+  topTracks: { trackId: string; trackName: string; playCount: number }[];
+} | null {
+  if (!isDemoId(id)) return null;
+  const artist = DEMO_TOP_ARTISTS.find((a) => a.artistId === id);
+  if (!artist) return null;
+  const topTracks = DEMO_TOP_TRACKS.filter((t) =>
+    t.artistNames.includes(artist.name),
+  )
+    .slice(0, 10)
+    .map((t) => ({
+      trackId: t.trackId,
+      trackName: t.name,
+      playCount: t.plays,
+    }));
+  return {
+    artist,
+    stats: { count: artist.plays },
+    topTracks,
+  };
+}
+
+/**
+ * Demo album detail : returns null if id isn't a known demo album,
+ * otherwise the full shape needed by /album/[id] in demo mode.
+ * Tracks of the album = demo tracks by the same primary artist. If less
+ * than 5, padded with synthetic entries.
+ */
+export function getDemoAlbum(id: string): {
+  album: (typeof DEMO_TOP_ALBUMS)[number];
+  stats: {
+    count: number;
+    firstPlayedAt: Date;
+    lastPlayedAt: Date;
+    totalMsPlayed: number;
+  };
+  tracks: {
+    trackId: string;
+    name: string;
+    trackNumber: number;
+    plays: number;
+  }[];
+  breakdown: Record<"4w" | "6m" | "1y" | "all", number>;
+  monthly: { month: Date; plays: number }[];
+  hours: { hour: number; count: number }[];
+  quality: { avgMs: number; skipRate: number };
+  otherAlbums: (typeof DEMO_TOP_ALBUMS)[number][];
+} | null {
+  if (!isDemoId(id)) return null;
+  const album = DEMO_TOP_ALBUMS.find((a) => a.albumId === id);
+  if (!album) return null;
+  const seed = seedFromString(id);
+  const albumArtist = album.artistNames[0];
+
+  // Tracks of this album : DEMO_TOP_TRACKS by same primary artist
+  const sourceTracks = DEMO_TOP_TRACKS.filter(
+    (t) => t.artistNames[0] === albumArtist,
+  ).slice(0, 12);
+
+  const tracks: {
+    trackId: string;
+    name: string;
+    trackNumber: number;
+    plays: number;
+  }[] = sourceTracks.map((t, i) => ({
+    trackId: t.trackId,
+    name: t.name,
+    trackNumber: i + 1,
+    plays: t.plays,
+  }));
+
+  // Pad to at least 5 entries with synthetic ones (deterministic from seed)
+  while (tracks.length < 5) {
+    const i = tracks.length;
+    tracks.push({
+      trackId: `${id}-track-${i}`,
+      name: `Interlude ${i + 1}`,
+      trackNumber: i + 1,
+      plays: Math.max(1, Math.round(album.plays / 20)),
+    });
+  }
+
+  const otherAlbums = DEMO_TOP_ALBUMS.filter(
+    (a) => a.artistNames[0] === albumArtist && a.albumId !== id,
+  ).slice(0, 6);
+
+  return {
+    album,
+    stats: {
+      count: album.plays,
+      ...synthesizeFirstLastDates(seed),
+      totalMsPlayed: album.plays * 200_000,
+    },
+    tracks,
+    breakdown: synthesizePeriodBreakdown(album.plays),
+    monthly: synthesizeMonthlyPlays(album.plays),
+    hours: synthesizeHours(album.plays),
+    quality: synthesizeQuality(seed),
+    otherAlbums,
+  };
+}
