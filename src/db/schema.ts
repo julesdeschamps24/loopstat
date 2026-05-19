@@ -1,7 +1,6 @@
 import {
   bigserial,
   boolean,
-  customType,
   date,
   index,
   integer,
@@ -15,10 +14,6 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-const bytea = customType<{ data: Buffer; default: false }>({
-  dataType: () => "bytea",
-});
-
 export type ProfileSettings = {
   background?: "mesh" | "wall" | "noir" | "mauve";
   accent?: "violet" | "blue" | "rose" | "green" | "orange" | "mono";
@@ -26,7 +21,6 @@ export type ProfileSettings = {
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
-  spotifyId: text("spotify_id"),
   email: text("email").notNull().unique(),
   displayName: text("display_name"),
   avatarUrl: text("avatar_url"),
@@ -49,24 +43,16 @@ export const users = pgTable("users", {
   premiumUntil: timestamp("premium_until", { withTimezone: true }),
 });
 
-export const spotifyTokens = pgTable("spotify_tokens", {
-  userId: uuid("user_id")
-    .primaryKey()
-    .references(() => users.id, { onDelete: "cascade" }),
-  accessToken: bytea("access_token").notNull(),
-  refreshToken: bytea("refresh_token").notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  scope: text("scope"),
-});
-
 export const artists = pgTable("artists", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   imageUrl: text("image_url"),
   genres: jsonb("genres").$type<string[]>().default([]).notNull(),
-  popularity: smallint("popularity"),
+  mbid: uuid("mbid"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => ({
+  mbidIdx: index("artists_mbid_idx").on(t.mbid),
+}));
 
 export const albums = pgTable("albums", {
   id: text("id").primaryKey(),
@@ -75,18 +61,16 @@ export const albums = pgTable("albums", {
   imageUrl: text("image_url"),
   totalTracks: smallint("total_tracks"),
   albumType: text("album_type"),
+  mbid: uuid("mbid"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (t) => ({
+  mbidIdx: index("albums_mbid_idx").on(t.mbid),
+}));
 
 export const tracks = pgTable("tracks", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   albumId: text("album_id").references(() => albums.id, { onDelete: "set null" }),
-  durationMs: integer("duration_ms"),
-  popularity: smallint("popularity"),
-  explicit: boolean("explicit"),
-  previewUrl: text("preview_url"),
-  isrc: text("isrc"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

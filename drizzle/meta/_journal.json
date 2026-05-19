@@ -36,6 +36,13 @@
       "when": 1779133522714,
       "tag": "0004_pivot_auth_google",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1779200000000,
+      "tag": "0005_pivot_catalog_musicbrainz",
+      "breakpoints": true
     }
   ]
 }

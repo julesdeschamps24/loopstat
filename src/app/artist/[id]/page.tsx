@@ -1,18 +1,19 @@
+import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { RankedList, RankedRow } from "@/components/stats/ranked-list";
 import { EmptyState } from "@/components/stats/empty-state";
+import { ArtistAvatar } from "@/components/ui/artist-avatar";
 import { getDemoArtist, isDemoId } from "@/lib/demo/data";
-import { spotifyFetch } from "@/lib/spotify/client";
-import type { SpotifyArtist } from "@/lib/spotify/types";
+import { db } from "@/db/client";
+import { artists } from "@/db/schema";
 import {
   getArtistPlayStats,
   getUserTopTracksByArtist,
 } from "@/db/queries/stats";
 import { formatNumber } from "@/lib/utils";
 
-// Spotify metadata is stable — re-fetch at most once an hour.
 export const revalidate = 3600;
 
 export default async function ArtistDetailPage({
@@ -37,7 +38,7 @@ export default async function ArtistDetailPage({
     return (
       <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
-          <div className="size-48 shrink-0 rounded-full bg-muted" />
+          <ArtistAvatar name={artist.name} size={192} />
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">Artiste</p>
             <h1 className="text-3xl font-semibold">{artist.name}</h1>
@@ -74,19 +75,20 @@ export default async function ArtistDetailPage({
     );
   }
 
-  let artist: SpotifyArtist;
-  try {
-    artist = await spotifyFetch<SpotifyArtist>(userId, `/artists/${id}`);
-  } catch {
-    notFound();
-  }
+  // --- MODE RÉEL : DB only ---
+  const [artist] = await db
+    .select()
+    .from(artists)
+    .where(eq(artists.id, id))
+    .limit(1);
+  if (!artist) notFound();
 
   const [stats, topTracks] = await Promise.all([
     getArtistPlayStats(userId, id),
     getUserTopTracksByArtist(userId, id, 10),
   ]);
 
-  const image = artist.images?.[0]?.url;
+  const image = artist.imageUrl;
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
@@ -101,7 +103,7 @@ export default async function ArtistDetailPage({
             className="size-48 shrink-0 rounded-full object-cover shadow-lg"
           />
         ) : (
-          <div className="size-48 shrink-0 rounded-full bg-muted" />
+          <ArtistAvatar name={artist.name} size={192} />
         )}
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">Artiste</p>

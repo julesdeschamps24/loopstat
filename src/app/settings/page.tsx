@@ -30,7 +30,6 @@ export default async function SettingsPage() {
     columns: {
       email: true,
       displayName: true,
-      spotifyId: true,
       username: true,
       isPublic: true,
       profileSettings: true,
@@ -42,13 +41,13 @@ export default async function SettingsPage() {
   const initialBackground = isBackground(settings.background) ? settings.background : "mesh";
   const initialAccent = isAccent(settings.accent) ? settings.accent : "violet";
 
-  const displayName = userRow?.displayName ?? session.user.name ?? userRow?.spotifyId ?? "";
+  const displayName = userRow?.displayName ?? session.user.name ?? "";
   const email = userRow?.email ?? null;
   // Preview du pseudo si pas encore persisté. La résolution réelle (incl. la
   // gestion de collision) se fait dans la server action au moment du save.
   const previewUsername =
     userRow?.username ??
-    deriveUsername(userRow?.displayName ?? null, userRow?.spotifyId ?? "");
+    deriveUsername(userRow?.displayName ?? null, session.user.id ?? "");
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">

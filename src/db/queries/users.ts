@@ -9,7 +9,6 @@ export type ProfileRow = {
   username: string | null;
   isPublic: boolean;
   displayName: string | null;
-  spotifyId: string | null;
 };
 
 export const getProfile = cache(
@@ -20,7 +19,6 @@ export const getProfile = cache(
         username: true,
         isPublic: true,
         displayName: true,
-        spotifyId: true,
       },
     });
     return row ?? null;
@@ -38,13 +36,12 @@ function isUniqueViolation(err: unknown): boolean {
 
 /**
  * Idempotent : si l'utilisateur a déjà un username persisté, on le retourne
- * tel quel. Sinon on dérive depuis displayName/spotifyId et on l'écrit en DB,
- * en résolvant une éventuelle collision avec un suffix issu du spotifyId.
+ * tel quel. Sinon on dérive depuis displayName/userId et on l'écrit en DB,
+ * en résolvant une éventuelle collision avec un suffix issu du userId.
  */
 export async function ensureUsernamePersisted(
   userId: string,
   displayName: string | null,
-  spotifyId: string | null,
 ): Promise<{ ok: true; username: string } | { ok: false }> {
   const existing = await db.query.users.findFirst({
     where: eq(users.id, userId),
@@ -52,9 +49,8 @@ export async function ensureUsernamePersisted(
   });
   if (existing?.username) return { ok: true, username: existing.username };
 
-  const idForDerivation = spotifyId ?? userId;
-  const base = deriveUsername(displayName, idForDerivation);
-  const candidates = [base, withUniqueSuffix(base, idForDerivation)];
+  const base = deriveUsername(displayName, userId);
+  const candidates = [base, withUniqueSuffix(base, userId)];
 
   for (const candidate of candidates) {
     try {

@@ -3,9 +3,11 @@ import path from "node:path";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { imports, tracks, type NewStream } from "@/db/schema";
-import { insertStreams, pruneOverlappingApiStreams } from "@/db/queries/streams";
+import { insertStreams } from "@/db/queries/streams";
 import { log } from "@/lib/log";
-import { enrichQueue } from "../queue";
+import { enrichCatalogQueue } from "../queue";
+import { albumArtists, albums, artists, trackArtists } from "@/db/schema";
+import { synthesizeAlbumId, synthesizeArtistId } from "@/lib/ids/synthesize";
 
 // Temp dir layout written by POST /api/import: <projectRoot>/.import-tmp/<importId>/<file>.
 // The route saves files here so we never push file buffers through Redis.
@@ -35,6 +37,8 @@ interface RawStreamEntry {
   ts?: unknown;
   ms_played?: unknown;
   master_metadata_track_name?: unknown;
+  master_metadata_album_artist_name?: unknown;
+  master_metadata_album_album_name?: unknown;
   spotify_track_uri?: unknown;
 }
 
@@ -64,8 +68,14 @@ export async function importHistory(
     // failure. The outer try/catch intentionally catches it and marks failed.
     const fileNames = await readdir(dir);
 
-    // Dedup track id -> name across all files, and accumulate kept stream rows.
-    const trackNames = new Map<string, string>();
+    // Dedup catalog entities and accumulate kept stream rows.
+    const artistRows = new Map<string, { name: string }>();
+    const albumRows = new Map<string, { name: string; artistId: string }>();
+    const trackRows = new Map<
+      string,
+      { name: string; albumId: string | null }
+    >();
+    const trackArtistLinks = new Map<string, string>();  // trackId -> artistId
     const streamRows: NewStream[] = [];
 
     const nowMs = Date.now();
@@ -112,12 +122,9 @@ export async function importHistory(
         const trackId = uri.slice(TRACK_URI_PREFIX.length);
         if (!trackId) continue;
 
-        // Skip entries with a malformed ts — an Invalid Date would otherwise
-        // blow up the whole batch insert.
         const playedAt = new Date(item.ts);
         const playedAtMs = playedAt.getTime();
         if (Number.isNaN(playedAtMs)) continue;
-        // Sanity range : avant Spotify ou trop loin dans le futur = corruption.
         if (
           playedAt < SPOTIFY_LAUNCH ||
           playedAtMs > nowMs + MAX_FUTURE_MS
@@ -125,9 +132,6 @@ export async function importHistory(
           continue;
         }
 
-        // ms_played : on tolère null (source polling) ; sinon doit être un
-        // entier positif dans la range JS safe. Hors-range → null, pas
-        // skip de l'entrée (ms_played est nullable, l'écoute reste valide).
         let msPlayed: number | null = null;
         if (typeof item.ms_played === "number") {
           if (
@@ -139,7 +143,31 @@ export async function importHistory(
           }
         }
 
-        trackNames.set(trackId, name);
+        // Capture artist + album names from the JSON (no API call needed).
+        const artistName = item.master_metadata_album_artist_name;
+        if (typeof artistName !== "string" || artistName.length === 0) continue;
+        if (artistName.length > MAX_NAME_LEN) continue;
+
+        const albumName = item.master_metadata_album_album_name;
+        const hasAlbum =
+          typeof albumName === "string" &&
+          albumName.length > 0 &&
+          albumName.length <= MAX_NAME_LEN;
+
+        const artistId = synthesizeArtistId(artistName);
+        const albumId = hasAlbum
+          ? synthesizeAlbumId(artistName, albumName as string)
+          : null;
+
+        artistRows.set(artistId, { name: artistName });
+        if (albumId && hasAlbum) {
+          albumRows.set(albumId, {
+            name: albumName as string,
+            artistId,
+          });
+        }
+        trackRows.set(trackId, { name, albumId });
+        trackArtistLinks.set(trackId, artistId);
 
         streamRows.push({
           userId,
@@ -151,15 +179,49 @@ export async function importHistory(
       }
     }
 
-    // Insert minimal track rows (id + name only) to satisfy the streams.track_id
-    // FK. onConflictDoNothing preserves any already-enriched track rows; the
-    // separate enrichMetadata job fills album/duration/popularity later.
-    const trackRows = Array.from(trackNames, ([id, name]) => ({ id, name }));
+    // Insert catalog entities in FK-safe order : artists → albums → tracks →
+    // join tables. All ON CONFLICT DO NOTHING for idempotent re-import.
+    // The enrichCatalog job fills mbid / image_url / release_date later.
     const CHUNK = 1000;
-    for (let i = 0; i < trackRows.length; i += CHUNK) {
+
+    const artistInserts = Array.from(artistRows, ([id, { name }]) => ({ id, name }));
+    for (let i = 0; i < artistInserts.length; i += CHUNK) {
+      await db.insert(artists).values(artistInserts.slice(i, i + CHUNK)).onConflictDoNothing();
+    }
+
+    const albumInserts = Array.from(albumRows, ([id, { name }]) => ({ id, name }));
+    for (let i = 0; i < albumInserts.length; i += CHUNK) {
+      await db.insert(albums).values(albumInserts.slice(i, i + CHUNK)).onConflictDoNothing();
+    }
+
+    const trackInserts = Array.from(trackRows, ([id, { name, albumId }]) => ({
+      id,
+      name,
+      albumId,
+    }));
+    for (let i = 0; i < trackInserts.length; i += CHUNK) {
+      await db.insert(tracks).values(trackInserts.slice(i, i + CHUNK)).onConflictDoNothing();
+    }
+
+    const trackArtistInserts = Array.from(
+      trackArtistLinks,
+      ([trackId, artistId]) => ({ trackId, artistId, position: 0 }),
+    );
+    for (let i = 0; i < trackArtistInserts.length; i += CHUNK) {
       await db
-        .insert(tracks)
-        .values(trackRows.slice(i, i + CHUNK))
+        .insert(trackArtists)
+        .values(trackArtistInserts.slice(i, i + CHUNK))
+        .onConflictDoNothing();
+    }
+
+    const albumArtistInserts = Array.from(
+      albumRows,
+      ([albumId, { artistId }]) => ({ albumId, artistId, position: 0 }),
+    );
+    for (let i = 0; i < albumArtistInserts.length; i += CHUNK) {
+      await db
+        .insert(albumArtists)
+        .values(albumArtistInserts.slice(i, i + CHUNK))
         .onConflictDoNothing();
     }
 
@@ -167,19 +229,9 @@ export async function importHistory(
     // index (user_id, played_at, track_id) — dedup vs DB and within the dump.
     const rowsImported = await insertStreams(streamRows);
 
-    // Nettoie les streams `api` (worker polling) qui chevauchent la fenêtre
-    // qu'on vient d'importer. La UNIQUE constraint ne les attrape pas à cause
-    // du drift de timestamp seconde-vs-ms entre les deux sources. Voir
-    // pruneOverlappingApiStreams() pour le détail.
-    if (streamRows.length > 0) {
-      const playedAts = streamRows.map((r) => r.playedAt.getTime());
-      const since = new Date(Math.min(...playedAts));
-      const until = new Date(Math.max(...playedAts));
-      const pruned = await pruneOverlappingApiStreams(userId, since, until);
-      if (pruned > 0) {
-        wlog.info({ userId, pruned }, "pruned overlapping api streams");
-      }
-    }
+    // pruneOverlappingApiStreams was used when Spotify polling produced
+    // source='api' streams that overlapped imports. Polling is gone (post
+    // sub-projet C), no api streams exist anymore — call removed.
 
     await db
       .update(imports)
@@ -198,7 +250,7 @@ export async function importHistory(
     // Use jobId to dedup concurrent enqueues: if an enrich job is already
     // queued or in-flight, this add() returns the existing job ref.
     try {
-      await enrichQueue.add("enrich-metadata", { userId }, { jobId: "enrich-metadata-global" });
+      await enrichCatalogQueue.add("enrich-catalog", { userId }, { jobId: "enrich-catalog-global" });
     } catch (enqueueErr) {
       wlog.error(
         { userId, err: enqueueErr },

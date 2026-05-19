@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -10,9 +11,8 @@ import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { formatDate, formatRelativeDate } from "@/lib/format/date";
-import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
-import { spotifyFetch } from "@/lib/spotify/client";
-import type { SpotifyAlbum, SpotifyTrack } from "@/lib/spotify/types";
+import { db } from "@/db/client";
+import { albums, albumArtists, artists } from "@/db/schema";
 import {
   getAlbumBreakdownByWindow,
   getAlbumListeningHours,
@@ -24,7 +24,6 @@ import {
 } from "@/db/queries/stats";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 
-// Spotify metadata is stable — re-fetch at most once an hour.
 export const revalidate = 3600;
 
 function formatPercent(ratio: number): string {
@@ -165,49 +164,24 @@ export default async function AlbumDetailPage({
     );
   }
 
-  let album: SpotifyAlbum;
-  try {
-    album = await spotifyFetch<SpotifyAlbum>(userId, `/albums/${id}`);
-  } catch {
-    notFound();
-  }
+  // --- MODE RÉEL : DB only ---
+  const [albumRow] = await db
+    .select()
+    .from(albums)
+    .where(eq(albums.id, id))
+    .limit(1);
+  if (!albumRow) notFound();
 
-  const primaryArtist = album.artists?.[0];
-  const primaryArtistId = primaryArtist?.id ?? null;
+  // Fetch primary artist for this album (position 0 or first).
+  const albumArtistRows = await db
+    .select({ artistId: albumArtists.artistId, name: artists.name })
+    .from(albumArtists)
+    .innerJoin(artists, eq(albumArtists.artistId, artists.id))
+    .where(eq(albumArtists.albumId, id))
+    .limit(5);
 
-  // Lazy-enrich : la réponse Spotify /albums/{id} contient déjà tous les champs
-  // dont upsertCatalogFromTracks a besoin (sauf popularity, non critique).
-  // On enrichit donc tous les tracks de cet album en 0 appel Spotify
-  // supplémentaire. Permet à la page d'afficher les bons artistes/durées sans
-  // attendre que le bulk worker arrive jusqu'à cet album.
-  // Best-effort : un échec ne bloque pas le render (le worker rattrapera).
-  try {
-    const albumSimple = {
-      id: album.id,
-      name: album.name,
-      release_date: album.release_date,
-      release_date_precision: album.release_date_precision,
-      images: album.images,
-      total_tracks: album.total_tracks,
-      album_type: album.album_type,
-      artists: album.artists,
-    };
-    const lazyTracks: SpotifyTrack[] = (album.tracks?.items ?? [])
-      .filter((t) => t.duration_ms != null)
-      .map((t) => ({
-        id: t.id,
-        name: t.name,
-        duration_ms: t.duration_ms!,
-        explicit: t.explicit,
-        preview_url: t.preview_url,
-        external_ids: t.external_ids,
-        artists: t.artists ?? album.artists ?? [],
-        album: albumSimple,
-      }));
-    if (lazyTracks.length > 0) await upsertCatalogFromTracks(lazyTracks);
-  } catch {
-    // Best-effort, ne pas bloquer le render
-  }
+  const primaryArtistId = albumArtistRows[0]?.artistId ?? null;
+  const artistNames = albumArtistRows.map((r) => r.name).join(", ");
 
   const [stats, trackPlays, breakdown, monthly, hours, quality, otherAlbums] =
     await Promise.all([
@@ -222,26 +196,20 @@ export default async function AlbumDetailPage({
         : Promise.resolve([]),
     ]);
 
-  const image = album.images?.[0]?.url;
-  const artistNames = album.artists?.map((a) => a.name).join(", ");
+  const image = albumRow.imageUrl;
   const hasPlays = stats.count > 0;
 
-  // Compose tracklist in Spotify's track_number order (DB schema doesn't
-  // persist track_number, so we use Spotify's items[] as authority and join
-  // with per-track plays from getAlbumTrackPlays via a Map lookup).
-  const playsByTrackId = new Map(trackPlays.map((t) => [t.trackId, t.plays]));
-  const orderedTracks: AlbumTrack[] = (album.tracks?.items ?? []).map(
-    (item, idx) => ({
-      trackId: item.id,
-      name: item.name,
-      trackNumber: item.track_number ?? idx + 1,
-      plays: playsByTrackId.get(item.id) ?? 0,
-    }),
-  );
+  // Build tracklist from DB track plays (ordered by name in the query).
+  // trackNumber is null in the new schema — use index as fallback display order.
+  const orderedTracks: AlbumTrack[] = trackPlays.map((t, idx) => ({
+    trackId: t.trackId,
+    name: t.name,
+    trackNumber: t.trackNumber ?? idx + 1,
+    plays: t.plays,
+  }));
 
   // Top track: ligne avec plays max. null si 0 plays globaux OU 1 seul track
-  // joué OU 1 seul track total dans l'album (single — redondant avec la
-  // tracklist).
+  // joué OU 1 seul track total dans l'album.
   const playedTracks = orderedTracks.filter((t) => t.plays > 0);
   const topTrack =
     orderedTracks.length > 1 && playedTracks.length > 1
@@ -281,12 +249,12 @@ export default async function AlbumDetailPage({
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">
             Album
-            {album.release_date ? ` · ${album.release_date}` : ""}
-            {album.total_tracks != null
-              ? ` · ${album.total_tracks} titre${album.total_tracks > 1 ? "s" : ""}`
+            {albumRow.releaseDate ? ` · ${albumRow.releaseDate}` : ""}
+            {albumRow.totalTracks != null
+              ? ` · ${albumRow.totalTracks} titre${albumRow.totalTracks > 1 ? "s" : ""}`
               : ""}
           </p>
-          <h1 className="text-3xl font-semibold">{album.name}</h1>
+          <h1 className="text-3xl font-semibold">{albumRow.name}</h1>
           {artistNames ? (
             <p className="mt-1 text-lg text-muted-foreground">{artistNames}</p>
           ) : null}
@@ -316,7 +284,7 @@ export default async function AlbumDetailPage({
         <TopTrackCard
           trackId={topTrack.trackId}
           trackName={topTrack.name}
-          artistName={artistNames ?? ""}
+          artistName={artistNames}
           imageUrl={image ?? null}
           plays={topTrack.plays}
           shareOfAlbum={topTrack.plays / stats.count}
@@ -398,9 +366,9 @@ export default async function AlbumDetailPage({
       ) : null}
 
       {/* 8. Autres albums de l'artiste */}
-      {primaryArtist && otherAlbums.length > 0 ? (
+      {primaryArtistId && otherAlbums.length > 0 ? (
         <OtherArtistAlbums
-          artistName={primaryArtist.name}
+          artistName={albumArtistRows[0]?.name ?? ""}
           albums={otherAlbums}
         />
       ) : null}

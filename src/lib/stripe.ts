@@ -38,7 +38,6 @@ export async function getOrCreateStripeCustomer(
       stripeCustomerId: true,
       email: true,
       displayName: true,
-      spotifyId: true,
     },
   });
   if (!row) throw new Error(`User ${userId} not found`);
@@ -46,7 +45,7 @@ export async function getOrCreateStripeCustomer(
 
   const customer = await stripe.customers.create({
     email: row.email ?? undefined,
-    name: row.displayName ?? row.spotifyId ?? undefined,
+    name: row.displayName ?? undefined,
     metadata: { userId },
   });
 

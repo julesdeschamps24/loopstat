@@ -54,6 +54,7 @@ export default async function TopArtistsPage({
                   rank={index + 1}
                   title={artist.name}
                   href={`/artist/${artist.artistId}`}
+                  avatarName={artist.name}
                   metric={`${formatNumber(artist.plays)} écoutes`}
                 />
               </StaggerItem>
@@ -109,6 +110,7 @@ export default async function TopArtistsPage({
                 title={artist.name}
                 href={`/artist/${artist.artistId}`}
                 imageUrl={artist.imageUrl ?? undefined}
+                avatarName={artist.imageUrl ? undefined : artist.name}
                 metric={`${formatNumber(artist.plays)} écoutes`}
               />
             </StaggerItem>

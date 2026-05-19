@@ -6,27 +6,17 @@ import { db } from "@/db/client";
 import { imports } from "@/db/schema";
 import { log } from "@/lib/log";
 import {
-  ENRICH_QUEUE_NAME,
-  ENRICH_SELF_HEAL_EVERY_MS,
-  ENRICH_SELF_HEAL_SCHEDULER_ID,
+  ENRICH_CATALOG_QUEUE_NAME,
+  ENRICH_CATALOG_SELF_HEAL_EVERY_MS,
+  ENRICH_CATALOG_SELF_HEAL_SCHEDULER_ID,
   IMPORT_QUEUE_NAME,
-  POLL_RECENT_FANOUT_EVERY_MS,
-  POLL_RECENT_FANOUT_SCHEDULER_ID,
-  POLL_RECENT_QUEUE_NAME,
   connection,
-  enrichQueue,
+  enrichCatalogQueue,
   importQueue,
-  pollRecentQueue,
 } from "./queue";
-import { pollUserRecentPlays } from "./jobs/pollRecent";
-import { fanoutPolls } from "./jobs/fanout";
 import { importHistory } from "./jobs/importHistory";
-import { enrichMetadata, selfHealEnrich } from "./jobs/enrichMetadata";
-import {
-  PollUserJobData,
-  ImportJobData,
-  EnrichJobData,
-} from "./schemas";
+import { enrichCatalog, selfHealEnrichCatalog } from "./jobs/enrichCatalog";
+import { ImportJobData } from "./schemas";
 
 // Same layout as worker/jobs/importHistory.ts: <projectRoot>/.import-tmp/<importId>/.
 const IMPORT_TMP_DIR = path.join(process.cwd(), ".import-tmp");
@@ -139,38 +129,6 @@ async function sweepStaleImports(): Promise<void> {
   }
 }
 
-// poll-recent queue processor. Handles two job kinds, distinguished by
-// `job.name`:
-//   - "fanout"    — payload {}, fired by the repeatable scheduler. Selects
-//                   eligible users and enqueues one "poll-user" per user.
-//   - "poll-user" — payload { userId }, per-user Spotify poll.
-// The import and enrich queues have their own processors below.
-async function processJob(job: Job): Promise<unknown> {
-  const start = Date.now();
-  const wlog = log.child({ worker: "poll-recent", jobId: job.id });
-
-  if (job.name === "fanout") {
-    const result = await fanoutPolls();
-    const duration = Date.now() - start;
-    wlog.info({ enqueued: result.enqueued, ms: duration }, "fanout complete");
-    return result;
-  }
-
-  // Default: per-user poll. Tolerates the historical job name (anything that
-  // isn't "fanout") so jobs queued before this dispatch was introduced still
-  // work.
-  const { userId } = PollUserJobData.parse(job.data);
-  if (!userId) throw new Error(`job ${job.id}: missing userId in data`);
-
-  const result = await pollUserRecentPlays(userId);
-  const duration = Date.now() - start;
-  wlog.info(
-    { user: userId, inserted: result.inserted, ms: duration },
-    "poll-recent complete",
-  );
-  return result;
-}
-
 // Import queue: one job kind, "import-history", payload { importId }. Parses an
 // uploaded Spotify Extended Streaming History dump and batch-inserts streams.
 async function processImportJob(job: Job): Promise<unknown> {
@@ -188,60 +146,6 @@ async function processImportJob(job: Job): Promise<unknown> {
   return result;
 }
 
-// Enrich queue: two job kinds, distinguished by `job.name`:
-//   - "enrich-metadata"   — payload { userId }. Backfills full track metadata
-//                           for every track importHistory inserted minimal.
-//   - "enrich-self-heal"  — payload {}, fired by the hourly scheduler. Checks
-//                           if any un-enriched tracks remain and (if so)
-//                           re-enqueues "enrich-metadata" with any user's
-//                           Spotify creds, even if a previous attempt failed
-//                           terminally. Guards against permanent catalog
-//                           coverage loss.
-async function processEnrichJob(job: Job): Promise<unknown> {
-  const start = Date.now();
-  const wlog = log.child({ worker: "enrich", jobId: job.id });
-
-  if (job.name === "enrich-self-heal") {
-    const result = await selfHealEnrich();
-    const duration = Date.now() - start;
-    wlog.info(
-      { unenriched: result.unenrichedCount, enqueued: result.enqueued, ms: duration },
-      "self-heal complete",
-    );
-    return result;
-  }
-
-  const { userId } = EnrichJobData.parse(job.data);
-  if (!userId) throw new Error(`job ${job.id}: missing userId in data`);
-
-  const result = await enrichMetadata(userId);
-  const duration = Date.now() - start;
-  wlog.info(
-    { user: userId, enrichedCount: result.enrichedCount, ms: duration },
-    "enrich complete",
-  );
-  return result;
-}
-
-const worker = new Worker(POLL_RECENT_QUEUE_NAME, processJob, {
-  connection,
-});
-
-worker.on("ready", () => {
-  log.info({ worker: "poll-recent" }, "worker ready");
-});
-
-worker.on("failed", (job, err) => {
-  log.error(
-    { worker: "poll-recent", jobId: job?.id ?? "?", err },
-    "job failed",
-  );
-});
-
-worker.on("error", (err) => {
-  log.error({ worker: "poll-recent", err }, "worker error");
-});
-
 const importWorker = new Worker(IMPORT_QUEUE_NAME, processImportJob, {
   connection,
 });
@@ -258,49 +162,50 @@ importWorker.on("error", (err) => {
   log.error({ worker: "import", err }, "worker error");
 });
 
-const enrichWorker = new Worker(ENRICH_QUEUE_NAME, processEnrichJob, {
-  connection,
+const enrichCatalogWorker = new Worker(
+  ENRICH_CATALOG_QUEUE_NAME,
+  async (job) => {
+    if (job.name === "enrich-catalog-self-heal-tick") {
+      return selfHealEnrichCatalog();
+    }
+    return enrichCatalog();
+  },
+  { connection, concurrency: 1 },
+);
+
+enrichCatalogWorker.on("ready", () => {
+  log.info({ worker: "enrich-catalog" }, "worker ready");
 });
 
-enrichWorker.on("ready", () => {
-  log.info({ worker: "enrich" }, "worker ready");
+enrichCatalogWorker.on("failed", (job, err) => {
+  log.error(
+    { worker: "enrich-catalog", jobId: job?.id ?? "?", err },
+    "job failed",
+  );
 });
 
-enrichWorker.on("failed", (job, err) => {
-  log.error({ worker: "enrich", jobId: job?.id ?? "?", err }, "job failed");
+enrichCatalogWorker.on("error", (err) => {
+  log.error({ worker: "enrich-catalog", err }, "worker error");
 });
 
-enrichWorker.on("error", (err) => {
-  log.error({ worker: "enrich", err }, "worker error");
-});
-
-// Register the repeatable fanout scheduler. `upsertJobScheduler` is idempotent
-// across restarts: same id + same opts is a no-op, so it's safe to call on
-// every boot.
+// Register the repeatable self-heal scheduler. `upsertJobScheduler` is
+// idempotent across restarts: same id + same opts is a no-op, so it's safe
+// to call on every boot.
 async function bootstrap(): Promise<void> {
   await sweepStaleImports();
-  await pollRecentQueue.upsertJobScheduler(
-    POLL_RECENT_FANOUT_SCHEDULER_ID,
-    { every: POLL_RECENT_FANOUT_EVERY_MS },
-    { name: "fanout", data: {} },
-  );
-  log.info(
-    {
-      scheduler: POLL_RECENT_FANOUT_SCHEDULER_ID,
-      intervalMinutes: POLL_RECENT_FANOUT_EVERY_MS / 60000,
-    },
-    "scheduler registered",
-  );
 
-  await enrichQueue.upsertJobScheduler(
-    ENRICH_SELF_HEAL_SCHEDULER_ID,
-    { every: ENRICH_SELF_HEAL_EVERY_MS },
-    { name: "enrich-self-heal", data: {} },
+  await enrichCatalogQueue.upsertJobScheduler(
+    ENRICH_CATALOG_SELF_HEAL_SCHEDULER_ID,
+    { every: ENRICH_CATALOG_SELF_HEAL_EVERY_MS },
+    {
+      name: "enrich-catalog-self-heal-tick",
+      data: {},
+    },
   );
   log.info(
     {
-      scheduler: ENRICH_SELF_HEAL_SCHEDULER_ID,
-      intervalMinutes: ENRICH_SELF_HEAL_EVERY_MS / 60000,
+      scheduler: ENRICH_CATALOG_SELF_HEAL_SCHEDULER_ID,
+      intervalMinutes: ENRICH_CATALOG_SELF_HEAL_EVERY_MS / 60000,
     },
     "scheduler registered",
   );
@@ -317,18 +222,14 @@ async function shutdown(signal: string): Promise<void> {
   shuttingDown = true;
   log.info({ signal }, "shutting down");
   try {
-    await worker.close();
-    log.info({}, "poll-recent worker closed");
     await importWorker.close();
     log.info({}, "import worker closed");
-    await enrichWorker.close();
-    log.info({}, "enrich worker closed");
-    await pollRecentQueue.close();
-    log.info({}, "poll-recent queue closed");
+    await enrichCatalogWorker.close();
+    log.info({}, "enrich-catalog worker closed");
     await importQueue.close();
     log.info({}, "import queue closed");
-    await enrichQueue.close();
-    log.info({}, "enrich queue closed");
+    await enrichCatalogQueue.close();
+    log.info({}, "enrich-catalog queue closed");
     await connection.quit();
     log.info({}, "redis connection closed");
     process.exit(0);

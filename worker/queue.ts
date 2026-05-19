@@ -8,27 +8,19 @@ import IORedis from "ioredis";
 // first real command — at runtime, docker-compose always provides REDIS_URL.
 const redisUrl = process.env.REDIS_URL ?? "redis://placeholder:6379";
 
-export const POLL_RECENT_QUEUE_NAME = "poll-recent";
-export const POLL_RECENT_FANOUT_SCHEDULER_ID = "poll-recent-fanout";
-export const POLL_RECENT_FANOUT_EVERY_MS = 30 * 60 * 1000;
-
 // Cache the connection + queue on globalThis so dev-mode HMR (Next.js / tsx watch)
 // doesn't open a new Redis socket and a new BullMQ Queue on every module reload.
 export const IMPORT_QUEUE_NAME = "import";
-export const ENRICH_QUEUE_NAME = "enrich";
+export const ENRICH_CATALOG_QUEUE_NAME = "enrich-catalog";
 
-// Self-heal: every hour the worker checks for un-enriched tracks and re-enqueues
-// the enrich job if needed. Guards against permanent loss of catalog coverage
-// when a previous enrich job died terminally (Spotify ban longer than
-// attempts × backoff, worker crash mid-flight, etc.).
-export const ENRICH_SELF_HEAL_SCHEDULER_ID = "enrich-self-heal";
-export const ENRICH_SELF_HEAL_EVERY_MS = 60 * 60 * 1000;
+// Self-heal: every hour, re-enqueue enrich job if albums still lack covers.
+export const ENRICH_CATALOG_SELF_HEAL_SCHEDULER_ID = "enrich-catalog-self-heal";
+export const ENRICH_CATALOG_SELF_HEAL_EVERY_MS = 60 * 60 * 1000;
 
 const globalCache = globalThis as unknown as {
   __loopstatRedis?: IORedis;
-  __loopstatPollRecentQueue?: Queue;
   __loopstatImportQueue?: Queue;
-  __loopstatEnrichQueue?: Queue;
+  __loopstatEnrichCatalogQueue?: Queue;
 };
 
 // BullMQ requires maxRetriesPerRequest: null on the connection used by Workers.
@@ -38,18 +30,6 @@ export const connection =
   (globalCache.__loopstatRedis = new IORedis(redisUrl, {
     maxRetriesPerRequest: null,
     lazyConnect: true,
-  }));
-
-export const pollRecentQueue =
-  globalCache.__loopstatPollRecentQueue ??
-  (globalCache.__loopstatPollRecentQueue = new Queue(POLL_RECENT_QUEUE_NAME, {
-    connection,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: { type: "exponential", delay: 5_000 },
-      removeOnComplete: { age: 3600, count: 1000 },
-      removeOnFail: { age: 24 * 3600 },
-    },
   }));
 
 export const importQueue =
@@ -66,19 +46,17 @@ export const importQueue =
     },
   }));
 
-export const enrichQueue =
-  globalCache.__loopstatEnrichQueue ??
-  (globalCache.__loopstatEnrichQueue = new Queue(ENRICH_QUEUE_NAME, {
+export const enrichCatalogQueue =
+  globalCache.__loopstatEnrichCatalogQueue ??
+  (globalCache.__loopstatEnrichCatalogQueue = new Queue(ENRICH_CATALOG_QUEUE_NAME, {
     connection,
     defaultJobOptions: {
-      // Enrichment is idempotent (enriched tracks have duration_ms set, so a
-      // retry won't re-select them) — safe to retry transient Spotify 5xx.
-      // attempts=10 with exp backoff gives ~85 min of cumulative retry window
-      // (5s+10s+20s+...+2560s), enough to ride out a long Spotify 429 ban.
-      // If 10 attempts still fail, the hourly self-heal scheduler re-enqueues.
-      attempts: 10,
-      backoff: { type: "exponential", delay: 5_000 },
-      removeOnComplete: { age: 3600, count: 1000 },
+      // Enrichment is idempotent (enriched rows have mbid set, so a retry
+      // won't re-select them) — safe to retry transient MBz failures.
+      // attempts=3 with exp backoff; hourly self-heal re-enqueues if still needed.
+      attempts: 3,
+      backoff: { type: "exponential", delay: 5000 },
+      removeOnComplete: { age: 24 * 3600, count: 100 },
       removeOnFail: { age: 24 * 3600 },
     },
   }));
