@@ -13,15 +13,17 @@ import { AlbumWall } from "@/components/album-wall";
 import { AppHeader } from "@/components/app-header";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
 import { WelcomeModal } from "@/components/onboarding/welcome-modal";
-import { CurrentlyPlaying } from "@/components/stats/currently-playing";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { StatCard } from "@/components/stats/stat-card";
 import { EmptyState } from "@/components/stats/empty-state";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
-import { fetchTopArtists, fetchTopTracks } from "@/lib/spotify/top";
 import { isPremium } from "@/db/queries/billing";
 import { hasCompletedImport } from "@/db/queries/imports";
-import { getListeningTotals } from "@/db/queries/stats";
+import {
+  getListeningTotals,
+  getTopTracksFromStreams,
+  getTopArtistsFromStreams,
+} from "@/db/queries/stats";
 import { getProfile } from "@/db/queries/users";
 import {
   DEMO_TOP_TRACKS,
@@ -180,13 +182,18 @@ export default async function DashboardPage() {
     );
   }
 
-  // --- MODE RÉEL (inchangé sauf retrait de la section isFreshUser) ---
+  // --- MODE RÉEL ---
+  // Cutoff "4 semaines" ≈ 28 jours ; "1 an" pour le mur de fond.
+  const now = new Date();
+  const since4w = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
+  const since1y = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+
   const [totals, topTracks, topArtists, topTracks1y, profile, premium] =
     await Promise.all([
       getListeningTotals(userId),
-      fetchTopTracks(userId, "4w").catch(() => []),
-      fetchTopArtists(userId, "4w").catch(() => []),
-      fetchTopTracks(userId, "1y").catch(() => []),
+      getTopTracksFromStreams(userId, since4w, 5),
+      getTopArtistsFromStreams(userId, since4w, 5),
+      getTopTracksFromStreams(userId, since1y, 50),
       getProfile(userId),
       isPremium(userId),
     ]);
@@ -196,17 +203,17 @@ export default async function DashboardPage() {
   const totalsByWindow = new Map(totals.map((t) => [t.window, t]));
   const orderedWindows: ("7d" | "30d" | "lifetime")[] = ["7d", "30d", "lifetime"];
 
-  const top5Tracks = topTracks.slice(0, 5);
-  const top5Artists = topArtists.slice(0, 5);
+  const top5Tracks = topTracks;
+  const top5Artists = topArtists;
 
-  // Dédup les top tracks 1y par album.id pour le mur de fond.
-  const seenAlbums = new Set<string>();
+  // Dédup les top tracks 1y par albumImageUrl pour le mur de fond.
+  const seenImages = new Set<string>();
   const wallCovers: (string | null)[] = [];
   for (const track of topTracks1y) {
-    const id = track.album?.id;
-    if (!id || seenAlbums.has(id)) continue;
-    seenAlbums.add(id);
-    wallCovers.push(track.album?.images?.[0]?.url ?? null);
+    const img = track.albumImageUrl;
+    if (!img || seenImages.has(img)) continue;
+    seenImages.add(img);
+    wallCovers.push(img);
     if (wallCovers.length === WALL_CELLS) break;
   }
   while (wallCovers.length < WALL_CELLS) wallCovers.push(null);
@@ -226,11 +233,6 @@ export default async function DashboardPage() {
         <div className="flex flex-col gap-12">
           <OwnProfileCard profile={profile} isPremium={premium} />
           <ImportBanner />
-
-          {/* CurrentlyPlaying */}
-          <section>
-            <CurrentlyPlaying />
-          </section>
 
           {/* Listening totals */}
           <section>
@@ -277,13 +279,13 @@ export default async function DashboardPage() {
             ) : (
               <StaggerList className="flex flex-col gap-1">
                 {top5Tracks.map((track, index) => (
-                  <StaggerItem key={track.id}>
+                  <StaggerItem key={track.trackId}>
                     <RankedRow
                       rank={index + 1}
                       title={track.name}
-                      href={`/track/${track.id}`}
-                      subtitle={track.artists.map((a) => a.name).join(", ")}
-                      imageUrl={track.album?.images?.[0]?.url}
+                      href={`/track/${track.trackId}`}
+                      subtitle={track.artistNames.join(", ")}
+                      imageUrl={track.albumImageUrl ?? undefined}
                     />
                   </StaggerItem>
                 ))}
@@ -312,12 +314,12 @@ export default async function DashboardPage() {
             ) : (
               <StaggerList className="flex flex-col gap-1">
                 {top5Artists.map((artist, index) => (
-                  <StaggerItem key={artist.id}>
+                  <StaggerItem key={artist.artistId}>
                     <RankedRow
                       rank={index + 1}
                       title={artist.name}
-                      href={`/artist/${artist.id}`}
-                      imageUrl={artist.images?.[0]?.url}
+                      href={`/artist/${artist.artistId}`}
+                      imageUrl={artist.imageUrl ?? undefined}
                     />
                   </StaggerItem>
                 ))}
