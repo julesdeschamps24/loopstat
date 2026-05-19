@@ -5,7 +5,7 @@ import { db } from "@/db/client";
 import { imports, tracks, type NewStream } from "@/db/schema";
 import { insertStreams, pruneOverlappingApiStreams } from "@/db/queries/streams";
 import { log } from "@/lib/log";
-import { enrichQueue } from "../queue";
+import { enrichCatalogQueue } from "../queue";
 import { albumArtists, albums, artists, trackArtists } from "@/db/schema";
 import { synthesizeAlbumId, synthesizeArtistId } from "@/lib/ids/synthesize";
 
@@ -260,7 +260,7 @@ export async function importHistory(
     // Use jobId to dedup concurrent enqueues: if an enrich job is already
     // queued or in-flight, this add() returns the existing job ref.
     try {
-      await enrichQueue.add("enrich-catalog", { userId }, { jobId: "enrich-catalog-global" });
+      await enrichCatalogQueue.add("enrich-catalog", { userId }, { jobId: "enrich-catalog-global" });
     } catch (enqueueErr) {
       wlog.error(
         { userId, err: enqueueErr },
