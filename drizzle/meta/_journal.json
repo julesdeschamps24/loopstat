@@ -50,6 +50,13 @@
       "when": 1779210000000,
       "tag": "0006_drop_artists_genres",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1779220000000,
+      "tag": "0007_add_artists_tadb_id",
+      "breakpoints": true
     }
   ]
 }

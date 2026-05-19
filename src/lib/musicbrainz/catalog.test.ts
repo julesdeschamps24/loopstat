@@ -69,6 +69,44 @@ describe("enrichAlbumByNames", () => {
     expect(setMock).toHaveBeenCalledWith({ mbid: SENTINEL });
   });
 
+  it("pads year-only release date to ISO YYYY-01-01", async () => {
+    vi.spyOn(search, "searchReleaseGroup").mockResolvedValue({
+      mbid: "rg-abc",
+      score: 100,
+      firstReleaseDate: "1962",
+    });
+    vi.spyOn(coverArt, "fetchCoverUrl").mockResolvedValue(null);
+
+    await enrichAlbumByNames({
+      albumId: "alb_x",
+      artistName: "X",
+      albumName: "Y",
+    });
+
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({ releaseDate: "1962-01-01" }),
+    );
+  });
+
+  it("pads year-month release date to ISO YYYY-MM-01", async () => {
+    vi.spyOn(search, "searchReleaseGroup").mockResolvedValue({
+      mbid: "rg-abc",
+      score: 100,
+      firstReleaseDate: "1985-07",
+    });
+    vi.spyOn(coverArt, "fetchCoverUrl").mockResolvedValue(null);
+
+    await enrichAlbumByNames({
+      albumId: "alb_x",
+      artistName: "X",
+      albumName: "Y",
+    });
+
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({ releaseDate: "1985-07-01" }),
+    );
+  });
+
   it("stores mbid but null image on CAA 404", async () => {
     vi.spyOn(search, "searchReleaseGroup").mockResolvedValue({
       mbid: "rg-abc",
