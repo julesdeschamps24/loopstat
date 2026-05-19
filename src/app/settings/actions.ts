@@ -28,7 +28,7 @@ export async function updateProfileAction(
 
   const userRow = await db.query.users.findFirst({
     where: eq(users.id, session.user.id),
-    columns: { displayName: true, spotifyId: true },
+    columns: { displayName: true },
   });
   if (!userRow) {
     return { status: "error", error: "Compte introuvable." };
@@ -37,7 +37,6 @@ export async function updateProfileAction(
   const ensured = await ensureUsernamePersisted(
     session.user.id,
     userRow.displayName,
-    userRow.spotifyId,
   );
   if (!ensured.ok) {
     return {

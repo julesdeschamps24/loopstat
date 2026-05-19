@@ -26,10 +26,10 @@ export async function DELETE(): Promise<Response> {
   }
 
   try {
-    // All user-scoped FKs (spotify_tokens, streams, imports, top_cache) have
-    // ON DELETE CASCADE on users.id, so a single delete cascades. Catalog
-    // tables (tracks, artists, albums, track_artists, album_artists) are
-    // shared across users and intentionally preserved.
+    // All user-scoped FKs (streams, imports, top_cache) have ON DELETE CASCADE
+    // on users.id, so a single delete cascades. Catalog tables (tracks,
+    // artists, albums, track_artists, album_artists) are shared across users
+    // and intentionally preserved.
     await db.transaction(async (tx) => {
       await tx.delete(users).where(eq(users.id, userId));
     });
