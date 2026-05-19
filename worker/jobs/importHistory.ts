@@ -179,15 +179,49 @@ export async function importHistory(
       }
     }
 
-    // Insert minimal track rows (id + name only) to satisfy the streams.track_id
-    // FK. onConflictDoNothing preserves any already-enriched track rows; the
-    // separate enrichMetadata job fills album/duration/popularity later.
-    const trackRows = Array.from(trackNames, ([id, name]) => ({ id, name }));
+    // Insert catalog entities in FK-safe order : artists → albums → tracks →
+    // join tables. All ON CONFLICT DO NOTHING for idempotent re-import.
+    // The enrichCatalog job fills mbid / image_url / release_date later.
     const CHUNK = 1000;
-    for (let i = 0; i < trackRows.length; i += CHUNK) {
+
+    const artistInserts = Array.from(artistRows, ([id, { name }]) => ({ id, name }));
+    for (let i = 0; i < artistInserts.length; i += CHUNK) {
+      await db.insert(artists).values(artistInserts.slice(i, i + CHUNK)).onConflictDoNothing();
+    }
+
+    const albumInserts = Array.from(albumRows, ([id, { name }]) => ({ id, name }));
+    for (let i = 0; i < albumInserts.length; i += CHUNK) {
+      await db.insert(albums).values(albumInserts.slice(i, i + CHUNK)).onConflictDoNothing();
+    }
+
+    const trackInserts = Array.from(trackRows, ([id, { name, albumId }]) => ({
+      id,
+      name,
+      albumId,
+    }));
+    for (let i = 0; i < trackInserts.length; i += CHUNK) {
+      await db.insert(tracks).values(trackInserts.slice(i, i + CHUNK)).onConflictDoNothing();
+    }
+
+    const trackArtistInserts = Array.from(
+      trackArtistLinks,
+      ([trackId, artistId]) => ({ trackId, artistId, position: 0 }),
+    );
+    for (let i = 0; i < trackArtistInserts.length; i += CHUNK) {
       await db
-        .insert(tracks)
-        .values(trackRows.slice(i, i + CHUNK))
+        .insert(trackArtists)
+        .values(trackArtistInserts.slice(i, i + CHUNK))
+        .onConflictDoNothing();
+    }
+
+    const albumArtistInserts = Array.from(
+      albumRows,
+      ([albumId, { artistId }]) => ({ albumId, artistId, position: 0 }),
+    );
+    for (let i = 0; i < albumArtistInserts.length; i += CHUNK) {
+      await db
+        .insert(albumArtists)
+        .values(albumArtistInserts.slice(i, i + CHUNK))
         .onConflictDoNothing();
     }
 
@@ -226,7 +260,7 @@ export async function importHistory(
     // Use jobId to dedup concurrent enqueues: if an enrich job is already
     // queued or in-flight, this add() returns the existing job ref.
     try {
-      await enrichQueue.add("enrich-metadata", { userId }, { jobId: "enrich-metadata-global" });
+      await enrichQueue.add("enrich-catalog", { userId }, { jobId: "enrich-catalog-global" });
     } catch (enqueueErr) {
       wlog.error(
         { userId, err: enqueueErr },
