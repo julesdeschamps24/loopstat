@@ -138,7 +138,7 @@ export function WelcomeModal() {
             <button
               type="button"
               onClick={close}
-              className="flex-1 rounded-full px-4 py-2.5 text-[13px] font-medium transition hover:opacity-80"
+              className="flex-1 cursor-pointer rounded-full px-4 py-2.5 text-[13px] font-medium transition hover:opacity-80"
               style={{
                 background: "transparent",
                 color: "#a89ec8",

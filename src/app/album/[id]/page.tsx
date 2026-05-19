@@ -40,7 +40,10 @@ export default async function AlbumDetailPage({
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
-  const { id } = await params;
+  const { id: rawId } = await params;
+  // Next.js 16 passes the param URL-encoded (e.g. "demo%3Ashort-n-sweet"),
+  // but our demo fixtures use a literal ":" prefix — decode so lookups match.
+  const id = decodeURIComponent(rawId);
 
   if (isDemoId(id)) {
     const demo = getDemoAlbum(id);
