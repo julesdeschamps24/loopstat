@@ -12,6 +12,20 @@ import { searchArtist, searchReleaseGroup } from "./search";
 const SENTINEL_MBID = "00000000-0000-0000-0000-000000000000";
 
 /**
+ * Normalize MBz "first-release-date" to ISO YYYY-MM-DD. MBz returns partial
+ * dates like "1962", "1962-07", or "1962-07-15"; Postgres DATE rejects the
+ * partials. We pad to a valid ISO date (Jan 1 for year-only, day 1 for
+ * year-month) to keep the year/month info.
+ */
+function normalizeReleaseDate(raw: string | undefined): string | null {
+  if (!raw) return null;
+  if (/^\d{4}$/.test(raw)) return `${raw}-01-01`;
+  if (/^\d{4}-\d{2}$/.test(raw)) return `${raw}-01`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  return null;
+}
+
+/**
  * Enrich an album row by name lookup against MusicBrainz + Cover Art Archive.
  * Updates `albums` with mbid + cover URL + release metadata, or marks the row
  * with a sentinel mbid when no match is found.
@@ -39,7 +53,7 @@ export async function enrichAlbumByNames({
     .set({
       mbid: match.mbid,
       imageUrl: coverUrl,
-      releaseDate: match.firstReleaseDate ?? null,
+      releaseDate: normalizeReleaseDate(match.firstReleaseDate),
       albumType: match.primaryType ?? null,
       totalTracks: match.totalTracks ?? null,
     })
