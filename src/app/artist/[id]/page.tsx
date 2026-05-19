@@ -38,7 +38,7 @@ export default async function ArtistDetailPage({
     return (
       <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
-          <ArtistAvatar name={artist.name} size={192} />
+          <ArtistAvatar name={artist.name} imageUrl={artist.imageUrl} size={192} />
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">Artiste</p>
             <h1 className="text-3xl font-semibold">{artist.name}</h1>
@@ -88,23 +88,10 @@ export default async function ArtistDetailPage({
     getUserTopTracksByArtist(userId, id, 10),
   ]);
 
-  const image = artist.imageUrl;
-
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
-        {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={image}
-            alt=""
-            decoding="async"
-            fetchPriority="high"
-            className="size-48 shrink-0 rounded-full object-cover shadow-lg"
-          />
-        ) : (
-          <ArtistAvatar name={artist.name} size={192} />
-        )}
+        <ArtistAvatar name={artist.name} imageUrl={artist.imageUrl} size={192} />
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">Artiste</p>
           <h1 className="text-3xl font-semibold">{artist.name}</h1>

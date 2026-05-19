@@ -22,6 +22,8 @@ export type RankedRowProps = {
   imageUrl?: string;
   /** When set and no imageUrl, renders an ArtistAvatar with this name. */
   avatarName?: string;
+  /** Artist photo URL passed to ArtistAvatar (distinct from album/track imageUrl). */
+  avatarImageUrl?: string | null;
   /** Optional right-side content, e.g. a playcount badge. */
   metric?: React.ReactNode;
   /** When set, the whole row becomes a link to this href. */
@@ -34,6 +36,7 @@ export function RankedRow({
   subtitle,
   imageUrl,
   avatarName,
+  avatarImageUrl,
   metric,
   href,
 }: RankedRowProps) {
@@ -52,7 +55,7 @@ export function RankedRow({
           className="size-12 shrink-0 rounded-lg object-cover"
         />
       ) : avatarName ? (
-        <ArtistAvatar name={avatarName} size={48} className="rounded-lg" />
+        <ArtistAvatar name={avatarName} imageUrl={avatarImageUrl ?? undefined} size={48} className="rounded-lg" />
       ) : (
         <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted">
           <Music className="size-5 text-muted-foreground" />
