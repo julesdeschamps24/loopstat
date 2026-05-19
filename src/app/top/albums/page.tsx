@@ -54,6 +54,7 @@ export default async function TopAlbumsPage({
                 <RankedRow
                   rank={index + 1}
                   title={album.name}
+                  href={`/album/${album.albumId}`}
                   subtitle={album.artistNames.join(", ")}
                   metric={`${formatNumber(album.plays)} écoutes`}
                 />

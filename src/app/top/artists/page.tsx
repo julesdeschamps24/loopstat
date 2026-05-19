@@ -53,6 +53,7 @@ export default async function TopArtistsPage({
                 <RankedRow
                   rank={index + 1}
                   title={artist.name}
+                  href={`/artist/${artist.artistId}`}
                   metric={`${formatNumber(artist.plays)} écoutes`}
                 />
               </StaggerItem>

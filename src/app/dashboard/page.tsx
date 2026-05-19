@@ -122,6 +122,7 @@ export default async function DashboardPage() {
                     <RankedRow
                       rank={index + 1}
                       title={track.name}
+                      href={`/track/${track.trackId}`}
                       subtitle={track.artistNames.join(", ")}
                     />
                   </StaggerItem>
@@ -144,7 +145,11 @@ export default async function DashboardPage() {
               <StaggerList className="flex flex-col gap-1">
                 {top5Artists.map((artist, index) => (
                   <StaggerItem key={artist.artistId}>
-                    <RankedRow rank={index + 1} title={artist.name} />
+                    <RankedRow
+                      rank={index + 1}
+                      title={artist.name}
+                      href={`/artist/${artist.artistId}`}
+                    />
                   </StaggerItem>
                 ))}
               </StaggerList>

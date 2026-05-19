@@ -54,6 +54,7 @@ export default async function TopTracksPage({
                 <RankedRow
                   rank={index + 1}
                   title={track.name}
+                  href={`/track/${track.trackId}`}
                   subtitle={track.artistNames.join(", ")}
                   metric={`${formatNumber(track.plays)} écoutes`}
                 />
