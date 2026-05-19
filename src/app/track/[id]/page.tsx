@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -5,9 +6,8 @@ import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { getDemoTrack, isDemoId } from "@/lib/demo/data";
-import { spotifyFetch } from "@/lib/spotify/client";
-import { upsertCatalogFromTracks } from "@/lib/spotify/catalog";
-import type { SpotifyTrack } from "@/lib/spotify/types";
+import { db } from "@/db/client";
+import { tracks, albums, trackArtists, artists } from "@/db/schema";
 import {
   getTrackBreakdownByWindow,
   getTrackListeningHours,
@@ -18,7 +18,6 @@ import {
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 import { formatDate } from "@/lib/format/date";
 
-// Spotify metadata is stable — re-fetch at most once an hour.
 export const revalidate = 3600;
 
 function formatPercent(ratio: number): string {
@@ -123,12 +122,33 @@ export default async function TrackDetailPage({
     );
   }
 
-  let track: SpotifyTrack;
-  try {
-    track = await spotifyFetch<SpotifyTrack>(userId, `/tracks/${id}`);
-  } catch {
-    notFound();
-  }
+  // --- MODE RÉEL : DB only ---
+  const [track] = await db
+    .select({ id: tracks.id, name: tracks.name, albumId: tracks.albumId })
+    .from(tracks)
+    .where(eq(tracks.id, id))
+    .limit(1);
+  if (!track) notFound();
+
+  // Fetch album for cover image.
+  const album = track.albumId
+    ? (
+        await db
+          .select()
+          .from(albums)
+          .where(eq(albums.id, track.albumId))
+          .limit(1)
+      )[0] ?? null
+    : null;
+
+  // Fetch artist names via trackArtists join.
+  const trackArtistRows = await db
+    .select({ name: artists.name })
+    .from(trackArtists)
+    .innerJoin(artists, eq(trackArtists.artistId, artists.id))
+    .where(eq(trackArtists.trackId, id))
+    .orderBy(trackArtists.position);
+  const artistNames = trackArtistRows.map((r) => r.name).join(", ");
 
   const [stats, breakdown, monthly, hours, quality] = await Promise.all([
     getTrackPlayStats(userId, id),
@@ -138,15 +158,7 @@ export default async function TrackDetailPage({
     getTrackPlayQuality(userId, id),
   ]);
 
-  // Keep the catalog warm — best-effort, never block the render on it.
-  try {
-    await upsertCatalogFromTracks([track]);
-  } catch {
-    // ignore — purely a cache-warming side effect
-  }
-
-  const albumImage = track.album?.images?.[0]?.url;
-  const artistNames = track.artists.map((a) => a.name).join(", ");
+  const albumImage = album?.imageUrl ?? null;
   const hasPlays = stats.count > 0;
 
   return (
@@ -167,10 +179,12 @@ export default async function TrackDetailPage({
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">Titre</p>
           <h1 className="text-3xl font-semibold">{track.name}</h1>
-          <p className="mt-1 text-lg text-muted-foreground">{artistNames}</p>
-          {track.album?.name ? (
+          {artistNames ? (
+            <p className="mt-1 text-lg text-muted-foreground">{artistNames}</p>
+          ) : null}
+          {album?.name ? (
             <p className="mt-1 text-sm text-muted-foreground">
-              {track.album.name}
+              {album.name}
             </p>
           ) : null}
         </div>
