@@ -6,6 +6,8 @@ import { imports, tracks, type NewStream } from "@/db/schema";
 import { insertStreams, pruneOverlappingApiStreams } from "@/db/queries/streams";
 import { log } from "@/lib/log";
 import { enrichQueue } from "../queue";
+import { albumArtists, albums, artists, trackArtists } from "@/db/schema";
+import { synthesizeAlbumId, synthesizeArtistId } from "@/lib/ids/synthesize";
 
 // Temp dir layout written by POST /api/import: <projectRoot>/.import-tmp/<importId>/<file>.
 // The route saves files here so we never push file buffers through Redis.
@@ -35,6 +37,8 @@ interface RawStreamEntry {
   ts?: unknown;
   ms_played?: unknown;
   master_metadata_track_name?: unknown;
+  master_metadata_album_artist_name?: unknown;
+  master_metadata_album_album_name?: unknown;
   spotify_track_uri?: unknown;
 }
 
