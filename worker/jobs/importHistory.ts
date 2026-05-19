@@ -68,8 +68,14 @@ export async function importHistory(
     // failure. The outer try/catch intentionally catches it and marks failed.
     const fileNames = await readdir(dir);
 
-    // Dedup track id -> name across all files, and accumulate kept stream rows.
-    const trackNames = new Map<string, string>();
+    // Dedup catalog entities and accumulate kept stream rows.
+    const artistRows = new Map<string, { name: string }>();
+    const albumRows = new Map<string, { name: string; artistId: string }>();
+    const trackRows = new Map<
+      string,
+      { name: string; albumId: string | null }
+    >();
+    const trackArtistLinks = new Map<string, string>();  // trackId -> artistId
     const streamRows: NewStream[] = [];
 
     const nowMs = Date.now();
@@ -116,12 +122,9 @@ export async function importHistory(
         const trackId = uri.slice(TRACK_URI_PREFIX.length);
         if (!trackId) continue;
 
-        // Skip entries with a malformed ts — an Invalid Date would otherwise
-        // blow up the whole batch insert.
         const playedAt = new Date(item.ts);
         const playedAtMs = playedAt.getTime();
         if (Number.isNaN(playedAtMs)) continue;
-        // Sanity range : avant Spotify ou trop loin dans le futur = corruption.
         if (
           playedAt < SPOTIFY_LAUNCH ||
           playedAtMs > nowMs + MAX_FUTURE_MS
@@ -129,9 +132,6 @@ export async function importHistory(
           continue;
         }
 
-        // ms_played : on tolère null (source polling) ; sinon doit être un
-        // entier positif dans la range JS safe. Hors-range → null, pas
-        // skip de l'entrée (ms_played est nullable, l'écoute reste valide).
         let msPlayed: number | null = null;
         if (typeof item.ms_played === "number") {
           if (
@@ -143,7 +143,31 @@ export async function importHistory(
           }
         }
 
-        trackNames.set(trackId, name);
+        // Capture artist + album names from the JSON (no API call needed).
+        const artistName = item.master_metadata_album_artist_name;
+        if (typeof artistName !== "string" || artistName.length === 0) continue;
+        if (artistName.length > MAX_NAME_LEN) continue;
+
+        const albumName = item.master_metadata_album_album_name;
+        const hasAlbum =
+          typeof albumName === "string" &&
+          albumName.length > 0 &&
+          albumName.length <= MAX_NAME_LEN;
+
+        const artistId = synthesizeArtistId(artistName);
+        const albumId = hasAlbum
+          ? synthesizeAlbumId(artistName, albumName as string)
+          : null;
+
+        artistRows.set(artistId, { name: artistName });
+        if (albumId && hasAlbum) {
+          albumRows.set(albumId, {
+            name: albumName as string,
+            artistId,
+          });
+        }
+        trackRows.set(trackId, { name, albumId });
+        trackArtistLinks.set(trackId, artistId);
 
         streamRows.push({
           userId,
