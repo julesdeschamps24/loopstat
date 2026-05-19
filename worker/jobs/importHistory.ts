@@ -3,7 +3,7 @@ import path from "node:path";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { imports, tracks, type NewStream } from "@/db/schema";
-import { insertStreams, pruneOverlappingApiStreams } from "@/db/queries/streams";
+import { insertStreams } from "@/db/queries/streams";
 import { log } from "@/lib/log";
 import { enrichCatalogQueue } from "../queue";
 import { albumArtists, albums, artists, trackArtists } from "@/db/schema";
@@ -229,29 +229,9 @@ export async function importHistory(
     // index (user_id, played_at, track_id) — dedup vs DB and within the dump.
     const rowsImported = await insertStreams(streamRows);
 
-    // Nettoie les streams `api` (worker polling) qui chevauchent la fenêtre
-    // qu'on vient d'importer. La UNIQUE constraint ne les attrape pas à cause
-    // du drift de timestamp seconde-vs-ms entre les deux sources. Voir
-    // pruneOverlappingApiStreams() pour le détail.
-    if (streamRows.length > 0) {
-      // Loop instead of Math.min(...arr) — with 100k+ stream rows the spread
-      // hits V8's max-arg limit and throws "Maximum call stack size exceeded".
-      let minMs = Number.POSITIVE_INFINITY;
-      let maxMs = Number.NEGATIVE_INFINITY;
-      for (const row of streamRows) {
-        const t = row.playedAt.getTime();
-        if (t < minMs) minMs = t;
-        if (t > maxMs) maxMs = t;
-      }
-      const pruned = await pruneOverlappingApiStreams(
-        userId,
-        new Date(minMs),
-        new Date(maxMs),
-      );
-      if (pruned > 0) {
-        wlog.info({ userId, pruned }, "pruned overlapping api streams");
-      }
-    }
+    // pruneOverlappingApiStreams was used when Spotify polling produced
+    // source='api' streams that overlapped imports. Polling is gone (post
+    // sub-projet C), no api streams exist anymore — call removed.
 
     await db
       .update(imports)
