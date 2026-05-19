@@ -5,6 +5,7 @@ import type { AlbumTrack } from "@/components/album/album-tracklist";
 import { AlbumTracklist } from "@/components/album/album-tracklist";
 import { OtherArtistAlbums } from "@/components/album/other-artist-albums";
 import { TopTrackCard } from "@/components/album/top-track-card";
+import { getDemoAlbum, isDemoId } from "@/lib/demo/data";
 import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
@@ -40,6 +41,126 @@ export default async function AlbumDetailPage({
   const userId = session.user.id;
 
   const { id } = await params;
+
+  if (isDemoId(id)) {
+    const demo = getDemoAlbum(id);
+    if (!demo) notFound();
+    const { album, stats, tracks, breakdown, monthly, hours, quality, otherAlbums } = demo;
+    const artistName = album.artistNames[0] ?? "";
+
+    // Top track = celui avec le plus de plays (only shown if album has > 1 track with plays)
+    const playedTracks = tracks.filter((t) => t.plays > 0);
+    const topTrack =
+      tracks.length > 1 && playedTracks.length > 1
+        ? tracks.reduce((a, b) => (a.plays >= b.plays ? a : b))
+        : null;
+
+    return (
+      <main
+        id="main"
+        className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full"
+      >
+        {/* 1. Hero */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
+          <div className="size-48 shrink-0 rounded-2xl bg-muted" />
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">Album</p>
+            <h1 className="text-3xl font-semibold">{album.name}</h1>
+            <p className="mt-1 text-lg text-muted-foreground">
+              {album.artistNames.join(", ")}
+            </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {formatNumber(stats.count)} écoute{stats.count > 1 ? "s" : ""}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Première écoute : {formatDate(stats.firstPlayedAt)}
+            </p>
+          </div>
+        </div>
+
+        {/* 2. Top track card */}
+        {topTrack ? (
+          <TopTrackCard
+            trackId={topTrack.trackId}
+            trackName={topTrack.name}
+            artistName={artistName}
+            imageUrl={null}
+            plays={topTrack.plays}
+            shareOfAlbum={topTrack.plays / stats.count}
+          />
+        ) : null}
+
+        {/* 3. Tracklist with bars */}
+        {tracks.length > 0 ? (
+          <section className={cn(glassCard, "p-6")}>
+            <h2 className="text-lg font-semibold">Tracklist</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Plays par titre — la barre montre la part au sein de l&apos;album.
+            </p>
+            <div className="mt-4">
+              <AlbumTracklist tracks={tracks} />
+            </div>
+          </section>
+        ) : null}
+
+        {/* 4. Évolution mensuelle */}
+        {monthly.length >= 2 ? (
+          <section className={cn(glassCard, "p-6")}>
+            <h2 className="text-lg font-semibold">Évolution mensuelle</h2>
+            <div className="mt-4">
+              <SparklineMonthly data={monthly} />
+            </div>
+          </section>
+        ) : null}
+
+        {/* 5. Par période */}
+        <section className={cn(glassCard, "p-6")}>
+          <h2 className="text-lg font-semibold">Par période</h2>
+          <PeriodBreakdownGrid data={breakdown} />
+        </section>
+
+        {/* 6. Heure préférée */}
+        <section className={cn(glassCard, "p-6")}>
+          <h2 className="text-lg font-semibold">Heure préférée</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Répartition des écoutes selon l&apos;heure de la journée.
+          </p>
+          <HourHeatmap data={hours} />
+        </section>
+
+        {/* 7. Qualité d'écoute */}
+        <section className={cn(glassCard, "p-6")}>
+          <h2 className="text-lg font-semibold">Qualité d&apos;écoute</h2>
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="rounded-xl bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                Durée moyenne
+              </p>
+              <p className="mt-2 font-display italic text-2xl leading-none tabular-nums">
+                {formatMs(quality.avgMs)}
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                Taux de skip
+              </p>
+              <p className="mt-2 font-display italic text-2xl leading-none tabular-nums">
+                {formatPercent(quality.skipRate)}
+              </p>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Écoute &lt; 30 s
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 8. Autres albums de l'artiste */}
+        {otherAlbums.length > 0 ? (
+          <OtherArtistAlbums artistName={artistName} albums={otherAlbums} />
+        ) : null}
+      </main>
+    );
+  }
 
   let album: SpotifyAlbum;
   try {
