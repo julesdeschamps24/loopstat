@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { albums, albumArtists, artists } from "@/db/schema";
 import { log } from "@/lib/log";
@@ -46,7 +46,7 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
   const unenrichedArtists = Number(artCount?.n ?? 0);
 
   if (unenrichedAlbums === 0 && unenrichedArtists === 0) {
-    slog.info("catalog fully enriched, no action");
+    slog.info({}, "catalog fully enriched, no action");
     return { unenrichedAlbums, unenrichedArtists, enqueued: false };
   }
 
@@ -92,7 +92,7 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
     .from(albums)
     .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
     .innerJoin(artists, eq(artists.id, albumArtists.artistId))
-    .where(and(isNull(albums.mbid), eq(albumArtists.position, 0)));
+    .where(isNull(albums.mbid));
 
   wlog.info({ albums: unenrichedAlbums.length }, "album sweep starting");
 
