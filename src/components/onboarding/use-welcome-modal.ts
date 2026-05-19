@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "loopstat-welcome-shown";
 
@@ -27,12 +27,12 @@ export function useWelcomeModalState(): {
     }
   }, []);
 
-  const close = () => {
+  const close = useCallback(() => {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(STORAGE_KEY, "true");
     }
     setIsOpen(false);
-  };
+  }, []);
 
   return { isOpen, close };
 }
