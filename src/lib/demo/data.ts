@@ -41,8 +41,8 @@ export const DEMO_TOP_TRACKS: {
   { trackId: "demo:agora-hills", name: "agora hills", artistNames: ["Doja Cat"], albumImageUrl: null, plays: 338 },
   { trackId: "demo:paint-the-town-red", name: "Paint The Town Red", artistNames: ["Doja Cat"], albumImageUrl: null, plays: 312 },
   { trackId: "demo:vampire", name: "vampire", artistNames: ["Olivia Rodrigo"], albumImageUrl: null, plays: 287 },
-  { trackId: "demo:greedy-old", name: "What Was I Made For?", artistNames: ["Billie Eilish"], albumImageUrl: null, plays: 251 },
-  { trackId: "demo:lovesick", name: "Si No Estás", artistNames: ["Iñigo Quintero"], albumImageUrl: null, plays: 214 },
+  { trackId: "demo:what-was-i-made-for", name: "What Was I Made For?", artistNames: ["Billie Eilish"], albumImageUrl: null, plays: 251 },
+  { trackId: "demo:si-no-estas", name: "Si No Estás", artistNames: ["Iñigo Quintero"], albumImageUrl: null, plays: 214 },
 ];
 
 export const DEMO_TOP_ARTISTS: {
