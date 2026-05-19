@@ -1,4 +1,4 @@
-import { eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { albums, albumArtists, artists } from "@/db/schema";
 import { log } from "@/lib/log";
@@ -6,7 +6,13 @@ import {
   enrichAlbumByNames,
   enrichArtistByName,
 } from "@/lib/musicbrainz/catalog";
+import {
+  enrichArtistImageByMbid,
+  enrichArtistImageByName,
+} from "@/lib/theaudiodb/catalog";
 import { enrichCatalogQueue } from "../queue";
+
+const SENTINEL_MBID = "00000000-0000-0000-0000-000000000000";
 
 const RATE_DELAY_MS = 1100;
 const CHUNK_SIZE = 25;
@@ -14,11 +20,13 @@ const CHUNK_SIZE = 25;
 export interface EnrichCatalogResult {
   albumsEnriched: number;
   artistsEnriched: number;
+  imagesEnriched: number;
 }
 
 export interface SelfHealResult {
   unenrichedAlbums: number;
   unenrichedArtists: number;
+  unenrichedImages: number;
   enqueued: boolean;
 }
 
@@ -41,13 +49,18 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
     .select({ n: sql<number>`count(*)::int` })
     .from(artists)
     .where(isNull(artists.mbid));
+  const [imgCount] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(artists)
+    .where(and(isNull(artists.imageUrl), isNull(artists.tadbId)));
 
   const unenrichedAlbums = Number(albCount?.n ?? 0);
   const unenrichedArtists = Number(artCount?.n ?? 0);
+  const unenrichedImages = Number(imgCount?.n ?? 0);
 
-  if (unenrichedAlbums === 0 && unenrichedArtists === 0) {
+  if (unenrichedAlbums === 0 && unenrichedArtists === 0 && unenrichedImages === 0) {
     slog.info({}, "catalog fully enriched, no action");
-    return { unenrichedAlbums, unenrichedArtists, enqueued: false };
+    return { unenrichedAlbums, unenrichedArtists, unenrichedImages, enqueued: false };
   }
 
   const existing = await enrichCatalogQueue.getJob("enrich-catalog-global");
@@ -58,7 +71,7 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
       await existing.remove();
     } else {
       slog.info({ state }, "enrich already pending — no re-enqueue");
-      return { unenrichedAlbums, unenrichedArtists, enqueued: false };
+      return { unenrichedAlbums, unenrichedArtists, unenrichedImages, enqueued: false };
     }
   }
 
@@ -68,10 +81,10 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
     { jobId: "enrich-catalog-global" },
   );
   slog.info(
-    { unenrichedAlbums, unenrichedArtists },
+    { unenrichedAlbums, unenrichedArtists, unenrichedImages },
     "self-heal enqueued enrich-catalog",
   );
-  return { unenrichedAlbums, unenrichedArtists, enqueued: true };
+  return { unenrichedAlbums, unenrichedArtists, unenrichedImages, enqueued: true };
 }
 
 /**
@@ -140,6 +153,37 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
     }
   }
 
-  wlog.info({ albumsEnriched, artistsEnriched }, "enrich complete");
-  return { albumsEnriched, artistsEnriched };
+  // TheAudioDB image sweep : artists without image_url and not yet tried (tadb_id IS NULL).
+  const unenrichedImages = await db
+    .select({ artistId: artists.id, name: artists.name, mbid: artists.mbid })
+    .from(artists)
+    .where(and(isNull(artists.imageUrl), isNull(artists.tadbId)));
+
+  wlog.info({ artists: unenrichedImages.length }, "tadb image sweep starting");
+
+  let imagesEnriched = 0;
+  for (let i = 0; i < unenrichedImages.length; i++) {
+    if (i > 0 || unenrichedArtists.length > 0 || unenrichedAlbums.length > 0) {
+      await sleep(RATE_DELAY_MS);
+    }
+    const row = unenrichedImages[i];
+    const hasRealMbid = row.mbid !== null && row.mbid !== SENTINEL_MBID;
+    try {
+      if (hasRealMbid) {
+        await enrichArtistImageByMbid({ artistId: row.artistId, mbid: row.mbid! });
+      } else {
+        await enrichArtistImageByName({ artistId: row.artistId, name: row.name });
+      }
+      imagesEnriched++;
+    } catch (err) {
+      wlog.error({ err, artistId: row.artistId }, "enrich artist image failed");
+      throw err;
+    }
+  }
+
+  wlog.info(
+    { albumsEnriched, artistsEnriched, imagesEnriched },
+    "enrich complete",
+  );
+  return { albumsEnriched, artistsEnriched, imagesEnriched };
 }
