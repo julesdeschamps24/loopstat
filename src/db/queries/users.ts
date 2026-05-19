@@ -9,7 +9,7 @@ export type ProfileRow = {
   username: string | null;
   isPublic: boolean;
   displayName: string | null;
-  spotifyId: string;
+  spotifyId: string | null;
 };
 
 export const getProfile = cache(
@@ -44,7 +44,7 @@ function isUniqueViolation(err: unknown): boolean {
 export async function ensureUsernamePersisted(
   userId: string,
   displayName: string | null,
-  spotifyId: string,
+  spotifyId: string | null,
 ): Promise<{ ok: true; username: string } | { ok: false }> {
   const existing = await db.query.users.findFirst({
     where: eq(users.id, userId),
@@ -52,8 +52,9 @@ export async function ensureUsernamePersisted(
   });
   if (existing?.username) return { ok: true, username: existing.username };
 
-  const base = deriveUsername(displayName, spotifyId);
-  const candidates = [base, withUniqueSuffix(base, spotifyId)];
+  const idForDerivation = spotifyId ?? userId;
+  const base = deriveUsername(displayName, idForDerivation);
+  const candidates = [base, withUniqueSuffix(base, idForDerivation)];
 
   for (const candidate of candidates) {
     try {

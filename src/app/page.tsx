@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { LandingHeader } from "@/components/landing/landing-header";
-import { SpotifyCtaButton } from "@/components/landing/spotify-cta-button";
+import { GoogleSignInButton } from "@/components/landing/google-sign-in-button";
 
 export default function HomePage() {
   return (
@@ -36,7 +36,7 @@ export default function HomePage() {
         </p>
 
         <div className="mt-2 flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
-          <SpotifyCtaButton />
+          <GoogleSignInButton />
           <Link
             href="/u/demo"
             className="inline-flex items-center gap-1.5 px-3 py-3.5 text-[15px] font-medium transition hover:underline"

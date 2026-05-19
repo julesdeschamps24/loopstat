@@ -5,6 +5,9 @@ import { auth } from "@/auth";
 import { EmptyState } from "@/components/stats/empty-state";
 import { getListeningClock, getListeningTotals } from "@/db/queries/stats";
 import { formatNumber } from "@/lib/utils";
+import { hasCompletedImport } from "@/db/queries/imports";
+import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
+import { DEMO_LISTENING_HOURS } from "@/lib/demo/data";
 
 // The hourly distribution shifts slowly — re-derive it at most once an hour.
 export const revalidate = 3600;
@@ -15,6 +18,55 @@ export default async function ListeningClockPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
+
+  const hasImport = await hasCompletedImport(userId);
+
+  if (!hasImport) {
+    const demoMax = Math.max(...DEMO_LISTENING_HOURS.map((c) => c.count), 1);
+    return (
+      <>
+        <DemoModeBanner />
+        <main
+          id="main"
+          className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full"
+        >
+          <header className="mb-8">
+            <h1 className="text-2xl font-semibold">Horloge d&apos;écoute</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Ces données sont fictives — importe ton historique pour voir les tiennes.
+            </p>
+          </header>
+          <section className="rounded-2xl border bg-card p-6">
+            <div className="grid grid-cols-12 gap-2 sm:grid-cols-24">
+              {DEMO_LISTENING_HOURS.map(({ hour, count }) => {
+                const intensity = count / demoMax;
+                return (
+                  <div
+                    key={hour}
+                    className="flex flex-col items-center gap-1"
+                    title={`${hour}h — ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
+                  >
+                    <div className="flex h-24 w-full items-end">
+                      <div
+                        className="w-full rounded-md bg-primary"
+                        style={{
+                          height: `${Math.max(intensity * 100, count > 0 ? 6 : 2)}%`,
+                          opacity: count > 0 ? 0.25 + intensity * 0.75 : 0.15,
+                        }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      {hour}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </main>
+      </>
+    );
+  }
 
   const [clock, totals] = await Promise.all([
     getListeningClock(userId),

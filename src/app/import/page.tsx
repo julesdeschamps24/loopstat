@@ -5,7 +5,13 @@ import { auth } from "@/auth";
 import { ImageZoom } from "@/components/image-zoom";
 import { ImportUpload } from "@/components/import-upload";
 
-export default async function ImportPage() {
+export default async function ImportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
+  const { from } = await searchParams;
+  const isFromWelcome = from === "welcome";
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -27,8 +33,9 @@ export default async function ImportPage() {
               Importer ton historique
             </h1>
             <p className="text-sm text-muted-foreground">
-              Pour avoir tes vraies écoutes lifetime, pas juste depuis ton
-              inscription à loopstat.
+              {isFromWelcome
+                ? "Plus que quelques minutes avant de voir tes vraies stats."
+                : "Pour avoir tes vraies écoutes lifetime, pas juste depuis ton inscription à loopstat."}
             </p>
           </div>
         </div>

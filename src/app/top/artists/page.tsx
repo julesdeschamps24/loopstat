@@ -9,6 +9,8 @@ import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { getTopArtistsFromStreams } from "@/db/queries/stats";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
+import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
+import { DEMO_TOP_ARTISTS } from "@/lib/demo/data";
 import {
   isStreamPeriod,
   periodSince,
@@ -29,14 +31,47 @@ export default async function TopArtistsPage({
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
+  const hasImport = await hasCompletedImport(userId);
+
+  if (!hasImport) {
+    return (
+      <>
+        <DemoModeBanner />
+        <main
+          id="main"
+          className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full"
+        >
+          <header className="mb-2 flex flex-wrap items-center justify-between gap-4">
+            <h1 className="text-2xl font-semibold">Top artistes</h1>
+          </header>
+          <p className="mb-8 text-sm text-muted-foreground">
+            Ces données sont fictives — importe ton historique pour voir les tiennes.
+          </p>
+          <StaggerList className="flex flex-col gap-1">
+            {DEMO_TOP_ARTISTS.map((artist, index) => (
+              <StaggerItem key={artist.artistId}>
+                <RankedRow
+                  rank={index + 1}
+                  title={artist.name}
+                  href={`/artist/${artist.artistId}`}
+                  metric={`${formatNumber(artist.plays)} écoutes`}
+                />
+              </StaggerItem>
+            ))}
+          </StaggerList>
+        </main>
+      </>
+    );
+  }
+
   const { period: rawPeriod } = await searchParams;
   const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
-  const [artists, imported, profile] = await Promise.all([
+  const [artists, profile] = await Promise.all([
     getTopArtistsFromStreams(userId, periodSince(period), TOP_LIMIT),
-    hasCompletedImport(userId),
     getProfile(userId),
   ]);
+  const imported = hasImport;
   const shareUsername =
     profile?.isPublic && profile.username ? profile.username : undefined;
 

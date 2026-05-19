@@ -32,7 +32,7 @@ export function AppHeader({
         <div>
           <p className="text-sm text-muted-foreground">Connecté en tant que</p>
           <p className="font-medium">
-            {session.user.name ?? session.user.spotifyId}
+            {session.user.name ?? session.user.email ?? "Compte"}
           </p>
         </div>
       </div>

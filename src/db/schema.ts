@@ -26,8 +26,8 @@ export type ProfileSettings = {
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
-  spotifyId: text("spotify_id").notNull().unique(),
-  email: text("email"),
+  spotifyId: text("spotify_id"),
+  email: text("email").notNull().unique(),
   displayName: text("display_name"),
   avatarUrl: text("avatar_url"),
   country: text("country"),

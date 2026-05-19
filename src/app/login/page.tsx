@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { ExternalLink, Music } from "lucide-react";
-import { isSpotifyConfigured } from "@/auth";
+import { isAuthConfigured } from "@/auth";
 import { LegalFooter } from "@/components/legal-footer";
-import { SpotifyLoginButton } from "@/components/spotify-login-button";
+import { GoogleSignInButton } from "@/components/landing/google-sign-in-button";
 
-// Force dynamic rendering so isSpotifyConfigured() is evaluated at each
+// Force dynamic rendering so isAuthConfigured() is evaluated at each
 // request against the current runtime env, rather than being baked into a
 // statically prerendered HTML at build time.
 export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
-  if (!isSpotifyConfigured()) {
+  if (!isAuthConfigured()) {
     return <SetupNeeded />;
   }
 
@@ -24,10 +24,10 @@ export default function LoginPage() {
             </div>
             <h1 className="text-2xl font-semibold">Bienvenue 👋</h1>
             <p className="text-sm text-muted-foreground">
-              Connecte-toi avec ton compte Spotify pour voir tes stats.
+              Connecte-toi pour voir tes stats Spotify.
             </p>
           </div>
-          <SpotifyLoginButton />
+          <GoogleSignInButton />
           <p className="text-xs text-muted-foreground">
             En te connectant, tu acceptes nos{" "}
             <Link href="/terms" className="underline hover:text-foreground">
@@ -52,16 +52,15 @@ function SetupNeeded() {
       <div className="w-full max-w-xl rounded-2xl border bg-card p-8 space-y-6">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs uppercase tracking-wider text-muted-foreground">
-            Setup requis (1 fois, ~2 min)
+            Setup requis (1 fois, ~5 min)
           </div>
           <h1 className="text-2xl font-semibold">
-            Configure ton app Spotify Developer
+            Configure ton client OAuth Google
           </h1>
           <p className="text-sm text-muted-foreground">
-            Spotify exige que <strong>l&apos;éditeur de l&apos;application</strong>{" "}
-            (toi) enregistre une app sur leur dashboard, une seule fois. Après ça,
-            tes utilisateurs se connectent en 1 clic — comme sur stats.fm ou
-            receiptify.
+            Google demande qu&apos;une app cliente soit enregistrée pour
+            authentifier les users via OAuth. Setup en 5 min, gratuit, jusqu&apos;à
+            100 testeurs whitelistés sans verification Google.
           </p>
         </div>
 
@@ -69,60 +68,57 @@ function SetupNeeded() {
           <Step n={1}>
             Va sur{" "}
             <a
-              href="https://developer.spotify.com/dashboard"
+              href="https://console.cloud.google.com/apis/credentials"
               target="_blank"
               rel="noreferrer"
               className="text-primary inline-flex items-center gap-1 hover:underline"
             >
-              developer.spotify.com/dashboard
+              console.cloud.google.com/apis/credentials
               <ExternalLink className="size-3" />
             </a>
             <br />
-            Connecte-toi avec ton compte Spotify perso, puis clique{" "}
+            Crée un projet si tu n&apos;en as pas, puis clique{" "}
             <kbd className="rounded bg-accent px-1.5 py-0.5 text-xs">
-              Create app
+              + Create credentials → OAuth client ID
             </kbd>
             .
           </Step>
           <Step n={2}>
-            Remplis :
-            <ul className="mt-2 space-y-1 text-muted-foreground">
-              <li>
-                <strong>App name</strong> : <code className="text-foreground">loopstat</code>
-              </li>
-              <li>
-                <strong>App description</strong> : ce que tu veux
-              </li>
-              <li>
-                <strong>Redirect URI</strong> :{" "}
-                <code className="break-all text-foreground">
-                  http://127.0.0.1:3000/api/auth/callback/spotify
-                </code>
-                <span className="block text-xs italic">
-                  (clique <kbd className="rounded bg-accent px-1 py-0.5">Add</kbd>{" "}
-                  après l&apos;avoir tapé !)
-                </span>
-              </li>
-              <li>
-                <strong>Which API/SDKs</strong> : coche <em>Web API</em>
-              </li>
-            </ul>
+            Type : <strong>Web application</strong>
+            <br />
+            Name : <code className="text-foreground">loopstat</code>
+            <br />
+            <strong>Authorized redirect URIs</strong> — ajoute :
+            <pre className="mt-2 rounded-lg bg-accent px-3 py-2 text-xs overflow-x-auto">
+              <code>http://127.0.0.1:3000/api/auth/callback/google</code>
+            </pre>
           </Step>
           <Step n={3}>
-            Coche les CGU →{" "}
-            <kbd className="rounded bg-accent px-1.5 py-0.5 text-xs">Save</kbd>.
+            Clique <kbd className="rounded bg-accent px-1.5 py-0.5 text-xs">Create</kbd>.
             <br />
-            Sur la page de l&apos;app → <strong>Settings</strong> → tu vois{" "}
-            <strong>Client ID</strong> et <strong>Client secret</strong>.
+            Copie <strong>Client ID</strong> et <strong>Client secret</strong>{" "}
+            depuis le dialog.
           </Step>
           <Step n={4}>
-            Colle les 2 valeurs dans le fichier{" "}
-            <code className="text-foreground">.env.local</code> à la racine du projet
-            :
+            Configure le consent screen (
+            <a
+              href="https://console.cloud.google.com/apis/credentials/consent"
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary inline-flex items-center gap-1 hover:underline"
+            >
+              ici
+              <ExternalLink className="size-3" />
+            </a>
+            ) : External, Testing, ajoute ton email dans &quot;Test users&quot;.
+          </Step>
+          <Step n={5}>
+            Colle les 2 valeurs dans{" "}
+            <code className="text-foreground">.env.local</code> :
             <pre className="mt-2 rounded-lg bg-accent px-3 py-2 text-xs overflow-x-auto">
               <code>
-                SPOTIFY_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxx{"\n"}
-                SPOTIFY_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxx
+                GOOGLE_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxx{"\n"}
+                GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxx
               </code>
             </pre>
             Puis redémarre le serveur ({" "}
