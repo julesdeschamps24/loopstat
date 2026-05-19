@@ -16,7 +16,11 @@ import {
 } from "@/lib/share/card-config";
 import { prefetchImages } from "@/lib/share/prefetch-images";
 import { periodSince } from "@/lib/stats/period";
-import { shrinkAlbumCoverUrl } from "@/lib/spotify/image-url";
+// Image URLs now come from MusicBrainz (already-sized JPEGs) — no CDN
+// shrinking needed. Identity function keeps call-sites unchanged.
+function shrinkAlbumCoverUrl(url: string | null, _size: "medium" | "small"): string | null {
+  return url ?? null;
+}
 
 import { POST_SIZE, PostTemplate } from "./templates/post";
 import {
