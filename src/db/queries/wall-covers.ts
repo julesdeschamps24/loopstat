@@ -20,6 +20,25 @@ export interface WallAlbum {
 }
 
 /**
+ * Convenience wrapper used by every page that renders <AlbumWall> as
+ * background : fetches top albums (with global catalog padding) and pads
+ * to exactly `cells` entries so the wall grid is always full. Avoids
+ * duplicating the padding loop across callsites.
+ */
+export async function getPaddedWallCovers(
+  userId: string,
+  since: Date | null,
+  cells: number,
+): Promise<WallAlbum[]> {
+  const albums = await getWallCovers(userId, since, cells);
+  const padded: WallAlbum[] = [...albums];
+  while (padded.length < cells) {
+    padded.push({ name: `slot-${padded.length}`, imageUrl: null });
+  }
+  return padded;
+}
+
+/**
  * Top N albums for the wall background, ALWAYS with covers.
  *
  * Strategy:

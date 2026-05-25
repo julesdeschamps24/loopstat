@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { auth } from "@/auth";
+import { AlbumWall } from "@/components/album-wall";
 import { getBillingState } from "@/db/queries/billing";
+import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import { OpenPortalButton } from "@/app/settings/billing/portal-form";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +19,14 @@ export default async function BillingPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login?next=/settings/billing");
 
-  const state = await getBillingState(session.user.id);
+  const [state, wallCovers] = await Promise.all([
+    getBillingState(session.user.id),
+    getPaddedWallCovers(session.user.id, null, 40),
+  ]);
 
   return (
+    <>
+    <AlbumWall covers={wallCovers} />
     <main
       id="main"
       className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full"
@@ -89,5 +96,6 @@ export default async function BillingPage() {
         </section>
       ) : null}
     </main>
+    </>
   );
 }
