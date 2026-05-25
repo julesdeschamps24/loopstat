@@ -111,7 +111,21 @@ export async function getPlayCountsForArtists(
 export async function getTrackPlayStats(
   userId: string,
   trackId: string,
+  since: Date | null = null,
 ): Promise<{ count: number; firstPlayedAt: Date | null; lastPlayedAt: Date | null }> {
+  const whereClause = since
+    ? and(
+        eq(streams.userId, userId),
+        eq(streams.trackId, trackId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+      )
+    : and(
+        eq(streams.userId, userId),
+        eq(streams.trackId, trackId),
+        QUALIFYING_PLAY,
+      );
+
   const [row] = await db
     .select({
       count: sql<number>`count(*)::int`,
@@ -119,13 +133,7 @@ export async function getTrackPlayStats(
       lastPlayedAt: sql<string | null>`max(${streams.playedAt})`,
     })
     .from(streams)
-    .where(
-      and(
-        eq(streams.userId, userId),
-        eq(streams.trackId, trackId),
-        QUALIFYING_PLAY,
-      ),
-    );
+    .where(whereClause);
 
   return {
     count: Number(row?.count ?? 0),
@@ -242,12 +250,26 @@ export async function getUserTopTracksByArtist(
 export async function getAlbumPlayStats(
   userId: string,
   albumId: string,
+  since: Date | null = null,
 ): Promise<{
   count: number;
   firstPlayedAt: Date | null;
   lastPlayedAt: Date | null;
   totalMsPlayed: number;
 }> {
+  const whereClause = since
+    ? and(
+        eq(streams.userId, userId),
+        eq(tracks.albumId, albumId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+      )
+    : and(
+        eq(streams.userId, userId),
+        eq(tracks.albumId, albumId),
+        QUALIFYING_PLAY,
+      );
+
   const [row] = await db
     .select({
       count: sql<number>`count(*)::int`,
@@ -257,13 +279,7 @@ export async function getAlbumPlayStats(
     })
     .from(streams)
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
-    .where(
-      and(
-        eq(streams.userId, userId),
-        eq(tracks.albumId, albumId),
-        QUALIFYING_PLAY,
-      ),
-    );
+    .where(whereClause);
 
   return {
     count: Number(row?.count ?? 0),
@@ -281,14 +297,19 @@ export async function getAlbumPlayStats(
 export async function getAlbumTrackPlays(
   userId: string,
   albumId: string,
+  since: Date | null = null,
 ): Promise<
   { trackId: string; name: string; trackNumber: number | null; plays: number }[]
 > {
+  const sinceFilter = since
+    ? sql`and ${streams.playedAt} >= ${since}`
+    : sql``;
+
   const rows = await db
     .select({
       trackId: tracks.id,
       name: tracks.name,
-      plays: sql<number>`coalesce(count(${streams.id}) filter (where ${streams.userId} = ${userId} and ${QUALIFYING_PLAY}), 0)::int`,
+      plays: sql<number>`coalesce(count(${streams.id}) filter (where ${streams.userId} = ${userId} and ${QUALIFYING_PLAY} ${sinceFilter}), 0)::int`,
     })
     .from(tracks)
     .leftJoin(streams, eq(streams.trackId, tracks.id))
@@ -602,20 +623,28 @@ export async function getTrackMonthlyPlays(
 export async function getTrackListeningHours(
   userId: string,
   trackId: string,
+  since: Date | null = null,
 ): Promise<{ hour: number; count: number }[]> {
+  const whereClause = since
+    ? and(
+        eq(streams.userId, userId),
+        eq(streams.trackId, trackId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+      )
+    : and(
+        eq(streams.userId, userId),
+        eq(streams.trackId, trackId),
+        QUALIFYING_PLAY,
+      );
+
   const rows = await db
     .select({
       hour: sql<number>`extract(hour from ${streams.playedAt})::int`,
       count: sql<number>`count(*)::int`,
     })
     .from(streams)
-    .where(
-      and(
-        eq(streams.userId, userId),
-        eq(streams.trackId, trackId),
-        QUALIFYING_PLAY,
-      ),
-    )
+    .where(whereClause)
     .groupBy(sql`extract(hour from ${streams.playedAt})`);
 
   const counts = new Map(rows.map((r) => [Number(r.hour), Number(r.count)]));
@@ -635,7 +664,16 @@ export async function getTrackListeningHours(
 export async function getTrackPlayQuality(
   userId: string,
   trackId: string,
+  since: Date | null = null,
 ): Promise<{ avgMs: number | null; skipRate: number | null }> {
+  const whereClause = since
+    ? and(
+        eq(streams.userId, userId),
+        eq(streams.trackId, trackId),
+        gte(streams.playedAt, since),
+      )
+    : and(eq(streams.userId, userId), eq(streams.trackId, trackId));
+
   const [row] = await db
     .select({
       avgMs: sql<string | null>`avg(${streams.msPlayed}) filter (where ${streams.msPlayed} is not null)`,
@@ -645,7 +683,7 @@ export async function getTrackPlayQuality(
       `,
     })
     .from(streams)
-    .where(and(eq(streams.userId, userId), eq(streams.trackId, trackId)));
+    .where(whereClause);
 
   return {
     avgMs: row?.avgMs != null ? Number(row.avgMs) : null,
@@ -827,7 +865,21 @@ export async function getAlbumMonthlyPlays(
 export async function getAlbumListeningHours(
   userId: string,
   albumId: string,
+  since: Date | null = null,
 ): Promise<{ hour: number; count: number }[]> {
+  const whereClause = since
+    ? and(
+        eq(streams.userId, userId),
+        eq(tracks.albumId, albumId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+      )
+    : and(
+        eq(streams.userId, userId),
+        eq(tracks.albumId, albumId),
+        QUALIFYING_PLAY,
+      );
+
   const rows = await db
     .select({
       hour: sql<number>`extract(hour from ${streams.playedAt})::int`,
@@ -835,13 +887,7 @@ export async function getAlbumListeningHours(
     })
     .from(streams)
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
-    .where(
-      and(
-        eq(streams.userId, userId),
-        eq(tracks.albumId, albumId),
-        QUALIFYING_PLAY,
-      ),
-    )
+    .where(whereClause)
     .groupBy(sql`extract(hour from ${streams.playedAt})`);
 
   const counts = new Map(rows.map((r) => [Number(r.hour), Number(r.count)]));
@@ -858,7 +904,16 @@ export async function getAlbumListeningHours(
 export async function getAlbumPlayQuality(
   userId: string,
   albumId: string,
+  since: Date | null = null,
 ): Promise<{ avgMs: number | null; skipRate: number | null }> {
+  const whereClause = since
+    ? and(
+        eq(streams.userId, userId),
+        eq(tracks.albumId, albumId),
+        gte(streams.playedAt, since),
+      )
+    : and(eq(streams.userId, userId), eq(tracks.albumId, albumId));
+
   const [row] = await db
     .select({
       avgMs: sql<string | null>`avg(${streams.msPlayed}) filter (where ${streams.msPlayed} is not null)`,
@@ -869,7 +924,7 @@ export async function getAlbumPlayQuality(
     })
     .from(streams)
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
-    .where(and(eq(streams.userId, userId), eq(tracks.albumId, albumId)));
+    .where(whereClause);
 
   return {
     avgMs: row?.avgMs != null ? Number(row.avgMs) : null,
