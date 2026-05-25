@@ -10,12 +10,13 @@
    loopstat.tech.   A   204.168.178.52
    ```
    Vérifie la propagation : `dig +short loopstat.tech A` doit renvoyer `204.168.178.52`.
-2. **Spotify Dashboard** ([developer.spotify.com/dashboard](https://developer.spotify.com/dashboard)) :
-   ouvre ton app, **Settings → Edit**, ajoute le redirect URI prod :
+2. **Google Cloud Console** ([console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)) :
+   ouvre ton projet OAuth, ajoute le redirect URI prod aux **Authorized redirect URIs** :
    ```
-   https://loopstat.tech/api/auth/callback/spotify
+   https://loopstat.tech/api/auth/callback/google
    ```
-   (Garde celui de dev `http://127.0.0.1:3000/api/auth/callback/spotify` à côté.)
+   (Garde celui de dev `http://127.0.0.1:3000/api/auth/callback/google` à côté.)
+   Si l'app est encore en "Testing" status, ajoute aussi ton email dans **Test users**.
 3. **`.env.production`** : copie `.env.production.example` en `.env.production` et remplis
    les valeurs (jamais commit). Génère les secrets manquants :
    ```sh
