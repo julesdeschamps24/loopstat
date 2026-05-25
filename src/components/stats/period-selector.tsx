@@ -37,8 +37,15 @@ export function PeriodSelector({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Hydration : on mount, restore from sessionStorage if URL lacks `?period`,
-  // unless this is a hard refresh (then reset).
+  // Hydration / persistence sync, fires on every (re-)mount of the selector
+  // (i.e. every cross-page navigation between /top/*).
+  //
+  // - Hard refresh detected (performance.navigation.type === "reload") :
+  //   clear sessionStorage so the default period applies.
+  // - URL has ?period= : sync it INTO sessionStorage so the next page can
+  //   pick it up even if the user reached this URL via a shared link.
+  // - URL has no ?period= but sessionStorage has one : router.replace to
+  //   apply it, keeping the user's last-chosen period across categories.
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -50,10 +57,12 @@ export function PeriodSelector({
       return;
     }
 
-    // Only restore when the URL didn't specify a period (i.e. parent used
-    // its default). If the URL had a period, that's what the user navigated
-    // with and we don't override it.
-    if (searchParams.get("period") !== null) return;
+    const urlPeriod = searchParams.get("period");
+    if (urlPeriod !== null && isStreamPeriod(urlPeriod)) {
+      // Keep storage in sync with whatever the URL says.
+      sessionStorage.setItem(STORAGE_KEY, urlPeriod);
+      return;
+    }
 
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored && isStreamPeriod(stored) && stored !== current) {
@@ -61,9 +70,10 @@ export function PeriodSelector({
       params.set("period", stored);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-    // Only run on mount — restore is a one-shot.
+    // Only react to pathname changes — re-run when user navigates between
+    // /top/tracks → /top/artists, but not on every searchParams tick.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pathname]);
 
   function selectPeriod(period: StreamPeriod) {
     if (period === current) return;
