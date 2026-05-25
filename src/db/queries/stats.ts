@@ -137,9 +137,17 @@ export async function getTrackPlayStats(
 export async function getArtistPlayStats(
   userId: string,
   artistId: string,
-): Promise<{ count: number }> {
+): Promise<{
+  count: number;
+  firstPlayedAt: Date | null;
+  lastPlayedAt: Date | null;
+}> {
   const [row] = await db
-    .select({ count: sql<number>`count(*)::int` })
+    .select({
+      count: sql<number>`count(*)::int`,
+      firstPlayedAt: sql<Date | null>`min(${streams.playedAt})`,
+      lastPlayedAt: sql<Date | null>`max(${streams.playedAt})`,
+    })
     .from(streams)
     .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
     .where(
@@ -150,7 +158,11 @@ export async function getArtistPlayStats(
       ),
     );
 
-  return { count: Number(row?.count ?? 0) };
+  return {
+    count: Number(row?.count ?? 0),
+    firstPlayedAt: row?.firstPlayedAt ?? null,
+    lastPlayedAt: row?.lastPlayedAt ?? null,
+  };
 }
 
 export async function getUserTopTracksByArtist(
