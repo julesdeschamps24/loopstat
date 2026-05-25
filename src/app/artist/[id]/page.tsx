@@ -6,6 +6,7 @@ import { RankedList, RankedRow } from "@/components/stats/ranked-list";
 import { EmptyState } from "@/components/stats/empty-state";
 import { ArtistAvatar } from "@/components/ui/artist-avatar";
 import { getDemoArtist, isDemoId } from "@/lib/demo/data";
+import { enrichDemoFixtures } from "@/lib/demo/enrich";
 import { db } from "@/db/client";
 import { artists } from "@/db/schema";
 import {
@@ -34,11 +35,13 @@ export default async function ArtistDetailPage({
     const demo = getDemoArtist(id);
     if (!demo) notFound();
     const { artist, stats, topTracks } = demo;
+    const { artistImages, trackImages } = await enrichDemoFixtures();
+    const artistImage = artistImages.get(artist.artistId) ?? artist.imageUrl;
 
     return (
       <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
-          <ArtistAvatar name={artist.name} imageUrl={artist.imageUrl} size={192} />
+          <ArtistAvatar name={artist.name} imageUrl={artistImage} size={192} />
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">Artiste</p>
             <h1 className="text-3xl font-semibold">{artist.name}</h1>
@@ -65,6 +68,7 @@ export default async function ArtistDetailPage({
                   rank={index + 1}
                   title={track.trackName}
                   href={`/track/${track.trackId}`}
+                  imageUrl={trackImages.get(track.trackId) ?? undefined}
                   metric={`${formatNumber(track.playCount)} écoutes`}
                 />
               ))}
