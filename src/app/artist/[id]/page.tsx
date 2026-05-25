@@ -3,21 +3,111 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { AlbumWall } from "@/components/album-wall";
-import { RankedList, RankedRow } from "@/components/stats/ranked-list";
+import { OtherArtistAlbums } from "@/components/album/other-artist-albums";
+import { RelatedArtists } from "@/components/artist/related-artists";
 import { EmptyState } from "@/components/stats/empty-state";
+import { RankedList, RankedRow } from "@/components/stats/ranked-list";
+import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { ArtistAvatar } from "@/components/ui/artist-avatar";
+import { db } from "@/db/client";
+import {
+  getArtistMonthlyPlays,
+  getArtistPlayStats,
+  getCoListenedArtists,
+  getUserTopAlbumsByArtist,
+  getUserTopTracksByArtist,
+  getListeningTotals,
+} from "@/db/queries/stats";
+import { getPaddedWallCovers } from "@/db/queries/wall-covers";
+import { artists } from "@/db/schema";
 import { getDemoArtist, isDemoId } from "@/lib/demo/data";
 import { enrichDemoFixtures } from "@/lib/demo/enrich";
-import { db } from "@/db/client";
-import { artists } from "@/db/schema";
-import { getPaddedWallCovers } from "@/db/queries/wall-covers";
-import {
-  getArtistPlayStats,
-  getUserTopTracksByArtist,
-} from "@/db/queries/stats";
-import { formatNumber } from "@/lib/utils";
+import { formatRelativeDate } from "@/lib/format/date";
+import { cn, formatNumber, glassCard } from "@/lib/utils";
 
 export const revalidate = 3600;
+
+function PercentDisplay({ percent }: { percent: number }) {
+  const display = percent < 1 ? "< 1" : `${percent}`;
+  return (
+    <div className="text-right">
+      <p
+        className="font-display italic leading-none"
+        style={{
+          fontSize: "64px",
+          fontWeight: 400,
+          letterSpacing: "-0.03em",
+          background: "linear-gradient(135deg, #c4b5fd, #ec4899)",
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          color: "transparent",
+        }}
+      >
+        {display}%
+      </p>
+      <p className="mt-1 text-[10px] uppercase tracking-[1.5px] text-muted-foreground">
+        de ton temps
+      </p>
+    </div>
+  );
+}
+
+function ArtistHero({
+  name,
+  imageUrl,
+  firstPlayedAt,
+  lastPlayedAt,
+  totalPercent,
+}: {
+  name: string;
+  imageUrl: string | null;
+  firstPlayedAt: Date | null;
+  lastPlayedAt: Date | null;
+  totalPercent: number;
+}) {
+  return (
+    <section
+      className="grid items-center gap-6 rounded-[20px] border p-6"
+      style={{
+        gridTemplateColumns: "144px 1fr auto",
+        background: "rgba(124, 58, 237, 0.06)",
+        borderColor: "rgba(124, 58, 237, 0.2)",
+      }}
+    >
+      <ArtistAvatar name={name} imageUrl={imageUrl} size={144} />
+      <div className="min-w-0">
+        <p className="text-[10px] uppercase tracking-[1.5px] text-muted-foreground">
+          Artiste
+        </p>
+        <h1
+          className="font-display italic"
+          style={{ fontSize: "32px", lineHeight: 1, marginTop: 4 }}
+        >
+          {name}
+        </h1>
+        <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+          {firstPlayedAt ? (
+            <p>
+              Découvert{" "}
+              <strong className="text-foreground">
+                {formatRelativeDate(firstPlayedAt)}
+              </strong>
+            </p>
+          ) : null}
+          {lastPlayedAt ? (
+            <p>
+              Dernière écoute{" "}
+              <strong className="text-foreground">
+                {formatRelativeDate(lastPlayedAt)}
+              </strong>
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <PercentDisplay percent={totalPercent} />
+    </section>
+  );
+}
 
 export default async function ArtistDetailPage({
   params,
@@ -33,10 +123,12 @@ export default async function ArtistDetailPage({
   // but our demo fixtures use a literal ":" prefix — decode so lookups match.
   const id = decodeURIComponent(rawId);
 
+  // ===== DEMO MODE =====
   if (isDemoId(id)) {
     const demo = getDemoArtist(id);
     if (!demo) notFound();
-    const { artist, stats, topTracks } = demo;
+    const { artist, stats, topTracks, topAlbums, monthly, related, totalPercent } = demo;
+
     const [{ artistImages, trackImages }, wallCovers] = await Promise.all([
       enrichDemoFixtures(),
       getPaddedWallCovers(userId, null, 40),
@@ -46,22 +138,104 @@ export default async function ArtistDetailPage({
     return (
       <>
         <AlbumWall covers={wallCovers} />
-      <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
-          <ArtistAvatar name={artist.name} imageUrl={artistImage} size={192} />
-          <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">Artiste</p>
-            <h1 className="text-3xl font-semibold">{artist.name}</h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {formatNumber(stats.count)} écoutes
-            </p>
-          </div>
-        </div>
+        <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
+          <ArtistHero
+            name={artist.name}
+            imageUrl={artistImage}
+            firstPlayedAt={stats.firstPlayedAt}
+            lastPlayedAt={stats.lastPlayedAt}
+            totalPercent={totalPercent}
+          />
 
-        <section className="mt-10">
-          <h2 className="mb-4 text-lg font-semibold">
-            Tes titres les plus écoutés
-          </h2>
+          <section>
+            <h2 className="mb-4 text-lg font-semibold">Tes titres les plus écoutés</h2>
+            {topTracks.length === 0 ? (
+              <EmptyState
+                title="Pas encore d'écoute enregistrée"
+                description="Tes titres les plus écoutés de cet artiste apparaîtront ici."
+              />
+            ) : (
+              <RankedList>
+                {topTracks.map((t, i) => (
+                  <RankedRow
+                    key={t.trackId}
+                    rank={i + 1}
+                    title={t.trackName}
+                    href={`/track/${t.trackId}`}
+                    imageUrl={trackImages.get(t.trackId) ?? undefined}
+                    metric={`${formatNumber(t.playCount)} écoutes`}
+                  />
+                ))}
+              </RankedList>
+            )}
+          </section>
+
+          {topAlbums.length > 0 ? (
+            <OtherArtistAlbums
+              artistName={artist.name}
+              albums={topAlbums.map((a) => ({
+                albumId: a.albumId,
+                name: a.name,
+                imageUrl: a.imageUrl,
+                plays: a.playCount,
+              }))}
+            />
+          ) : null}
+
+          {monthly.length >= 3 ? (
+            <section className={cn(glassCard, "p-6")}>
+              <h2 className="text-lg font-semibold">Évolution mensuelle</h2>
+              <div className="mt-4">
+                <SparklineMonthly data={monthly} />
+              </div>
+            </section>
+          ) : null}
+
+          {related.length > 0 ? (
+            <section>
+              <h2 className="mb-4 text-lg font-semibold">Artistes connexes</h2>
+              <RelatedArtists artists={related} />
+            </section>
+          ) : null}
+        </main>
+      </>
+    );
+  }
+
+  // ===== REAL MODE =====
+  const [artist] = await db.select().from(artists).where(eq(artists.id, id)).limit(1);
+  if (!artist) notFound();
+
+  const [stats, topTracks, topAlbums, monthly, related, totals, wallCovers] =
+    await Promise.all([
+      getArtistPlayStats(userId, id),
+      getUserTopTracksByArtist(userId, id, 20),
+      getUserTopAlbumsByArtist(userId, id, 10),
+      getArtistMonthlyPlays(userId, id),
+      getCoListenedArtists(userId, id, 5),
+      getListeningTotals(userId),
+      getPaddedWallCovers(userId, null, 40),
+    ]);
+
+  const lifetimeTotals = totals.find((t) => t.window === "lifetime");
+  const totalCount = lifetimeTotals?.count ?? 0;
+  const totalPercent =
+    totalCount > 0 ? Math.max(0, Math.round((stats.count / totalCount) * 100)) : 0;
+
+  return (
+    <>
+      <AlbumWall covers={wallCovers} />
+      <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
+        <ArtistHero
+          name={artist.name}
+          imageUrl={artist.imageUrl}
+          firstPlayedAt={stats.firstPlayedAt}
+          lastPlayedAt={stats.lastPlayedAt}
+          totalPercent={totalPercent}
+        />
+
+        <section>
+          <h2 className="mb-4 text-lg font-semibold">Tes titres les plus écoutés</h2>
           {topTracks.length === 0 ? (
             <EmptyState
               title="Pas encore d'écoute enregistrée"
@@ -69,77 +243,47 @@ export default async function ArtistDetailPage({
             />
           ) : (
             <RankedList>
-              {topTracks.map((track, index) => (
+              {topTracks.map((t, i) => (
                 <RankedRow
-                  key={track.trackId}
-                  rank={index + 1}
-                  title={track.trackName}
-                  href={`/track/${track.trackId}`}
-                  imageUrl={trackImages.get(track.trackId) ?? undefined}
-                  metric={`${formatNumber(track.playCount)} écoutes`}
+                  key={t.trackId}
+                  rank={i + 1}
+                  title={t.trackName}
+                  href={`/track/${t.trackId}`}
+                  metric={`${formatNumber(t.playCount)} écoutes`}
                 />
               ))}
             </RankedList>
           )}
         </section>
-      </main>
-      </>
-    );
-  }
 
-  // --- MODE RÉEL : DB only ---
-  const [artist] = await db
-    .select()
-    .from(artists)
-    .where(eq(artists.id, id))
-    .limit(1);
-  if (!artist) notFound();
-
-  const [stats, topTracks, wallCovers] = await Promise.all([
-    getArtistPlayStats(userId, id),
-    getUserTopTracksByArtist(userId, id, 10),
-    getPaddedWallCovers(userId, null, 40),
-  ]);
-
-  return (
-    <>
-      <AlbumWall covers={wallCovers} />
-    <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
-        <ArtistAvatar name={artist.name} imageUrl={artist.imageUrl} size={192} />
-        <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">Artiste</p>
-          <h1 className="text-3xl font-semibold">{artist.name}</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
-            {formatNumber(stats.count)} écoutes
-          </p>
-        </div>
-      </div>
-
-      <section className="mt-10">
-        <h2 className="mb-4 text-lg font-semibold">
-          Tes titres les plus écoutés
-        </h2>
-        {topTracks.length === 0 ? (
-          <EmptyState
-            title="Pas encore d'écoute enregistrée"
-            description="Tes titres les plus écoutés de cet artiste apparaîtront ici."
+        {topAlbums.length > 0 ? (
+          <OtherArtistAlbums
+            artistName={artist.name}
+            albums={topAlbums.map((a) => ({
+              albumId: a.albumId,
+              name: a.name,
+              imageUrl: a.imageUrl,
+              plays: a.playCount,
+            }))}
           />
-        ) : (
-          <RankedList>
-            {topTracks.map((track, index) => (
-              <RankedRow
-                key={track.trackId}
-                rank={index + 1}
-                title={track.trackName}
-                href={`/track/${track.trackId}`}
-                metric={`${formatNumber(track.playCount)} écoutes`}
-              />
-            ))}
-          </RankedList>
-        )}
-      </section>
-    </main>
+        ) : null}
+
+        {monthly.length >= 3 ? (
+          <section className={cn(glassCard, "p-6")}>
+            <h2 className="text-lg font-semibold">Évolution mensuelle</h2>
+            <div className="mt-4">
+              <SparklineMonthly data={monthly} />
+            </div>
+          </section>
+        ) : null}
+
+        {related.length > 0 ? (
+          <section>
+            <h2 className="mb-4 text-lg font-semibold">Artistes connexes</h2>
+            <RelatedArtists artists={related} />
+          </section>
+        ) : null}
+      </main>
     </>
   );
 }

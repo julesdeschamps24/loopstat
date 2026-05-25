@@ -15,7 +15,7 @@ export default defineConfig({
       // Provide harmless defaults so module-level env checks (DATABASE_URL,
       // TOKEN_ENC_KEY) don't throw at import time. Individual tests override
       // these via vi.stubEnv when needed.
-      DATABASE_URL: "postgres://test:test@127.0.0.1:5432/test",
+      DATABASE_URL: "postgres://loopstat:loopstat@127.0.0.1:5432/loopstat",
       TOKEN_ENC_KEY:
         "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     },

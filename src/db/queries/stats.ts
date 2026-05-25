@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { albums, artists, streams, trackArtists, tracks } from "@/db/schema";
+import { albumArtists, albums, artists, streams, trackArtists, tracks } from "@/db/schema";
 import { periodSince, type StreamPeriod } from "@/lib/stats/period";
 
 /**
@@ -137,9 +137,17 @@ export async function getTrackPlayStats(
 export async function getArtistPlayStats(
   userId: string,
   artistId: string,
-): Promise<{ count: number }> {
+): Promise<{
+  count: number;
+  firstPlayedAt: Date | null;
+  lastPlayedAt: Date | null;
+}> {
   const [row] = await db
-    .select({ count: sql<number>`count(*)::int` })
+    .select({
+      count: sql<number>`count(*)::int`,
+      firstPlayedAt: sql<Date | null>`min(${streams.playedAt})`,
+      lastPlayedAt: sql<Date | null>`max(${streams.playedAt})`,
+    })
     .from(streams)
     .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
     .where(
@@ -150,7 +158,11 @@ export async function getArtistPlayStats(
       ),
     );
 
-  return { count: Number(row?.count ?? 0) };
+  return {
+    count: Number(row?.count ?? 0),
+    firstPlayedAt: row?.firstPlayedAt ?? null,
+    lastPlayedAt: row?.lastPlayedAt ?? null,
+  };
 }
 
 export async function getUserTopTracksByArtist(
@@ -864,5 +876,133 @@ export async function getOtherAlbumsByArtist(
     name: r.name,
     imageUrl: r.imageUrl,
     plays: Number(r.plays),
+  }));
+}
+
+/**
+ * Top albums of `artistId` ordered by the user's play count. Mirrors
+ * `getUserTopTracksByArtist` at album granularity.
+ */
+export async function getUserTopAlbumsByArtist(
+  userId: string,
+  artistId: string,
+  limit: number,
+): Promise<{
+  albumId: string;
+  name: string;
+  imageUrl: string | null;
+  playCount: number;
+}[]> {
+  const rows = await db
+    .select({
+      albumId: albums.id,
+      name: albums.name,
+      imageUrl: albums.imageUrl,
+      playCount: sql<number>`count(${streams.id})::int`,
+    })
+    .from(streams)
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .innerJoin(albums, eq(albums.id, tracks.albumId))
+    .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(albumArtists.artistId, artistId),
+        QUALIFYING_PLAY,
+      ),
+    )
+    .groupBy(albums.id, albums.name, albums.imageUrl)
+    .orderBy(desc(sql`count(${streams.id})`))
+    .limit(limit);
+
+  return rows.map((r) => ({
+    albumId: r.albumId,
+    name: r.name,
+    imageUrl: r.imageUrl,
+    playCount: Number(r.playCount),
+  }));
+}
+
+/**
+ * Plays per month for `userId × artistId` over the last 18 months.
+ * Mirror of getTrackMonthlyPlays at the artist granularity.
+ */
+export async function getArtistMonthlyPlays(
+  userId: string,
+  artistId: string,
+): Promise<{ month: Date; plays: number }[]> {
+  const rows = await db
+    .select({
+      month: sql<string>`date_trunc('month', ${streams.playedAt})::text`,
+      plays: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(trackArtists.artistId, artistId),
+        QUALIFYING_PLAY,
+        sql`${streams.playedAt} > now() - interval '18 months'`,
+      ),
+    )
+    .groupBy(sql`date_trunc('month', ${streams.playedAt})`)
+    .orderBy(sql`date_trunc('month', ${streams.playedAt}) asc`);
+
+  return rows.map((r) => ({
+    month: new Date(r.month),
+    plays: Number(r.plays),
+  }));
+}
+
+/**
+ * Top N artists that the user listens to within ±30 min of plays from
+ * `artistId`. Self-join on streams.played_at within a 30-min window where
+ * one side is the focal artist and the other side is any other artist.
+ */
+export async function getCoListenedArtists(
+  userId: string,
+  artistId: string,
+  limit: number,
+): Promise<{
+  artistId: string;
+  name: string;
+  imageUrl: string | null;
+  coCount: number;
+}[]> {
+  const rows = await db.execute<{
+    artist_id: string;
+    name: string;
+    image_url: string | null;
+    co_count: number;
+  }>(sql`
+    WITH focal AS (
+      SELECT s.played_at
+      FROM streams s
+      JOIN track_artists ta ON ta.track_id = s.track_id
+      WHERE s.user_id = ${userId} AND ta.artist_id = ${artistId}
+    )
+    SELECT
+      a.id AS artist_id,
+      a.name,
+      a.image_url,
+      count(*)::int AS co_count
+    FROM focal
+    JOIN streams s2 ON s2.user_id = ${userId}
+      AND s2.played_at BETWEEN focal.played_at - INTERVAL '30 min'
+                           AND focal.played_at + INTERVAL '30 min'
+    JOIN track_artists ta2 ON ta2.track_id = s2.track_id
+    JOIN artists a ON a.id = ta2.artist_id
+    WHERE a.id != ${artistId}
+    GROUP BY a.id, a.name, a.image_url
+    ORDER BY co_count DESC
+    LIMIT ${limit};
+  `);
+
+  return rows.map((r) => ({
+    artistId: r.artist_id,
+    name: r.name,
+    imageUrl: r.image_url,
+    coCount: Number(r.co_count),
   }));
 }
