@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
 import {
   Album,
@@ -51,6 +51,7 @@ export function Sidebar({
   premiumExpiresAt?: Date;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const now = useMemo(() => new Date(), []);
   const trialDaysLeft =
@@ -100,11 +101,31 @@ export function Sidebar({
             (href === "/top/tracks" && pathname.startsWith("/track/")) ||
             (href === "/top/artists" && pathname.startsWith("/artist/")) ||
             (href === "/top/albums" && pathname.startsWith("/album/"));
+
+          // Pour les /top/* — au clic, on lit la période choisie en
+          // sessionStorage et on l'injecte dans l'URL avant que la nav
+          // ne parte. Cela évite le flash "default 1w → redirect 1y"
+          // côté PeriodSelector et garantit que la page server-rendered
+          // a déjà la bonne période.
+          const isTopRoute = href.startsWith("/top/");
+
           return (
             <Link
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
+              onClick={
+                isTopRoute
+                  ? (e) => {
+                      if (typeof window === "undefined") return;
+                      const stored = sessionStorage.getItem("loopstat-period");
+                      if (stored) {
+                        e.preventDefault();
+                        router.push(`${href}?period=${stored}`);
+                      }
+                    }
+                  : undefined
+              }
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
                 active
