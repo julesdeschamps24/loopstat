@@ -37,7 +37,7 @@ export default async function TopTracksPage({
   const hasImport = await hasCompletedImport(userId);
 
   const { period: rawPeriod } = await searchParams;
-  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
+  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "1w";
 
   if (!hasImport) {
     const [tracks, wallCovers] = await Promise.all([

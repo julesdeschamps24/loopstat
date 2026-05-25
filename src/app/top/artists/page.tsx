@@ -36,7 +36,7 @@ export default async function TopArtistsPage({
   const hasImport = await hasCompletedImport(userId);
 
   const { period: rawPeriod } = await searchParams;
-  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
+  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "1w";
 
   if (!hasImport) {
     const [artistsData, wallCovers] = await Promise.all([
