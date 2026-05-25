@@ -2,6 +2,7 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { albums, albumArtists, artists } from "@/db/schema";
 import { log } from "@/lib/log";
+import { MusicBrainzError } from "@/lib/musicbrainz/client";
 import {
   enrichAlbumByNames,
   enrichArtistByName,
@@ -16,6 +17,39 @@ const SENTINEL_MBID = "00000000-0000-0000-0000-000000000000";
 
 const RATE_DELAY_MS = 1100;
 const CHUNK_SIZE = 25;
+
+// In-line retry on MBz 503 ("server busy") so a transient blip doesn't
+// fail the whole sweep — losing all in-progress chunks. After this many
+// attempts on the same item, give up and let BullMQ retry the job (the
+// already-persisted chunks survive).
+const MAX_503_RETRIES = 5;
+const RETRY_503_BUFFER_MS = 1000;
+
+/**
+ * Run `fn` and retry up to MAX_503_RETRIES times on MBz 503 errors,
+ * respecting the Retry-After hint when present. Other errors propagate.
+ */
+async function withMbzRetry<T>(fn: () => Promise<T>, wlog: ReturnType<typeof log.child>): Promise<T> {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (
+        err instanceof MusicBrainzError &&
+        err.status === 503 &&
+        attempt < MAX_503_RETRIES
+      ) {
+        const wait = (err.retryAfterMs ?? 30_000) + RETRY_503_BUFFER_MS;
+        attempt += 1;
+        wlog.warn({ attempt, waitMs: wait }, "MBz 503, backing off");
+        await sleep(wait);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
 
 export interface EnrichCatalogResult {
   albumsEnriched: number;
@@ -114,11 +148,15 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
     if (i > 0) await sleep(RATE_DELAY_MS);
     const row = unenrichedAlbums[i];
     try {
-      await enrichAlbumByNames({
-        albumId: row.albumId,
-        artistName: row.artistName,
-        albumName: row.albumName,
-      });
+      await withMbzRetry(
+        () =>
+          enrichAlbumByNames({
+            albumId: row.albumId,
+            artistName: row.artistName,
+            albumName: row.albumName,
+          }),
+        wlog,
+      );
       albumsEnriched++;
       if (albumsEnriched % CHUNK_SIZE === 0) {
         wlog.info(
@@ -148,7 +186,10 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
     if (i > 0 || unenrichedAlbums.length > 0) await sleep(RATE_DELAY_MS);
     const row = unenrichedArtists[i];
     try {
-      await enrichArtistByName({ artistId: row.artistId, name: row.name });
+      await withMbzRetry(
+        () => enrichArtistByName({ artistId: row.artistId, name: row.name }),
+        wlog,
+      );
       artistsEnriched++;
     } catch (err) {
       wlog.error(
