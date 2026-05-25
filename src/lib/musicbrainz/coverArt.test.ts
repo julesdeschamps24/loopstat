@@ -36,6 +36,13 @@ describe("fetchCoverUrl", () => {
     expect(await fetchCoverUrl("abc-1234")).toBeNull();
   });
 
+  it("returns null on 500 (CAA broken metadata for this item)", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("internal error", { status: 500 }),
+    );
+    expect(await fetchCoverUrl("abc-1234")).toBeNull();
+  });
+
   it("throws on 503 (so caller can retry)", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response("busy", { status: 503 }),
