@@ -16,6 +16,7 @@ export const COLORS = {
 };
 
 export const PERIOD_LABEL: Record<SharePeriod, string> = {
+  "1w": "Dernière semaine",
   "4w": "4 dernières semaines",
   "6m": "6 derniers mois",
   "1y": "12 derniers mois",

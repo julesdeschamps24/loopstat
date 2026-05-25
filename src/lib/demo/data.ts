@@ -178,8 +178,9 @@ function synthesizeFirstLastDates(seed: number): {
 
 function synthesizePeriodBreakdown(
   totalPlays: number,
-): Record<"4w" | "6m" | "1y" | "all", number> {
+): Record<"1w" | "4w" | "6m" | "1y" | "all", number> {
   return {
+    "1w": Math.round(totalPlays * 0.02),
     "4w": Math.round(totalPlays * 0.08),
     "6m": Math.round(totalPlays * 0.3),
     "1y": Math.round(totalPlays * 0.75),
@@ -243,7 +244,7 @@ function synthesizeQuality(seed: number): {
 export function getDemoTrack(id: string): {
   track: (typeof DEMO_TOP_TRACKS)[number];
   stats: { count: number; firstPlayedAt: Date; lastPlayedAt: Date };
-  breakdown: Record<"4w" | "6m" | "1y" | "all", number>;
+  breakdown: Record<"1w" | "4w" | "6m" | "1y" | "all", number>;
   monthly: { month: Date; plays: number }[];
   hours: { hour: number; count: number }[];
   quality: { avgMs: number; skipRate: number };
@@ -359,7 +360,7 @@ export function getDemoAlbum(id: string): {
     trackNumber: number;
     plays: number;
   }[];
-  breakdown: Record<"4w" | "6m" | "1y" | "all", number>;
+  breakdown: Record<"1w" | "4w" | "6m" | "1y" | "all", number>;
   monthly: { month: Date; plays: number }[];
   hours: { hour: number; count: number }[];
   quality: { avgMs: number; skipRate: number };
