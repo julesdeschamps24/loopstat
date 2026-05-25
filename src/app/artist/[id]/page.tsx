@@ -28,7 +28,13 @@ import { cn, formatNumber, glassCard } from "@/lib/utils";
 export const revalidate = 3600;
 
 function PercentDisplay({ percent }: { percent: number }) {
-  const display = percent < 1 ? "< 1" : `${percent}`;
+  // 2-decimal precision with French comma separator. "0.005" still rounds to
+  // "0,01" so we'd never show a misleading "0,00%" — but for a true 0 we want
+  // to suppress the section's value entirely (handled by the caller).
+  const display =
+    percent < 0.01
+      ? "< 0,01"
+      : percent.toFixed(2).replace(".", ",");
   return (
     <div className="text-right">
       <p
@@ -222,10 +228,12 @@ export default async function ArtistDetailPage({
       getPaddedWallCovers(userId, null, 40),
     ]);
 
+  // % du temps d'écoute total — basé sur ms_played (durée réelle écoutée),
+  // pas le count de plays. Une chanson skippée à 10s pèse beaucoup moins
+  // qu'un titre écouté en entier.
   const lifetimeTotals = totals.find((t) => t.window === "lifetime");
-  const totalCount = lifetimeTotals?.count ?? 0;
-  const totalPercent =
-    totalCount > 0 ? Math.max(0, Math.round((stats.count / totalCount) * 100)) : 0;
+  const totalMs = lifetimeTotals?.msPlayed ?? 0;
+  const totalPercent = totalMs > 0 ? (stats.msPlayed / totalMs) * 100 : 0;
 
   return (
     <>

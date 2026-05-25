@@ -139,12 +139,14 @@ export async function getArtistPlayStats(
   artistId: string,
 ): Promise<{
   count: number;
+  msPlayed: number;
   firstPlayedAt: Date | null;
   lastPlayedAt: Date | null;
 }> {
   const [row] = await db
     .select({
       count: sql<number>`count(*)::int`,
+      msPlayed: sql<number>`coalesce(sum(${streams.msPlayed}), 0)::bigint`,
       firstPlayedAt: sql<Date | null>`min(${streams.playedAt})`,
       lastPlayedAt: sql<Date | null>`max(${streams.playedAt})`,
     })
@@ -160,6 +162,7 @@ export async function getArtistPlayStats(
 
   return {
     count: Number(row?.count ?? 0),
+    msPlayed: Number(row?.msPlayed ?? 0),
     firstPlayedAt: row?.firstPlayedAt ?? null,
     lastPlayedAt: row?.lastPlayedAt ?? null,
   };
