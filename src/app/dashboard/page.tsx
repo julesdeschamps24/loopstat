@@ -149,6 +149,7 @@ export default async function DashboardPage() {
                       title={track.name}
                       href={`/track/${track.trackId}`}
                       subtitle={track.artistNames.join(", ")}
+                      imageUrl={track.albumImageUrl ?? undefined}
                     />
                   </StaggerItem>
                 ))}
@@ -174,6 +175,9 @@ export default async function DashboardPage() {
                       rank={index + 1}
                       title={artist.name}
                       href={`/artist/${artist.artistId}`}
+                      imageUrl={artist.imageUrl ?? undefined}
+                      avatarName={artist.name}
+                      avatarImageUrl={artist.imageUrl}
                     />
                   </StaggerItem>
                 ))}
