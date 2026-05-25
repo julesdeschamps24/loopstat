@@ -25,9 +25,11 @@ import {
   getTopArtistsFromStreams,
 } from "@/db/queries/stats";
 import { getProfile } from "@/db/queries/users";
+import { getWallCovers } from "@/db/queries/wall-covers";
 import {
   DEMO_TOP_TRACKS,
   DEMO_TOP_ARTISTS,
+  DEMO_TOP_ALBUMS,
   DEMO_TOTAL_PLAYS,
   DEMO_TOTAL_HOURS_LISTENED,
 } from "@/lib/demo/data";
@@ -72,8 +74,15 @@ export default async function DashboardPage() {
     const top5Tracks = DEMO_TOP_TRACKS.slice(0, 5);
     const top5Artists = DEMO_TOP_ARTISTS.slice(0, 5);
 
-    // Pas de wallCovers pour la démo (pas d'images d'album dans les fixtures).
-    const wallCovers: (string | null)[] = Array(WALL_CELLS).fill(null);
+    // Démo : on a des noms d'albums sans imageUrl → la AlbumWall affichera
+    // un gradient déterministe par album. Padding au cas où on a < 40.
+    const wallCovers = DEMO_TOP_ALBUMS.slice(0, WALL_CELLS).map((a) => ({
+      name: a.name,
+      imageUrl: a.imageUrl,
+    }));
+    while (wallCovers.length < WALL_CELLS) {
+      wallCovers.push({ name: `demo-${wallCovers.length}`, imageUrl: null });
+    }
 
     return (
       <>
@@ -188,12 +197,12 @@ export default async function DashboardPage() {
   const since4w = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
   const since1y = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
 
-  const [totals, topTracks, topArtists, topTracks1y, profile, premium] =
+  const [totals, topTracks, topArtists, wallAlbums, profile, premium] =
     await Promise.all([
       getListeningTotals(userId),
       getTopTracksFromStreams(userId, since4w, 5),
       getTopArtistsFromStreams(userId, since4w, 5),
-      getTopTracksFromStreams(userId, since1y, 50),
+      getWallCovers(userId, since1y, WALL_CELLS),
       getProfile(userId),
       isPremium(userId),
     ]);
@@ -206,17 +215,14 @@ export default async function DashboardPage() {
   const top5Tracks = topTracks;
   const top5Artists = topArtists;
 
-  // Dédup les top tracks 1y par albumImageUrl pour le mur de fond.
-  const seenImages = new Set<string>();
-  const wallCovers: (string | null)[] = [];
-  for (const track of topTracks1y) {
-    const img = track.albumImageUrl;
-    if (!img || seenImages.has(img)) continue;
-    seenImages.add(img);
-    wallCovers.push(img);
-    if (wallCovers.length === WALL_CELLS) break;
+  // Mur de fond : top albums du user (déduplication par album_id côté query).
+  // Si certains albums n'ont pas encore d'image_url (worker enrich en cours),
+  // AlbumWall render un gradient déterministe par nom — chaque reload
+  // remplace progressivement les gradients par les vraies covers.
+  const wallCovers: { name: string; imageUrl: string | null }[] = [...wallAlbums];
+  while (wallCovers.length < WALL_CELLS) {
+    wallCovers.push({ name: `slot-${wallCovers.length}`, imageUrl: null });
   }
-  while (wallCovers.length < WALL_CELLS) wallCovers.push(null);
 
   return (
     <>

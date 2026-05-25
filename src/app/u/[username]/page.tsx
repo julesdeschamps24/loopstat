@@ -93,10 +93,12 @@ export default async function PublicProfilePage({
     background === "wall"
       ? await getWallCovers(profile.id, periodSince("1y"), 40)
       : [];
-  const paddedCovers: (string | null)[] = [
+  const paddedCovers: { name: string; imageUrl: string | null }[] = [
     ...wallCovers,
-    ...Array<string | null>(Math.max(0, 40 - wallCovers.length)).fill(null),
   ];
+  while (paddedCovers.length < 40) {
+    paddedCovers.push({ name: `slot-${paddedCovers.length}`, imageUrl: null });
+  }
 
   const mainStyle: React.CSSProperties = {
     // Allow children to read the accent via var(--ls-accent, #7c3aed)
