@@ -167,6 +167,14 @@ export default async function ArtistDetailPage({
             totalPercent={totalPercent}
           />
 
+          <div className="flex justify-end">
+            <Suspense
+              fallback={<div className="h-9 w-64 rounded-full border bg-card" />}
+            >
+              <PeriodSelector current={period} />
+            </Suspense>
+          </div>
+
           <section>
             <h2 className="mb-4 text-lg font-semibold">Tes titres les plus écoutés</h2>
             {topTracks.length === 0 ? (
