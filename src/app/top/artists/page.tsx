@@ -35,6 +35,9 @@ export default async function TopArtistsPage({
 
   const hasImport = await hasCompletedImport(userId);
 
+  const { period: rawPeriod } = await searchParams;
+  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
+
   if (!hasImport) {
     const [artistsData, wallCovers] = await Promise.all([
       getEnrichedDemoTopArtists(),
@@ -50,6 +53,9 @@ export default async function TopArtistsPage({
         >
           <header className="mb-2 flex flex-wrap items-center justify-between gap-4">
             <h1 className="text-2xl font-semibold">Top artistes</h1>
+            <Suspense fallback={<div className="h-10 w-75 rounded-full border bg-card" />}>
+              <PeriodSelector current={period} />
+            </Suspense>
           </header>
           <p className="mb-8 text-sm text-muted-foreground">
             Ces données sont fictives — importe ton historique pour voir les tiennes.
@@ -72,9 +78,6 @@ export default async function TopArtistsPage({
       </>
     );
   }
-
-  const { period: rawPeriod } = await searchParams;
-  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
   const [artists, profile, wallCovers] = await Promise.all([
     getTopArtistsFromStreams(userId, periodSince(period), TOP_LIMIT),
