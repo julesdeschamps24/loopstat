@@ -18,16 +18,30 @@ const SENTINEL_MBID = "00000000-0000-0000-0000-000000000000";
 const RATE_DELAY_MS = 1100;
 const CHUNK_SIZE = 25;
 
-// In-line retry on MBz 503 ("server busy") so a transient blip doesn't
+// In-line retry on transient MBz/network errors so a brief outage doesn't
 // fail the whole sweep — losing all in-progress chunks. After this many
 // attempts on the same item, give up and let BullMQ retry the job (the
 // already-persisted chunks survive).
-const MAX_503_RETRIES = 5;
-const RETRY_503_BUFFER_MS = 1000;
+const MAX_TRANSIENT_RETRIES = 5;
+const RETRY_BUFFER_MS = 1000;
+const DEFAULT_RETRY_WAIT_MS = 30_000;
 
 /**
- * Run `fn` and retry up to MAX_503_RETRIES times on MBz 503 errors,
- * respecting the Retry-After hint when present. Other errors propagate.
+ * Return true if `err` represents a transient condition that's worth
+ * retrying in-line (instead of failing the whole job).
+ *  - MBz 503 ("server busy") — well-known, respect Retry-After.
+ *  - Generic `fetch failed` TypeError — undici network glitches (DNS, TCP
+ *    reset, TLS handshake hiccup). Common during multi-hour runs.
+ */
+function isTransientMbzError(err: unknown): boolean {
+  if (err instanceof MusicBrainzError && err.status === 503) return true;
+  if (err instanceof TypeError && /fetch failed/i.test(err.message)) return true;
+  return false;
+}
+
+/**
+ * Run `fn` and retry up to MAX_TRANSIENT_RETRIES times on transient errors,
+ * respecting MBz's Retry-After hint when present. Other errors propagate.
  */
 async function withMbzRetry<T>(fn: () => Promise<T>, wlog: ReturnType<typeof log.child>): Promise<T> {
   let attempt = 0;
@@ -35,14 +49,14 @@ async function withMbzRetry<T>(fn: () => Promise<T>, wlog: ReturnType<typeof log
     try {
       return await fn();
     } catch (err) {
-      if (
-        err instanceof MusicBrainzError &&
-        err.status === 503 &&
-        attempt < MAX_503_RETRIES
-      ) {
-        const wait = (err.retryAfterMs ?? 30_000) + RETRY_503_BUFFER_MS;
+      if (isTransientMbzError(err) && attempt < MAX_TRANSIENT_RETRIES) {
+        const hinted = err instanceof MusicBrainzError ? err.retryAfterMs : undefined;
+        const wait = (hinted ?? DEFAULT_RETRY_WAIT_MS) + RETRY_BUFFER_MS;
         attempt += 1;
-        wlog.warn({ attempt, waitMs: wait }, "MBz 503, backing off");
+        wlog.warn(
+          { attempt, waitMs: wait, kind: err instanceof MusicBrainzError ? "503" : "network" },
+          "transient MBz error, backing off",
+        );
         await sleep(wait);
         continue;
       }
