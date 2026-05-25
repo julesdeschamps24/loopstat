@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { AlbumWall } from "@/components/album-wall";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
 import { ShareButton } from "@/components/share-button";
@@ -9,6 +10,7 @@ import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { getTopTracksFromStreams } from "@/db/queries/stats";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
+import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
 import { getEnrichedDemoTopTracks } from "@/lib/demo/enrich";
 import {
@@ -35,10 +37,14 @@ export default async function TopTracksPage({
   const hasImport = await hasCompletedImport(userId);
 
   if (!hasImport) {
-    const tracks = await getEnrichedDemoTopTracks();
+    const [tracks, wallCovers] = await Promise.all([
+      getEnrichedDemoTopTracks(),
+      getPaddedWallCovers(userId, null, 40),
+    ]);
     return (
       <>
         <DemoModeBanner />
+        <AlbumWall covers={wallCovers} />
         <main
           id="main"
           className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full"
@@ -71,9 +77,10 @@ export default async function TopTracksPage({
   const { period: rawPeriod } = await searchParams;
   const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
-  const [tracks, profile] = await Promise.all([
+  const [tracks, profile, wallCovers] = await Promise.all([
     getTopTracksFromStreams(userId, periodSince(period), TOP_LIMIT),
     getProfile(userId),
+    getPaddedWallCovers(userId, periodSince("1y"), 40),
   ]);
   const imported = hasImport;
   const shareUsername =
@@ -85,6 +92,8 @@ export default async function TopTracksPage({
       : "Aucun titre pour cette période — écoute quelques sons puis reviens dans ~30 min (le polling synchronise automatiquement).";
 
   return (
+    <>
+      <AlbumWall covers={wallCovers} />
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Top titres</h1>
@@ -121,5 +130,6 @@ export default async function TopTracksPage({
         </StaggerList>
       )}
     </main>
+    </>
   );
 }

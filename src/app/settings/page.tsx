@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
+import { AlbumWall } from "@/components/album-wall";
 import { AppHeader } from "@/components/app-header";
 import { AppearanceForm } from "@/components/profile/appearance-form";
 import { PremiumGate } from "@/components/premium-gate";
@@ -11,6 +12,7 @@ import { ProfileForm } from "@/components/settings/profile-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { isPremium } from "@/db/queries/billing";
 import { db } from "@/db/client";
+import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import { users } from "@/db/schema";
 import { deriveUsername } from "@/lib/derive-username";
 import { isAccent, isBackground } from "@/lib/profile/appearance";
@@ -36,7 +38,10 @@ export default async function SettingsPage() {
     },
   });
 
-  const premium = await isPremium(session.user.id);
+  const [premium, wallCovers] = await Promise.all([
+    isPremium(session.user.id),
+    getPaddedWallCovers(session.user.id, null, 40),
+  ]);
   const settings = userRow?.profileSettings ?? {};
   const initialBackground = isBackground(settings.background) ? settings.background : "mesh";
   const initialAccent = isAccent(settings.accent) ? settings.accent : "violet";
@@ -50,6 +55,8 @@ export default async function SettingsPage() {
     deriveUsername(userRow?.displayName ?? null, session.user.id ?? "");
 
   return (
+    <>
+      <AlbumWall covers={wallCovers} />
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
       <AppHeader session={session} />
 
@@ -125,5 +132,6 @@ export default async function SettingsPage() {
         </section>
       </div>
     </main>
+    </>
   );
 }
