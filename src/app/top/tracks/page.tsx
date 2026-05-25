@@ -36,6 +36,9 @@ export default async function TopTracksPage({
 
   const hasImport = await hasCompletedImport(userId);
 
+  const { period: rawPeriod } = await searchParams;
+  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
+
   if (!hasImport) {
     const [tracks, wallCovers] = await Promise.all([
       getEnrichedDemoTopTracks(),
@@ -51,6 +54,9 @@ export default async function TopTracksPage({
         >
           <header className="mb-2 flex flex-wrap items-center justify-between gap-4">
             <h1 className="text-2xl font-semibold">Top titres</h1>
+            <Suspense fallback={<div className="h-10 w-75 rounded-full border bg-card" />}>
+              <PeriodSelector current={period} />
+            </Suspense>
           </header>
           <p className="mb-8 text-sm text-muted-foreground">
             Ces données sont fictives — importe ton historique pour voir les tiennes.
@@ -73,9 +79,6 @@ export default async function TopTracksPage({
       </>
     );
   }
-
-  const { period: rawPeriod } = await searchParams;
-  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
   const [tracks, profile, wallCovers] = await Promise.all([
     getTopTracksFromStreams(userId, periodSince(period), TOP_LIMIT),

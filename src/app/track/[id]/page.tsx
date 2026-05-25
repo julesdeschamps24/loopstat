@@ -1,12 +1,10 @@
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
-import { Suspense } from "react";
 
 import { auth } from "@/auth";
 import { AlbumWall } from "@/components/album-wall";
 import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
-import { PeriodSelector } from "@/components/stats/period-selector";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { getDemoTrack, isDemoId } from "@/lib/demo/data";
 import { enrichDemoFixtures } from "@/lib/demo/enrich";
@@ -20,7 +18,6 @@ import {
   getTrackPlayQuality,
   getTrackPlayStats,
 } from "@/db/queries/stats";
-import { isStreamPeriod, periodSince, type StreamPeriod } from "@/lib/stats/period";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 import { formatDate } from "@/lib/format/date";
 
@@ -32,10 +29,8 @@ function formatPercent(ratio: number): string {
 
 export default async function TrackDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ period?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -45,10 +40,6 @@ export default async function TrackDetailPage({
   // Next.js 16 passes the param URL-encoded (e.g. "demo%3Aespresso"), but our
   // demo fixtures use a literal ":" prefix — decode so lookups match.
   const id = decodeURIComponent(rawId);
-
-  const { period: rawPeriod } = await searchParams;
-  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
-  const since = periodSince(period);
 
   if (isDemoId(id)) {
     const demo = getDemoTrack(id);
@@ -84,12 +75,6 @@ export default async function TrackDetailPage({
             <h1 className="text-3xl font-semibold">{track.name}</h1>
             <p className="mt-1 text-lg text-muted-foreground">{artistNames}</p>
           </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Suspense fallback={<div className="h-9 w-64 rounded-full border bg-card" />}>
-            <PeriodSelector current={period} />
-          </Suspense>
         </div>
 
         <section className={cn(glassCard, "p-6")}>
@@ -188,11 +173,11 @@ export default async function TrackDetailPage({
   const artistNames = trackArtistRows.map((r) => r.name).join(", ");
 
   const [stats, breakdown, monthly, hours, quality, wallCovers] = await Promise.all([
-    getTrackPlayStats(userId, id, since),
+    getTrackPlayStats(userId, id),
     getTrackBreakdownByWindow(userId, id),
     getTrackMonthlyPlays(userId, id),
-    getTrackListeningHours(userId, id, since),
-    getTrackPlayQuality(userId, id, since),
+    getTrackListeningHours(userId, id),
+    getTrackPlayQuality(userId, id),
     getPaddedWallCovers(userId, null, 40),
   ]);
 
@@ -228,12 +213,6 @@ export default async function TrackDetailPage({
             </p>
           ) : null}
         </div>
-      </div>
-
-      <div className="flex justify-end">
-        <Suspense fallback={<div className="h-9 w-64 rounded-full border bg-card" />}>
-          <PeriodSelector current={period} />
-        </Suspense>
       </div>
 
       <section className={cn(glassCard, "p-6")}>
