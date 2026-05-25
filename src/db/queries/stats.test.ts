@@ -41,3 +41,24 @@ describe("getUserTopAlbumsByArtist", () => {
     expect(Array.isArray(expectShape)).toBe(true);
   });
 });
+
+describe("getArtistMonthlyPlays", () => {
+  it("returns empty array for non-existent artist", async () => {
+    const { getArtistMonthlyPlays } = await import("./stats");
+    const rows = await getArtistMonthlyPlays(
+      "00000000-0000-0000-0000-000000000000",
+      "art_nonexistent",
+    );
+    expect(rows).toEqual([]);
+  });
+
+  it("returns shape { month: Date, plays: number }", async () => {
+    const { getArtistMonthlyPlays } = await import("./stats");
+    const rows = await getArtistMonthlyPlays(
+      "00000000-0000-0000-0000-000000000000",
+      "art_nonexistent",
+    );
+    const expectShape: { month: Date; plays: number }[] = rows;
+    expect(Array.isArray(expectShape)).toBe(true);
+  });
+});

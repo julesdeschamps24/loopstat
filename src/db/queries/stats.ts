@@ -922,3 +922,35 @@ export async function getUserTopAlbumsByArtist(
     playCount: Number(r.playCount),
   }));
 }
+
+/**
+ * Plays per month for `userId × artistId` over the last 18 months.
+ * Mirror of getTrackMonthlyPlays at the artist granularity.
+ */
+export async function getArtistMonthlyPlays(
+  userId: string,
+  artistId: string,
+): Promise<{ month: Date; plays: number }[]> {
+  const rows = await db
+    .select({
+      month: sql<string>`date_trunc('month', ${streams.playedAt})::text`,
+      plays: sql<number>`count(*)::int`,
+    })
+    .from(streams)
+    .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(trackArtists.artistId, artistId),
+        QUALIFYING_PLAY,
+        sql`${streams.playedAt} > now() - interval '18 months'`,
+      ),
+    )
+    .groupBy(sql`date_trunc('month', ${streams.playedAt})`)
+    .orderBy(sql`date_trunc('month', ${streams.playedAt}) asc`);
+
+  return rows.map((r) => ({
+    month: new Date(r.month),
+    plays: Number(r.plays),
+  }));
+}
