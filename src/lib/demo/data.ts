@@ -272,25 +272,69 @@ export function getDemoTrack(id: string): {
  */
 export function getDemoArtist(id: string): {
   artist: (typeof DEMO_TOP_ARTISTS)[number];
-  stats: { count: number };
-  topTracks: { trackId: string; trackName: string; playCount: number }[];
+  stats: {
+    count: number;
+    firstPlayedAt: Date;
+    lastPlayedAt: Date;
+  };
+  topTracks: { trackId: string; trackName: string; albumImageUrl: string | null; playCount: number }[];
+  topAlbums: { albumId: string; name: string; imageUrl: string | null; playCount: number }[];
+  monthly: { month: Date; plays: number }[];
+  related: { artistId: string; name: string; imageUrl: string | null; coCount: number }[];
+  totalPercent: number;
 } | null {
   if (!isDemoId(id)) return null;
   const artist = DEMO_TOP_ARTISTS.find((a) => a.artistId === id);
   if (!artist) return null;
+  const seed = seedFromString(id);
+
   const topTracks = DEMO_TOP_TRACKS.filter((t) =>
     t.artistNames.includes(artist.name),
   )
-    .slice(0, 10)
+    .slice(0, 20)
     .map((t) => ({
       trackId: t.trackId,
       trackName: t.name,
+      albumImageUrl: t.albumImageUrl,
       playCount: t.plays,
     }));
+
+  const topAlbums = DEMO_TOP_ALBUMS.filter(
+    (a) => a.artistNames[0] === artist.name,
+  )
+    .slice(0, 10)
+    .map((a) => ({
+      albumId: a.albumId,
+      name: a.name,
+      imageUrl: a.imageUrl,
+      playCount: a.plays,
+    }));
+
+  const related = DEMO_TOP_ARTISTS.filter((a) => a.artistId !== id)
+    .slice(0, 5)
+    .map((a) => ({
+      artistId: a.artistId,
+      name: a.name,
+      imageUrl: a.imageUrl,
+      coCount: Math.max(1, Math.round(a.plays / 10)),
+    }));
+
+  const dates = synthesizeFirstLastDates(seed);
+  const monthly = synthesizeMonthlyPlays(artist.plays);
+  const totalPercent = Math.max(1, Math.round((artist.plays / DEMO_TOTAL_PLAYS) * 100));
+
   return {
     artist,
-    stats: { count: artist.plays },
+    stats: {
+      count: artist.plays,
+      firstPlayedAt: dates.firstPlayedAt,
+      lastPlayedAt: dates.lastPlayedAt,
+    },
     topTracks,
+    topAlbums,
+    monthly,
+    related,
+    totalPercent,
   };
 }
 

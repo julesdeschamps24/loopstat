@@ -143,6 +143,25 @@ describe("demo detail helpers", () => {
     });
   });
 
+  describe("getDemoArtist (rich page fields)", () => {
+    it("returns topAlbums, monthly, related, dates, totalPercent", async () => {
+      const { getDemoArtist, DEMO_TOP_ARTISTS } = await import("./data");
+      const firstArtist = DEMO_TOP_ARTISTS[0];
+      const demo = getDemoArtist(firstArtist.artistId);
+      expect(demo).not.toBeNull();
+      if (!demo) return;
+      expect(Array.isArray(demo.topAlbums)).toBe(true);
+      expect(Array.isArray(demo.monthly)).toBe(true);
+      expect(Array.isArray(demo.related)).toBe(true);
+      expect(demo.related.length).toBeLessThanOrEqual(5);
+      expect(demo.related.every((r) => r.artistId !== firstArtist.artistId)).toBe(true);
+      expect(demo.stats.firstPlayedAt).toBeInstanceOf(Date);
+      expect(demo.stats.lastPlayedAt).toBeInstanceOf(Date);
+      expect(typeof demo.totalPercent).toBe("number");
+      expect(demo.totalPercent).toBeGreaterThan(0);
+    });
+  });
+
   describe("getDemoAlbum", () => {
     it("returns null for non-demo IDs", () => {
       expect(getDemoAlbum("4EWzghMNZsqi3xqdutlL1O")).toBeNull();
