@@ -87,7 +87,27 @@ curl -sI https://loopstat.tech | head -3
 ### 6. Tester le flow OAuth complet
 
 Ouvre `https://loopstat.tech/login` dans un navigateur, clique « Se connecter
-avec Spotify », autorise. Tu dois atterrir sur `/dashboard`.
+avec Google », autorise. Tu dois atterrir sur `/dashboard`.
+
+### 7. (Premier déploiement uniquement) Seeder le catalog démo
+
+Le mode démo (nouveaux users avant import) affiche les top tracks/artistes
+populaires avec vraies covers. Le catalog en prod est vide au premier deploy
+donc il faut le seeder avec les ~15 albums + 15 artistes + 30 tracks démo.
+
+```sh
+ssh root@204.168.178.52 'cd /opt/loopstat && \
+  docker compose -f docker-compose.prod.yml exec app \
+  pnpm exec dotenv -e .env.production -- tsx scripts/seed-demo-catalog.ts'
+```
+
+Durée : ~2 min (~15 albums × 1.1s MBz + ~15 artistes × 2.2s MBz+TADB).
+Idempotent : ré-exécutable sans danger, skip ce qui est déjà enrichi.
+
+À relancer si :
+- La DB Postgres est wipée / restaurée d'un backup ancien.
+- On ajoute de nouvelles fixtures à `src/lib/demo/data.ts` (le script enrichit
+  seulement les nouvelles entrées au re-run).
 
 ## Mises à jour ultérieures
 
