@@ -1,20 +1,29 @@
 import Link from "next/link";
 
 import { auth } from "@/auth";
+import { AlbumWall } from "@/components/album-wall";
 import { PricingToggle } from "@/app/pricing/pricing-toggle";
 import { getBillingState } from "@/db/queries/billing";
+import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 
 export const dynamic = "force-dynamic";
 
 export default async function PricingPage() {
   const session = await auth();
-  const state = session?.user?.id
-    ? await getBillingState(session.user.id)
-    : { tier: "free" as const };
+  const [state, wallCovers] = await Promise.all([
+    session?.user?.id
+      ? getBillingState(session.user.id)
+      : Promise.resolve({ tier: "free" as const }),
+    // Authenticated → user's top albums, anonymous → falls through to the
+    // global catalog favourites (getWallCovers handles the empty user case).
+    getPaddedWallCovers(session?.user?.id ?? "anonymous", null, 40),
+  ]);
 
   const isPremium = state.tier !== "free";
 
   return (
+    <>
+      <AlbumWall covers={wallCovers} />
     <main id="main" className="flex-1 flex flex-col px-6 py-16 max-w-3xl mx-auto w-full">
       <header className="mb-12 text-center">
         <h1 className="font-serif text-4xl sm:text-5xl">
@@ -65,5 +74,6 @@ export default async function PricingPage() {
         </p>
       ) : null}
     </main>
+    </>
   );
 }
