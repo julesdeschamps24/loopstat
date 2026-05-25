@@ -29,7 +29,6 @@ import { getWallCovers } from "@/db/queries/wall-covers";
 import {
   DEMO_TOP_TRACKS,
   DEMO_TOP_ARTISTS,
-  DEMO_TOP_ALBUMS,
   DEMO_TOTAL_PLAYS,
   DEMO_TOTAL_HOURS_LISTENED,
 } from "@/lib/demo/data";
@@ -74,14 +73,17 @@ export default async function DashboardPage() {
     const top5Tracks = DEMO_TOP_TRACKS.slice(0, 5);
     const top5Artists = DEMO_TOP_ARTISTS.slice(0, 5);
 
-    // Démo : on a des noms d'albums sans imageUrl → la AlbumWall affichera
-    // un gradient déterministe par album. Padding au cas où on a < 40.
-    const wallCovers = DEMO_TOP_ALBUMS.slice(0, WALL_CELLS).map((a) => ({
-      name: a.name,
-      imageUrl: a.imageUrl,
-    }));
+    // Démo : le user n'a pas encore importé → 0 streams pour lui.
+    // getWallCovers tombe sur la branche "padding catalog global" : on
+    // affiche les albums les plus populaires de tous les users déjà sur
+    // loopstat. La wall est belle dès le premier load. Padding final
+    // (artefact) au cas où le catalog serait vide (très premier user).
+    const wallAlbums = await getWallCovers(userId, null, WALL_CELLS);
+    const wallCovers: { name: string; imageUrl: string | null }[] = [
+      ...wallAlbums,
+    ];
     while (wallCovers.length < WALL_CELLS) {
-      wallCovers.push({ name: `demo-${wallCovers.length}`, imageUrl: null });
+      wallCovers.push({ name: `slot-${wallCovers.length}`, imageUrl: null });
     }
 
     return (
