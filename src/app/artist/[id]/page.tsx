@@ -194,7 +194,12 @@ export default async function ArtistDetailPage({
           {related.length > 0 ? (
             <section>
               <h2 className="mb-4 text-lg font-semibold">Artistes connexes</h2>
-              <RelatedArtists artists={related} />
+              <RelatedArtists
+                artists={related.map((r) => ({
+                  ...r,
+                  imageUrl: artistImages.get(r.artistId) ?? r.imageUrl,
+                }))}
+              />
             </section>
           ) : null}
         </main>

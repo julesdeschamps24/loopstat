@@ -985,7 +985,16 @@ export async function getCoListenedArtists(
     SELECT
       a.id AS artist_id,
       a.name,
-      a.image_url,
+      -- Fall back to one of the artist's album covers when TheAudioDB hasn't
+      -- enriched artists.image_url yet (which is most artists right now).
+      COALESCE(
+        a.image_url,
+        (SELECT alb.image_url
+         FROM albums alb
+         JOIN album_artists aa ON aa.album_id = alb.id
+         WHERE aa.artist_id = a.id AND alb.image_url IS NOT NULL
+         LIMIT 1)
+      ) AS image_url,
       count(*)::int AS co_count
     FROM focal
     JOIN streams s2 ON s2.user_id = ${userId}
