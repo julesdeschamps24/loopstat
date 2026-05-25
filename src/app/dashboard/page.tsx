@@ -85,10 +85,16 @@ export default async function DashboardPage() {
     while (wallCovers.length < WALL_CELLS) {
       wallCovers.push({ name: `slot-${wallCovers.length}`, imageUrl: null });
     }
+    // Les 12 premiers covers du wall alimentent aussi le panneau gauche de
+    // la WelcomeModal — vraies pochettes plutôt que gradients violet.
+    const modalCovers = wallAlbums
+      .map((a) => a.imageUrl)
+      .filter((u): u is string => u !== null)
+      .slice(0, 12);
 
     return (
       <>
-        <WelcomeModal />
+        <WelcomeModal covers={modalCovers} />
         <DemoModeBanner />
         <AlbumWall covers={wallCovers} />
         <main

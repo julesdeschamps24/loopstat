@@ -7,13 +7,19 @@ import { useWelcomeModalState } from "./use-welcome-modal";
 /**
  * Modal de bienvenue affichée une seule fois (per browser, localStorage flag)
  * au premier load après auth pour un user en mode démo. Direction visuelle B1 :
- * split-panel avec mur d'albums violet/mauve à gauche, body éditorial à droite
- * avec headline serif italique et accent gradient.
+ * split-panel avec mur d'albums à gauche, body éditorial à droite avec headline
+ * serif italique et accent gradient.
+ *
+ * Les 12 covers (`covers` prop) viennent du catalog global, fetchées server-side
+ * par le parent (dashboard). Si moins de 12, on cycle dans ce qu'on a.
  *
  * Esc = Skip (équivalent au bouton).
  */
-export function WelcomeModal() {
+export function WelcomeModal({ covers }: { covers: string[] }) {
   const { isOpen, close } = useWelcomeModalState();
+  const cells = Array.from({ length: 12 }, (_, i) =>
+    covers.length > 0 ? covers[i % covers.length] : null,
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -54,18 +60,21 @@ export function WelcomeModal() {
             background: "#0a0612",
           }}
         >
-          <div style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }} />
-          <div style={{ background: "linear-gradient(135deg, #581c87, #7c3aed)" }} />
-          <div style={{ background: "linear-gradient(135deg, #a855f7, #ec4899)" }} />
-          <div style={{ background: "linear-gradient(135deg, #4c1d95, #a855f7)" }} />
-          <div style={{ background: "linear-gradient(135deg, #7c3aed, #3b0764)" }} />
-          <div style={{ background: "linear-gradient(135deg, #ec4899, #7c3aed)" }} />
-          <div style={{ background: "linear-gradient(135deg, #6d28d9, #c026d3)" }} />
-          <div style={{ background: "linear-gradient(135deg, #a855f7, #581c87)" }} />
-          <div style={{ background: "linear-gradient(135deg, #7c3aed, #db2777)" }} />
-          <div style={{ background: "linear-gradient(135deg, #5b21b6, #a855f7)" }} />
-          <div style={{ background: "linear-gradient(135deg, #c026d3, #7c3aed)" }} />
-          <div style={{ background: "linear-gradient(135deg, #7c3aed, #1e1b4b)" }} />
+          {cells.map((url, i) =>
+            url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                src={url}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <div key={i} style={{ background: "#1a0d2e" }} />
+            ),
+          )}
           {/* Masque dégradé bas + droite pour fondre vers le body */}
           <div
             className="pointer-events-none absolute inset-0"
