@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, isNull, not, or, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { albums, streams, tracks } from "@/db/schema";
@@ -20,37 +20,75 @@ export interface WallAlbum {
 }
 
 /**
- * Top N albums (by play count) for a user over a period, deduped by album_id.
- * Returns albums even when they don't yet have a cover URL — the consumer
- * (AlbumWall) renders a deterministic gradient fallback derived from the
- * album name. As the background enrich job populates albums.image_url over
- * time, each reload of the dashboard reveals more real covers.
+ * Top N albums for the wall background, ALWAYS with covers.
+ *
+ * Strategy:
+ *  1. User's own top albums (by play count) that are enriched (image_url set).
+ *  2. If less than `limit`, pad with other enriched albums from the global
+ *     catalog (= any album any user has played that has a cover). This keeps
+ *     the wall visually full while the background enrich worker catches up
+ *     with the user's tail of unenriched albums.
+ *
+ * `imageUrl` in the returned shape is non-null in practice. The type stays
+ * nullable so AlbumWall's gradient fallback handles the (rare) edge case of
+ * a brand-new catalog with no enriched albums anywhere.
  */
 export async function getWallCovers(
   userId: string,
   since: Date | null,
   limit: number,
 ): Promise<WallAlbum[]> {
-  const where = and(
+  const userTopWhere = and(
     eq(streams.userId, userId),
     since ? gte(streams.playedAt, since) : undefined,
+    isNotNull(albums.imageUrl),
     QUALIFYING_PLAY,
   );
 
-  const rows = await db
+  const userTop = await db
     .select({
       albumId: albums.id,
       name: albums.name,
       imageUrl: albums.imageUrl,
-      plays: sql<number>`count(*)::int`,
     })
     .from(streams)
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
     .innerJoin(albums, eq(albums.id, tracks.albumId))
-    .where(where)
+    .where(userTopWhere)
     .groupBy(albums.id, albums.name, albums.imageUrl)
     .orderBy(desc(sql`count(*)`))
     .limit(limit);
 
-  return rows.map((r) => ({ name: r.name, imageUrl: r.imageUrl }));
+  if (userTop.length >= limit) {
+    return userTop.map((r) => ({ name: r.name, imageUrl: r.imageUrl }));
+  }
+
+  // Pad with other enriched albums from the catalog, excluding the user's
+  // top set. Ordered by global play frequency so the most-listened albums
+  // (across all users) appear first — the wall looks like a curated mood
+  // board instead of random.
+  const exclude = userTop.map((r) => r.albumId);
+  const fillerWhere = and(
+    isNotNull(albums.imageUrl),
+    exclude.length > 0 ? not(inArray(albums.id, exclude)) : undefined,
+  );
+
+  const filler = await db
+    .select({
+      name: albums.name,
+      imageUrl: albums.imageUrl,
+      plays: sql<number>`count(${streams.id})::int`,
+    })
+    .from(albums)
+    .leftJoin(tracks, eq(tracks.albumId, albums.id))
+    .leftJoin(streams, eq(streams.trackId, tracks.id))
+    .where(fillerWhere)
+    .groupBy(albums.id, albums.name, albums.imageUrl)
+    .orderBy(desc(sql`count(${streams.id})`))
+    .limit(limit - userTop.length);
+
+  return [
+    ...userTop.map((r) => ({ name: r.name, imageUrl: r.imageUrl })),
+    ...filler.map((r) => ({ name: r.name, imageUrl: r.imageUrl })),
+  ];
 }
