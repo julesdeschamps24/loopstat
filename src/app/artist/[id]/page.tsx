@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { auth } from "@/auth";
 import { AlbumWall } from "@/components/album-wall";
@@ -10,6 +11,12 @@ import { RankedList, RankedRow } from "@/components/stats/ranked-list";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { ArtistAvatar } from "@/components/ui/artist-avatar";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { PeriodSelector } from "@/components/stats/period-selector";
+import {
+  isStreamPeriod,
+  periodSince,
+  type StreamPeriod,
+} from "@/lib/stats/period";
 import { db } from "@/db/client";
 import {
   getArtistMonthlyPlays,
@@ -17,7 +24,7 @@ import {
   getCoListenedArtists,
   getUserTopAlbumsByArtist,
   getUserTopTracksByArtist,
-  getListeningTotals,
+  getUserTotalMsPlayed,
 } from "@/db/queries/stats";
 import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import { artists } from "@/db/schema";
@@ -118,8 +125,10 @@ function ArtistHero({
 
 export default async function ArtistDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ period?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -129,6 +138,10 @@ export default async function ArtistDetailPage({
   // Next.js 16 passes the param URL-encoded (e.g. "demo%3Asabrina-carpenter"),
   // but our demo fixtures use a literal ":" prefix — decode so lookups match.
   const id = decodeURIComponent(rawId);
+
+  const { period: rawPeriod } = await searchParams;
+  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
+  const since = periodSince(period);
 
   // ===== DEMO MODE =====
   if (isDemoId(id)) {
@@ -223,22 +236,19 @@ export default async function ArtistDetailPage({
   const [artist] = await db.select().from(artists).where(eq(artists.id, id)).limit(1);
   if (!artist) notFound();
 
-  const [stats, topTracks, topAlbums, monthly, related, totals, wallCovers] =
+  const [stats, topTracks, topAlbums, monthly, related, totalMs, wallCovers] =
     await Promise.all([
-      getArtistPlayStats(userId, id),
-      getUserTopTracksByArtist(userId, id, 20),
-      getUserTopAlbumsByArtist(userId, id, 10),
+      getArtistPlayStats(userId, id, since),
+      getUserTopTracksByArtist(userId, id, 20, since),
+      getUserTopAlbumsByArtist(userId, id, 10, since),
       getArtistMonthlyPlays(userId, id),
-      getCoListenedArtists(userId, id, 5),
-      getListeningTotals(userId),
+      getCoListenedArtists(userId, id, 5, since),
+      getUserTotalMsPlayed(userId, since),
       getPaddedWallCovers(userId, null, 40),
     ]);
 
-  // % du temps d'écoute total — basé sur ms_played (durée réelle écoutée),
-  // pas le count de plays. Une chanson skippée à 10s pèse beaucoup moins
-  // qu'un titre écouté en entier.
-  const lifetimeTotals = totals.find((t) => t.window === "lifetime");
-  const totalMs = lifetimeTotals?.msPlayed ?? 0;
+  // % du temps d'écoute total — basé sur ms_played, période-cohérent avec
+  // la sélection (denominateur filtré au même `since`).
   const totalPercent = totalMs > 0 ? (stats.msPlayed / totalMs) * 100 : 0;
 
   return (
@@ -252,6 +262,14 @@ export default async function ArtistDetailPage({
           lastPlayedAt={stats.lastPlayedAt}
           totalPercent={totalPercent}
         />
+
+        <div className="flex justify-end">
+          <Suspense
+            fallback={<div className="h-9 w-64 rounded-full border bg-card" />}
+          >
+            <PeriodSelector current={period} />
+          </Suspense>
+        </div>
 
         <section>
           <h2 className="mb-4 text-lg font-semibold">Tes titres les plus écoutés</h2>

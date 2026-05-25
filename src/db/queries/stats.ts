@@ -134,15 +134,52 @@ export async function getTrackPlayStats(
   };
 }
 
+/**
+ * Total ms_played by the user, optionally filtered to streams since a date.
+ * Used as the denominator for "% du temps" computations that need to match
+ * a period filter applied elsewhere.
+ */
+export async function getUserTotalMsPlayed(
+  userId: string,
+  since: Date | null = null,
+): Promise<number> {
+  const whereClause = since
+    ? and(eq(streams.userId, userId), gte(streams.playedAt, since), QUALIFYING_PLAY)
+    : and(eq(streams.userId, userId), QUALIFYING_PLAY);
+
+  const [row] = await db
+    .select({
+      msPlayed: sql<number>`coalesce(sum(${streams.msPlayed}), 0)::bigint`,
+    })
+    .from(streams)
+    .where(whereClause);
+
+  return Number(row?.msPlayed ?? 0);
+}
+
 export async function getArtistPlayStats(
   userId: string,
   artistId: string,
+  since: Date | null = null,
 ): Promise<{
   count: number;
   msPlayed: number;
   firstPlayedAt: Date | null;
   lastPlayedAt: Date | null;
 }> {
+  const whereClause = since
+    ? and(
+        eq(streams.userId, userId),
+        eq(trackArtists.artistId, artistId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+      )
+    : and(
+        eq(streams.userId, userId),
+        eq(trackArtists.artistId, artistId),
+        QUALIFYING_PLAY,
+      );
+
   const [row] = await db
     .select({
       count: sql<number>`count(*)::int`,
@@ -152,13 +189,7 @@ export async function getArtistPlayStats(
     })
     .from(streams)
     .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
-    .where(
-      and(
-        eq(streams.userId, userId),
-        eq(trackArtists.artistId, artistId),
-        QUALIFYING_PLAY,
-      ),
-    );
+    .where(whereClause);
 
   return {
     count: Number(row?.count ?? 0),
@@ -172,7 +203,21 @@ export async function getUserTopTracksByArtist(
   userId: string,
   artistId: string,
   limit: number,
+  since: Date | null = null,
 ): Promise<{ trackId: string; trackName: string; playCount: number }[]> {
+  const whereClause = since
+    ? and(
+        eq(streams.userId, userId),
+        eq(trackArtists.artistId, artistId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+      )
+    : and(
+        eq(streams.userId, userId),
+        eq(trackArtists.artistId, artistId),
+        QUALIFYING_PLAY,
+      );
+
   const rows = await db
     .select({
       trackId: streams.trackId,
@@ -182,13 +227,7 @@ export async function getUserTopTracksByArtist(
     .from(streams)
     .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
-    .where(
-      and(
-        eq(streams.userId, userId),
-        eq(trackArtists.artistId, artistId),
-        QUALIFYING_PLAY,
-      ),
-    )
+    .where(whereClause)
     .groupBy(streams.trackId, tracks.name)
     .orderBy(desc(sql`count(*)`))
     .limit(limit);
@@ -890,12 +929,26 @@ export async function getUserTopAlbumsByArtist(
   userId: string,
   artistId: string,
   limit: number,
+  since: Date | null = null,
 ): Promise<{
   albumId: string;
   name: string;
   imageUrl: string | null;
   playCount: number;
 }[]> {
+  const whereClause = since
+    ? and(
+        eq(streams.userId, userId),
+        eq(albumArtists.artistId, artistId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+      )
+    : and(
+        eq(streams.userId, userId),
+        eq(albumArtists.artistId, artistId),
+        QUALIFYING_PLAY,
+      );
+
   const rows = await db
     .select({
       albumId: albums.id,
@@ -907,13 +960,7 @@ export async function getUserTopAlbumsByArtist(
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
     .innerJoin(albums, eq(albums.id, tracks.albumId))
     .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
-    .where(
-      and(
-        eq(streams.userId, userId),
-        eq(albumArtists.artistId, artistId),
-        QUALIFYING_PLAY,
-      ),
-    )
+    .where(whereClause)
     .groupBy(albums.id, albums.name, albums.imageUrl)
     .orderBy(desc(sql`count(${streams.id})`))
     .limit(limit);
@@ -967,12 +1014,14 @@ export async function getCoListenedArtists(
   userId: string,
   artistId: string,
   limit: number,
+  since: Date | null = null,
 ): Promise<{
   artistId: string;
   name: string;
   imageUrl: string | null;
   coCount: number;
 }[]> {
+  const sinceFilter = since ? sql`AND s.played_at >= ${since}` : sql``;
   const rows = await db.execute<{
     artist_id: string;
     name: string;
@@ -984,6 +1033,7 @@ export async function getCoListenedArtists(
       FROM streams s
       JOIN track_artists ta ON ta.track_id = s.track_id
       WHERE s.user_id = ${userId} AND ta.artist_id = ${artistId}
+        ${sinceFilter}
     )
     SELECT
       a.id AS artist_id,
