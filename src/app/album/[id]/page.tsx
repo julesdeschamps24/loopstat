@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
-import { Suspense } from "react";
 
 import { auth } from "@/auth";
 import { AlbumWall } from "@/components/album-wall";
@@ -13,7 +12,6 @@ import { enrichDemoFixtures } from "@/lib/demo/enrich";
 import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
-import { PeriodSelector } from "@/components/stats/period-selector";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { formatDate, formatRelativeDate } from "@/lib/format/date";
 import { db } from "@/db/client";
@@ -27,7 +25,6 @@ import {
   getAlbumTrackPlays,
   getOtherAlbumsByArtist,
 } from "@/db/queries/stats";
-import { isStreamPeriod, periodSince, type StreamPeriod } from "@/lib/stats/period";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 
 export const revalidate = 3600;
@@ -38,10 +35,8 @@ function formatPercent(ratio: number): string {
 
 export default async function AlbumDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ period?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -51,10 +46,6 @@ export default async function AlbumDetailPage({
   // Next.js 16 passes the param URL-encoded (e.g. "demo%3Ashort-n-sweet"),
   // but our demo fixtures use a literal ":" prefix — decode so lookups match.
   const id = decodeURIComponent(rawId);
-
-  const { period: rawPeriod } = await searchParams;
-  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
-  const since = periodSince(period);
 
   if (isDemoId(id)) {
     const demo = getDemoAlbum(id);
@@ -109,13 +100,6 @@ export default async function AlbumDetailPage({
               Première écoute : {formatDate(stats.firstPlayedAt)}
             </p>
           </div>
-        </div>
-
-        {/* Period selector */}
-        <div className="flex justify-end">
-          <Suspense fallback={<div className="h-9 w-64 rounded-full border bg-card" />}>
-            <PeriodSelector current={period} />
-          </Suspense>
         </div>
 
         {/* 2. Top track card */}
@@ -230,12 +214,12 @@ export default async function AlbumDetailPage({
 
   const [stats, trackPlays, breakdown, monthly, hours, quality, otherAlbums, wallCovers] =
     await Promise.all([
-      getAlbumPlayStats(userId, id, since),
-      getAlbumTrackPlays(userId, id, since),
+      getAlbumPlayStats(userId, id),
+      getAlbumTrackPlays(userId, id),
       getAlbumBreakdownByWindow(userId, id),
       getAlbumMonthlyPlays(userId, id),
-      getAlbumListeningHours(userId, id, since),
-      getAlbumPlayQuality(userId, id, since),
+      getAlbumListeningHours(userId, id),
+      getAlbumPlayQuality(userId, id),
       primaryArtistId
         ? getOtherAlbumsByArtist(userId, primaryArtistId, id, 10)
         : Promise.resolve([]),
@@ -325,13 +309,6 @@ export default async function AlbumDetailPage({
             </p>
           )}
         </div>
-      </div>
-
-      {/* Period selector */}
-      <div className="flex justify-end">
-        <Suspense fallback={<div className="h-9 w-64 rounded-full border bg-card" />}>
-          <PeriodSelector current={period} />
-        </Suspense>
       </div>
 
       {/* 2. Top track card (album-specific) */}

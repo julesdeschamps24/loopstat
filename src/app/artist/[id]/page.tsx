@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
-import { Suspense } from "react";
 
 import { auth } from "@/auth";
 import { AlbumWall } from "@/components/album-wall";
@@ -11,12 +10,6 @@ import { RankedList, RankedRow } from "@/components/stats/ranked-list";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { ArtistAvatar } from "@/components/ui/artist-avatar";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
-import { PeriodSelector } from "@/components/stats/period-selector";
-import {
-  isStreamPeriod,
-  periodSince,
-  type StreamPeriod,
-} from "@/lib/stats/period";
 import { db } from "@/db/client";
 import {
   getArtistMonthlyPlays,
@@ -125,10 +118,8 @@ function ArtistHero({
 
 export default async function ArtistDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ period?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -138,10 +129,6 @@ export default async function ArtistDetailPage({
   // Next.js 16 passes the param URL-encoded (e.g. "demo%3Asabrina-carpenter"),
   // but our demo fixtures use a literal ":" prefix — decode so lookups match.
   const id = decodeURIComponent(rawId);
-
-  const { period: rawPeriod } = await searchParams;
-  const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
-  const since = periodSince(period);
 
   // ===== DEMO MODE =====
   if (isDemoId(id)) {
@@ -166,14 +153,6 @@ export default async function ArtistDetailPage({
             lastPlayedAt={stats.lastPlayedAt}
             totalPercent={totalPercent}
           />
-
-          <div className="flex justify-end">
-            <Suspense
-              fallback={<div className="h-9 w-64 rounded-full border bg-card" />}
-            >
-              <PeriodSelector current={period} />
-            </Suspense>
-          </div>
 
           <section>
             <h2 className="mb-4 text-lg font-semibold">Tes titres les plus écoutés</h2>
@@ -246,17 +225,16 @@ export default async function ArtistDetailPage({
 
   const [stats, topTracks, topAlbums, monthly, related, totalMs, wallCovers] =
     await Promise.all([
-      getArtistPlayStats(userId, id, since),
-      getUserTopTracksByArtist(userId, id, 20, since),
-      getUserTopAlbumsByArtist(userId, id, 10, since),
+      getArtistPlayStats(userId, id),
+      getUserTopTracksByArtist(userId, id, 20),
+      getUserTopAlbumsByArtist(userId, id, 10),
       getArtistMonthlyPlays(userId, id),
-      getCoListenedArtists(userId, id, 5, since),
-      getUserTotalMsPlayed(userId, since),
+      getCoListenedArtists(userId, id, 5),
+      getUserTotalMsPlayed(userId),
       getPaddedWallCovers(userId, null, 40),
     ]);
 
-  // % du temps d'écoute total — basé sur ms_played, période-cohérent avec
-  // la sélection (denominateur filtré au même `since`).
+  // % du temps d'écoute total — basé sur ms_played lifetime.
   const totalPercent = totalMs > 0 ? (stats.msPlayed / totalMs) * 100 : 0;
 
   return (
@@ -270,14 +248,6 @@ export default async function ArtistDetailPage({
           lastPlayedAt={stats.lastPlayedAt}
           totalPercent={totalPercent}
         />
-
-        <div className="flex justify-end">
-          <Suspense
-            fallback={<div className="h-9 w-64 rounded-full border bg-card" />}
-          >
-            <PeriodSelector current={period} />
-          </Suspense>
-        </div>
 
         <section>
           <h2 className="mb-4 text-lg font-semibold">Tes titres les plus écoutés</h2>
