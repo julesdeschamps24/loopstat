@@ -17,3 +17,27 @@ describe("getArtistPlayStats", () => {
     expect(result.lastPlayedAt).toBeNull();
   });
 });
+
+describe("getUserTopAlbumsByArtist", () => {
+  it("returns an empty array for an artist with no plays", async () => {
+    const { getUserTopAlbumsByArtist } = await import("./stats");
+    const rows = await getUserTopAlbumsByArtist(
+      "00000000-0000-0000-0000-000000000000",
+      "art_nonexistent",
+      10,
+    );
+    expect(rows).toEqual([]);
+  });
+
+  it("returns array shape with albumId, name, imageUrl, playCount", async () => {
+    const { getUserTopAlbumsByArtist } = await import("./stats");
+    const rows = await getUserTopAlbumsByArtist(
+      "00000000-0000-0000-0000-000000000000",
+      "art_nonexistent",
+      10,
+    );
+    // Type-only assertion (empty array, but the type must be correct)
+    const expectShape: { albumId: string; name: string; imageUrl: string | null; playCount: number }[] = rows;
+    expect(Array.isArray(expectShape)).toBe(true);
+  });
+});

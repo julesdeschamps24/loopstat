@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { albums, artists, streams, trackArtists, tracks } from "@/db/schema";
+import { albumArtists, albums, artists, streams, trackArtists, tracks } from "@/db/schema";
 import { periodSince, type StreamPeriod } from "@/lib/stats/period";
 
 /**
@@ -876,5 +876,49 @@ export async function getOtherAlbumsByArtist(
     name: r.name,
     imageUrl: r.imageUrl,
     plays: Number(r.plays),
+  }));
+}
+
+/**
+ * Top albums of `artistId` ordered by the user's play count. Mirrors
+ * `getUserTopTracksByArtist` at album granularity.
+ */
+export async function getUserTopAlbumsByArtist(
+  userId: string,
+  artistId: string,
+  limit: number,
+): Promise<{
+  albumId: string;
+  name: string;
+  imageUrl: string | null;
+  playCount: number;
+}[]> {
+  const rows = await db
+    .select({
+      albumId: albums.id,
+      name: albums.name,
+      imageUrl: albums.imageUrl,
+      playCount: sql<number>`count(${streams.id})::int`,
+    })
+    .from(streams)
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .innerJoin(albums, eq(albums.id, tracks.albumId))
+    .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        eq(albumArtists.artistId, artistId),
+        QUALIFYING_PLAY,
+      ),
+    )
+    .groupBy(albums.id, albums.name, albums.imageUrl)
+    .orderBy(desc(sql`count(${streams.id})`))
+    .limit(limit);
+
+  return rows.map((r) => ({
+    albumId: r.albumId,
+    name: r.name,
+    imageUrl: r.imageUrl,
+    playCount: Number(r.playCount),
   }));
 }
