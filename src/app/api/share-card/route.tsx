@@ -176,15 +176,15 @@ export async function GET(req: Request) {
           periodSince(config.period),
           WALL_COVER_LIMITS[config.format],
         )
-      : Promise.resolve([] as string[]),
+      : Promise.resolve([] as { name: string; imageUrl: string | null }[]),
   ]);
 
-  // Collect every URL that needs to land in the PNG, shrink them to
-  // the right CDN size, then prefetch in parallel into data URLs.
-  // Bypasses Satori's serial image loader (the wall background alone
-  // was ~70 sequential fetches = ~5s per render).
+  // Share-card PNG : on ne peut pas render le gradient fallback (Satori
+  // gère mal certains background gradients dans @vercel/og). On garde
+  // uniquement les vraies covers pour le mur. Si certaines manquent, le
+  // mur aura simplement moins de cellules — acceptable pour l'export.
   const wallShrunk = rawCovers
-    .map((u) => shrinkAlbumCoverUrl(u, "small"))
+    .map((c) => (c.imageUrl ? shrinkAlbumCoverUrl(c.imageUrl, "small") : null))
     .filter((u): u is string => u !== null);
   const itemsForUrls: FocusItem[] =
     config.mode === "focus"
