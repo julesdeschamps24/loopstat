@@ -3,7 +3,9 @@ const CAA_BASE = "https://coverartarchive.org";
 /**
  * Fetch the cover URL for a MusicBrainz release-group MBID.
  * - 200 (after following 302): returns the final archive.org URL.
- * - 404: returns null (the release-group exists in MBz but has no cover on CAA).
+ * - 404 / 403: returns null (no cover available — CAA returns 403 when the
+ *   release-group has no `front` image despite existing in MBz, 404 when the
+ *   release-group itself isn't indexed). Both are "permanent, no cover".
  * - other non-2xx (503, network, etc.): throws so caller can retry/backoff.
  *
  * Notes:
@@ -18,7 +20,7 @@ export async function fetchCoverUrl(
   const url = `${CAA_BASE}/release-group/${releaseGroupMbid}/front-500`;
   const res = await fetch(url, { redirect: "follow" });
 
-  if (res.status === 404) return null;
+  if (res.status === 404 || res.status === 403) return null;
   if (!res.ok) {
     throw new Error(`Cover Art Archive ${url} failed: ${res.status}`);
   }

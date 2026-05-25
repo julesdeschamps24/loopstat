@@ -29,6 +29,13 @@ describe("fetchCoverUrl", () => {
     expect(await fetchCoverUrl("abc-1234")).toBeNull();
   });
 
+  it("returns null on 403 (release-group exists but no front image)", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("forbidden", { status: 403 }),
+    );
+    expect(await fetchCoverUrl("abc-1234")).toBeNull();
+  });
+
   it("throws on 503 (so caller can retry)", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response("busy", { status: 503 }),
