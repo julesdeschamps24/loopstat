@@ -10,9 +10,11 @@ describe("getArtistPlayStats", () => {
       "art_nonexistent",
     );
     expect(result).toHaveProperty("count");
+    expect(result).toHaveProperty("msPlayed");
     expect(result).toHaveProperty("firstPlayedAt");
     expect(result).toHaveProperty("lastPlayedAt");
     expect(result.count).toBe(0);
+    expect(result.msPlayed).toBe(0);
     expect(result.firstPlayedAt).toBeNull();
     expect(result.lastPlayedAt).toBeNull();
   });

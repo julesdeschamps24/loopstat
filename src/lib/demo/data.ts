@@ -321,7 +321,8 @@ export function getDemoArtist(id: string): {
 
   const dates = synthesizeFirstLastDates(seed);
   const monthly = synthesizeMonthlyPlays(artist.plays);
-  const totalPercent = Math.max(1, Math.round((artist.plays / DEMO_TOTAL_PLAYS) * 100));
+  // Raw float — display layer formats to 2 decimals (e.g. "20,98%").
+  const totalPercent = (artist.plays / DEMO_TOTAL_PLAYS) * 100;
 
   return {
     artist,
