@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { AlbumWall } from "@/components/album-wall";
 import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
@@ -9,6 +10,7 @@ import { getDemoTrack, isDemoId } from "@/lib/demo/data";
 import { enrichDemoFixtures } from "@/lib/demo/enrich";
 import { db } from "@/db/client";
 import { tracks, albums, trackArtists, artists } from "@/db/schema";
+import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import {
   getTrackBreakdownByWindow,
   getTrackListeningHours,
@@ -45,10 +47,15 @@ export default async function TrackDetailPage({
     const { track, stats, breakdown, monthly, hours, quality } = demo;
     const artistNames = track.artistNames.join(", ");
     const hasPlays = stats.count > 0;
-    const { trackImages } = await enrichDemoFixtures();
+    const [{ trackImages }, wallCovers] = await Promise.all([
+      enrichDemoFixtures(),
+      getPaddedWallCovers(userId, null, 40),
+    ]);
     const cover = trackImages.get(track.trackId) ?? null;
 
     return (
+      <>
+        <AlbumWall covers={wallCovers} />
       <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
           {cover ? (
@@ -133,6 +140,7 @@ export default async function TrackDetailPage({
           </div>
         </section>
       </main>
+      </>
     );
   }
 
@@ -164,18 +172,21 @@ export default async function TrackDetailPage({
     .orderBy(trackArtists.position);
   const artistNames = trackArtistRows.map((r) => r.name).join(", ");
 
-  const [stats, breakdown, monthly, hours, quality] = await Promise.all([
+  const [stats, breakdown, monthly, hours, quality, wallCovers] = await Promise.all([
     getTrackPlayStats(userId, id),
     getTrackBreakdownByWindow(userId, id),
     getTrackMonthlyPlays(userId, id),
     getTrackListeningHours(userId, id),
     getTrackPlayQuality(userId, id),
+    getPaddedWallCovers(userId, null, 40),
   ]);
 
   const albumImage = album?.imageUrl ?? null;
   const hasPlays = stats.count > 0;
 
   return (
+    <>
+      <AlbumWall covers={wallCovers} />
     <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
         {albumImage ? (
@@ -289,5 +300,6 @@ export default async function TrackDetailPage({
         </>
       ) : null}
     </main>
+    </>
   );
 }

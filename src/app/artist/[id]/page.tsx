@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { AlbumWall } from "@/components/album-wall";
 import { RankedList, RankedRow } from "@/components/stats/ranked-list";
 import { EmptyState } from "@/components/stats/empty-state";
 import { ArtistAvatar } from "@/components/ui/artist-avatar";
@@ -9,6 +10,7 @@ import { getDemoArtist, isDemoId } from "@/lib/demo/data";
 import { enrichDemoFixtures } from "@/lib/demo/enrich";
 import { db } from "@/db/client";
 import { artists } from "@/db/schema";
+import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import {
   getArtistPlayStats,
   getUserTopTracksByArtist,
@@ -35,10 +37,15 @@ export default async function ArtistDetailPage({
     const demo = getDemoArtist(id);
     if (!demo) notFound();
     const { artist, stats, topTracks } = demo;
-    const { artistImages, trackImages } = await enrichDemoFixtures();
+    const [{ artistImages, trackImages }, wallCovers] = await Promise.all([
+      enrichDemoFixtures(),
+      getPaddedWallCovers(userId, null, 40),
+    ]);
     const artistImage = artistImages.get(artist.artistId) ?? artist.imageUrl;
 
     return (
+      <>
+        <AlbumWall covers={wallCovers} />
       <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
           <ArtistAvatar name={artist.name} imageUrl={artistImage} size={192} />
@@ -76,6 +83,7 @@ export default async function ArtistDetailPage({
           )}
         </section>
       </main>
+      </>
     );
   }
 
@@ -87,12 +95,15 @@ export default async function ArtistDetailPage({
     .limit(1);
   if (!artist) notFound();
 
-  const [stats, topTracks] = await Promise.all([
+  const [stats, topTracks, wallCovers] = await Promise.all([
     getArtistPlayStats(userId, id),
     getUserTopTracksByArtist(userId, id, 10),
+    getPaddedWallCovers(userId, null, 40),
   ]);
 
   return (
+    <>
+      <AlbumWall covers={wallCovers} />
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-3xl mx-auto w-full">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
         <ArtistAvatar name={artist.name} imageUrl={artist.imageUrl} size={192} />
@@ -129,5 +140,6 @@ export default async function ArtistDetailPage({
         )}
       </section>
     </main>
+    </>
   );
 }
