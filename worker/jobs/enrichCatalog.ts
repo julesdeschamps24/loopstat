@@ -127,7 +127,10 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
         );
       }
     } catch (err) {
-      wlog.error({ err, albumId: row.albumId }, "enrich album failed");
+      wlog.error(
+        { err, msg: (err as Error)?.message, albumId: row.albumId },
+        "enrich album failed",
+      );
       throw err;
     }
   }
@@ -148,7 +151,10 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
       await enrichArtistByName({ artistId: row.artistId, name: row.name });
       artistsEnriched++;
     } catch (err) {
-      wlog.error({ err, artistId: row.artistId }, "enrich artist failed");
+      wlog.error(
+        { err, msg: (err as Error)?.message, artistId: row.artistId },
+        "enrich artist failed",
+      );
       throw err;
     }
   }
@@ -176,7 +182,10 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
       }
       imagesEnriched++;
     } catch (err) {
-      wlog.error({ err, artistId: row.artistId }, "enrich artist image failed");
+      wlog.error(
+        { err, msg: (err as Error)?.message, artistId: row.artistId },
+        "enrich artist image failed",
+      );
       throw err;
     }
   }
