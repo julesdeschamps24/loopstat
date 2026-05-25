@@ -10,7 +10,7 @@ import { getTopArtistsFromStreams } from "@/db/queries/stats";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
-import { DEMO_TOP_ARTISTS } from "@/lib/demo/data";
+import { getEnrichedDemoTopArtists } from "@/lib/demo/enrich";
 import {
   isStreamPeriod,
   periodSince,
@@ -34,6 +34,7 @@ export default async function TopArtistsPage({
   const hasImport = await hasCompletedImport(userId);
 
   if (!hasImport) {
+    const artistsData = await getEnrichedDemoTopArtists();
     return (
       <>
         <DemoModeBanner />
@@ -48,7 +49,7 @@ export default async function TopArtistsPage({
             Ces données sont fictives — importe ton historique pour voir les tiennes.
           </p>
           <StaggerList className="flex flex-col gap-1">
-            {DEMO_TOP_ARTISTS.map((artist, index) => (
+            {artistsData.map((artist, index) => (
               <StaggerItem key={artist.artistId}>
                 <RankedRow
                   rank={index + 1}

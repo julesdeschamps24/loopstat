@@ -6,6 +6,7 @@ import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
 import { getDemoTrack, isDemoId } from "@/lib/demo/data";
+import { enrichDemoFixtures } from "@/lib/demo/enrich";
 import { db } from "@/db/client";
 import { tracks, albums, trackArtists, artists } from "@/db/schema";
 import {
@@ -44,11 +45,24 @@ export default async function TrackDetailPage({
     const { track, stats, breakdown, monthly, hours, quality } = demo;
     const artistNames = track.artistNames.join(", ");
     const hasPlays = stats.count > 0;
+    const { trackImages } = await enrichDemoFixtures();
+    const cover = trackImages.get(track.trackId) ?? null;
 
     return (
       <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
-          <div className="size-48 shrink-0 rounded-2xl bg-muted" />
+          {cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={cover}
+              alt=""
+              className="size-48 shrink-0 rounded-2xl object-cover shadow-lg"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <div className="size-48 shrink-0 rounded-2xl bg-muted" />
+          )}
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">Titre</p>
             <h1 className="text-3xl font-semibold">{track.name}</h1>

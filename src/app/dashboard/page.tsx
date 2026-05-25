@@ -27,11 +27,13 @@ import {
 import { getProfile } from "@/db/queries/users";
 import { getWallCovers } from "@/db/queries/wall-covers";
 import {
-  DEMO_TOP_TRACKS,
-  DEMO_TOP_ARTISTS,
   DEMO_TOTAL_PLAYS,
   DEMO_TOTAL_HOURS_LISTENED,
 } from "@/lib/demo/data";
+import {
+  getEnrichedDemoTopArtists,
+  getEnrichedDemoTopTracks,
+} from "@/lib/demo/enrich";
 import { formatNumber } from "@/lib/utils";
 import { ImportBanner } from "@/components/import-banner";
 import { OwnProfileCard } from "@/components/profile/own-profile-card";
@@ -70,8 +72,12 @@ export default async function DashboardPage() {
     const shareUsername =
       profile?.isPublic && profile.username ? profile.username : undefined;
 
-    const top5Tracks = DEMO_TOP_TRACKS.slice(0, 5);
-    const top5Artists = DEMO_TOP_ARTISTS.slice(0, 5);
+    const [enrichedTracks, enrichedArtists] = await Promise.all([
+      getEnrichedDemoTopTracks(),
+      getEnrichedDemoTopArtists(),
+    ]);
+    const top5Tracks = enrichedTracks.slice(0, 5);
+    const top5Artists = enrichedArtists.slice(0, 5);
 
     // Démo : le user n'a pas encore importé → 0 streams pour lui.
     // getWallCovers tombe sur la branche "padding catalog global" : on

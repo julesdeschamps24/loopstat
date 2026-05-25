@@ -11,7 +11,7 @@ import { getTopAlbumsFromStreams } from "@/db/queries/stats";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
-import { DEMO_TOP_ALBUMS } from "@/lib/demo/data";
+import { getEnrichedDemoTopAlbums } from "@/lib/demo/enrich";
 import {
   isStreamPeriod,
   periodSince,
@@ -35,6 +35,7 @@ export default async function TopAlbumsPage({
   const hasImport = await hasCompletedImport(userId);
 
   if (!hasImport) {
+    const albumsData = await getEnrichedDemoTopAlbums();
     return (
       <>
         <DemoModeBanner />
@@ -49,13 +50,14 @@ export default async function TopAlbumsPage({
             Ces données sont fictives — importe ton historique pour voir les tiennes.
           </p>
           <StaggerList className="flex flex-col gap-1">
-            {DEMO_TOP_ALBUMS.map((album, index) => (
+            {albumsData.map((album, index) => (
               <StaggerItem key={album.albumId}>
                 <RankedRow
                   rank={index + 1}
                   title={album.name}
                   href={`/album/${album.albumId}`}
                   subtitle={album.artistNames.join(", ")}
+                  imageUrl={album.imageUrl ?? undefined}
                   metric={`${formatNumber(album.plays)} écoutes`}
                 />
               </StaggerItem>

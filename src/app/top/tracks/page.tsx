@@ -10,7 +10,7 @@ import { getTopTracksFromStreams } from "@/db/queries/stats";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
-import { DEMO_TOP_TRACKS } from "@/lib/demo/data";
+import { getEnrichedDemoTopTracks } from "@/lib/demo/enrich";
 import {
   isStreamPeriod,
   periodSince,
@@ -35,6 +35,7 @@ export default async function TopTracksPage({
   const hasImport = await hasCompletedImport(userId);
 
   if (!hasImport) {
+    const tracks = await getEnrichedDemoTopTracks();
     return (
       <>
         <DemoModeBanner />
@@ -49,13 +50,14 @@ export default async function TopTracksPage({
             Ces données sont fictives — importe ton historique pour voir les tiennes.
           </p>
           <StaggerList className="flex flex-col gap-1">
-            {DEMO_TOP_TRACKS.map((track, index) => (
+            {tracks.map((track, index) => (
               <StaggerItem key={track.trackId}>
                 <RankedRow
                   rank={index + 1}
                   title={track.name}
                   href={`/track/${track.trackId}`}
                   subtitle={track.artistNames.join(", ")}
+                  imageUrl={track.albumImageUrl ?? undefined}
                   metric={`${formatNumber(track.plays)} écoutes`}
                 />
               </StaggerItem>

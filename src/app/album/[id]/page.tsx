@@ -7,6 +7,7 @@ import { AlbumTracklist } from "@/components/album/album-tracklist";
 import { OtherArtistAlbums } from "@/components/album/other-artist-albums";
 import { TopTrackCard } from "@/components/album/top-track-card";
 import { getDemoAlbum, isDemoId } from "@/lib/demo/data";
+import { enrichDemoFixtures } from "@/lib/demo/enrich";
 import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
@@ -57,6 +58,9 @@ export default async function AlbumDetailPage({
         ? tracks.reduce((a, b) => (a.plays >= b.plays ? a : b))
         : null;
 
+    const { albumImages, trackImages } = await enrichDemoFixtures();
+    const cover = albumImages.get(album.albumId) ?? null;
+
     return (
       <main
         id="main"
@@ -64,7 +68,18 @@ export default async function AlbumDetailPage({
       >
         {/* 1. Hero */}
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
-          <div className="size-48 shrink-0 rounded-2xl bg-muted" />
+          {cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={cover}
+              alt=""
+              className="size-48 shrink-0 rounded-2xl object-cover shadow-lg"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <div className="size-48 shrink-0 rounded-2xl bg-muted" />
+          )}
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">Album</p>
             <h1 className="text-3xl font-semibold">{album.name}</h1>
@@ -86,7 +101,7 @@ export default async function AlbumDetailPage({
             trackId={topTrack.trackId}
             trackName={topTrack.name}
             artistName={artistName}
-            imageUrl={null}
+            imageUrl={trackImages.get(topTrack.trackId) ?? cover}
             plays={topTrack.plays}
             shareOfAlbum={topTrack.plays / stats.count}
           />
@@ -158,7 +173,13 @@ export default async function AlbumDetailPage({
 
         {/* 8. Autres albums de l'artiste */}
         {otherAlbums.length > 0 ? (
-          <OtherArtistAlbums artistName={artistName} albums={otherAlbums} />
+          <OtherArtistAlbums
+            artistName={artistName}
+            albums={otherAlbums.map((a) => ({
+              ...a,
+              imageUrl: albumImages.get(a.albumId) ?? a.imageUrl,
+            }))}
+          />
         ) : null}
       </main>
     );
