@@ -144,17 +144,69 @@ ssh root@204.168.178.52 'journalctl -u caddy -n 100 --no-pager'
 
 ## Rollback
 
+Use `deploy/rollback.sh` from your local repo. It reverts the VPS to any
+previous git ref (commit SHA, tag, or `HEAD~N`).
+
+```sh
+./deploy/rollback.sh HEAD~1        # previous commit
+./deploy/rollback.sh 4ccbb85       # specific SHA
+```
+
+The script asks for confirmation, syncs the chosen ref, rebuilds the
+stack, then smoke-tests `/api/health`. Volumes `postgres_data` and
+`redis_data` are NOT touched.
+
+To stop everything (preserves data):
+
 ```sh
 ssh root@204.168.178.52 'cd /opt/loopstat && \
   docker compose -f docker-compose.prod.yml down'
 ```
 
-Les volumes `postgres_data` et `redis_data` survivent. Pour repartir
-complètement à zéro (DESTRUCTIF) :
+DESTRUCTIVE — wipe the DB too:
 
 ```sh
 ssh root@204.168.178.52 'cd /opt/loopstat && \
   docker compose -f docker-compose.prod.yml down -v'
+```
+
+## Sauvegardes Postgres
+
+Daily backup script : `deploy/backup-postgres.sh`. Installation on the
+VPS, as root :
+
+```sh
+scp deploy/backup-postgres.sh root@204.168.178.52:/opt/loopstat/deploy/
+ssh root@204.168.178.52 'chmod +x /opt/loopstat/deploy/backup-postgres.sh && \
+  echo "17 3 * * * /opt/loopstat/deploy/backup-postgres.sh >> /var/log/loopstat-backup.log 2>&1" \
+  | crontab -'
+```
+
+Backups land in `/var/backups/loopstat/loopstat-<timestamp>.sql.gz`,
+retention 7 days. For off-VPS copy (recommended), set `RSYNC_DEST` in
+the cron entry:
+
+```cron
+17 3 * * * RSYNC_DEST="user@your-host:/backups/loopstat/" /opt/loopstat/deploy/backup-postgres.sh ...
+```
+
+Restore from a backup:
+
+```sh
+gunzip < /var/backups/loopstat/loopstat-20260601-031700.sql.gz | \
+  docker exec -i loopstat_postgres psql -U loopstat -d loopstat
+```
+
+## Healthcheck
+
+The Dockerfile declares a `HEALTHCHECK` that polls `/api/health` every
+30 s. The endpoint pings Postgres + Redis; returns 200 only if both
+respond. Docker restarts the container after 3 consecutive failures.
+
+Inspect from the VPS:
+
+```sh
+docker inspect --format='{{.State.Health.Status}}' loopstat_app
 ```
 
 ## Sécurité — points d'attention
