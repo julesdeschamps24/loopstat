@@ -18,16 +18,21 @@ const STORAGE_KEY = "loopstat-period";
 // page nav after a refresh.
 let initialReloadChecked = false;
 
-function maybeClearOnInitialReload(): void {
-  if (initialReloadChecked) return;
+/**
+ * Returns true if this is the very first effect run after a hard refresh
+ * (F5 / Ctrl-R). Always returns false on subsequent calls within the same
+ * tab lifecycle. Side effect : clears sessionStorage on the reload case.
+ */
+function consumeInitialReload(): boolean {
+  if (initialReloadChecked) return false;
   initialReloadChecked = true;
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") return false;
   const navEntry = performance.getEntriesByType(
     "navigation",
   )[0] as PerformanceNavigationTiming | undefined;
-  if (navEntry?.type === "reload") {
-    sessionStorage.removeItem(STORAGE_KEY);
-  }
+  if (navEntry?.type !== "reload") return false;
+  sessionStorage.removeItem(STORAGE_KEY);
+  return true;
 }
 
 /**
@@ -55,8 +60,20 @@ export function PeriodSelector({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Once-per-tab reload check.
-    maybeClearOnInitialReload();
+
+    // Hard refresh (F5 / Ctrl-R) : clear storage AND strip `?period=` from
+    // the URL so the page falls back to its default period. Without the
+    // URL strip the next render's URL→storage sync would re-populate the
+    // storage with the stale value and defeat the reset.
+    if (consumeInitialReload()) {
+      if (searchParams.get("period") !== null) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("period");
+        const qs = params.toString();
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      }
+      return;
+    }
 
     const urlPeriod = searchParams.get("period");
     if (urlPeriod !== null && isStreamPeriod(urlPeriod)) {
