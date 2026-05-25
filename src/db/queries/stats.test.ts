@@ -62,3 +62,31 @@ describe("getArtistMonthlyPlays", () => {
     expect(Array.isArray(expectShape)).toBe(true);
   });
 });
+
+describe("getCoListenedArtists", () => {
+  it("returns empty array for non-existent artist", async () => {
+    const { getCoListenedArtists } = await import("./stats");
+    const rows = await getCoListenedArtists(
+      "00000000-0000-0000-0000-000000000000",
+      "art_nonexistent",
+      5,
+    );
+    expect(rows).toEqual([]);
+  });
+
+  it("returns shape { artistId, name, imageUrl, coCount }", async () => {
+    const { getCoListenedArtists } = await import("./stats");
+    const rows = await getCoListenedArtists(
+      "00000000-0000-0000-0000-000000000000",
+      "art_nonexistent",
+      5,
+    );
+    const expectShape: {
+      artistId: string;
+      name: string;
+      imageUrl: string | null;
+      coCount: number;
+    }[] = rows;
+    expect(Array.isArray(expectShape)).toBe(true);
+  });
+});

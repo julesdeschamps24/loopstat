@@ -954,3 +954,55 @@ export async function getArtistMonthlyPlays(
     plays: Number(r.plays),
   }));
 }
+
+/**
+ * Top N artists that the user listens to within ±30 min of plays from
+ * `artistId`. Self-join on streams.played_at within a 30-min window where
+ * one side is the focal artist and the other side is any other artist.
+ */
+export async function getCoListenedArtists(
+  userId: string,
+  artistId: string,
+  limit: number,
+): Promise<{
+  artistId: string;
+  name: string;
+  imageUrl: string | null;
+  coCount: number;
+}[]> {
+  const rows = await db.execute<{
+    artist_id: string;
+    name: string;
+    image_url: string | null;
+    co_count: number;
+  }>(sql`
+    WITH focal AS (
+      SELECT s.played_at
+      FROM streams s
+      JOIN track_artists ta ON ta.track_id = s.track_id
+      WHERE s.user_id = ${userId} AND ta.artist_id = ${artistId}
+    )
+    SELECT
+      a.id AS artist_id,
+      a.name,
+      a.image_url,
+      count(*)::int AS co_count
+    FROM focal
+    JOIN streams s2 ON s2.user_id = ${userId}
+      AND s2.played_at BETWEEN focal.played_at - INTERVAL '30 min'
+                           AND focal.played_at + INTERVAL '30 min'
+    JOIN track_artists ta2 ON ta2.track_id = s2.track_id
+    JOIN artists a ON a.id = ta2.artist_id
+    WHERE a.id != ${artistId}
+    GROUP BY a.id, a.name, a.image_url
+    ORDER BY co_count DESC
+    LIMIT ${limit};
+  `);
+
+  return rows.map((r) => ({
+    artistId: r.artist_id,
+    name: r.name,
+    imageUrl: r.image_url,
+    coCount: Number(r.co_count),
+  }));
+}
