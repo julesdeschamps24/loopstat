@@ -555,7 +555,7 @@ export async function getTrackBreakdownByWindow(
   userId: string,
   trackId: string,
 ): Promise<Record<StreamPeriod, number>> {
-  const windows: StreamPeriod[] = ["4w", "6m", "1y", "all"];
+  const windows: StreamPeriod[] = ["1w", "4w", "6m", "1y", "all"];
 
   const results = await Promise.all(
     windows.map(async (window) => {
@@ -796,7 +796,7 @@ export async function getAlbumBreakdownByWindow(
   userId: string,
   albumId: string,
 ): Promise<Record<StreamPeriod, number>> {
-  const windows: StreamPeriod[] = ["4w", "6m", "1y", "all"];
+  const windows: StreamPeriod[] = ["1w", "4w", "6m", "1y", "all"];
 
   const results = await Promise.all(
     windows.map(async (window) => {

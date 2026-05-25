@@ -25,6 +25,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const PERIOD_LABEL: Record<SharePeriod, string> = {
+  "1w": "1 sem",
   "4w": "4 sem",
   "6m": "6 mois",
   "1y": "1 an",
