@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { AlbumWall } from "@/components/album-wall";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
 import { ShareButton } from "@/components/share-button";
@@ -9,6 +10,7 @@ import { StaggerItem, StaggerList } from "@/components/ui/motion";
 import { getTopArtistsFromStreams } from "@/db/queries/stats";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
+import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
 import { getEnrichedDemoTopArtists } from "@/lib/demo/enrich";
 import {
@@ -34,10 +36,14 @@ export default async function TopArtistsPage({
   const hasImport = await hasCompletedImport(userId);
 
   if (!hasImport) {
-    const artistsData = await getEnrichedDemoTopArtists();
+    const [artistsData, wallCovers] = await Promise.all([
+      getEnrichedDemoTopArtists(),
+      getPaddedWallCovers(userId, null, 40),
+    ]);
     return (
       <>
         <DemoModeBanner />
+        <AlbumWall covers={wallCovers} />
         <main
           id="main"
           className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full"
@@ -70,9 +76,10 @@ export default async function TopArtistsPage({
   const { period: rawPeriod } = await searchParams;
   const period: StreamPeriod = isStreamPeriod(rawPeriod) ? rawPeriod : "4w";
 
-  const [artists, profile] = await Promise.all([
+  const [artists, profile, wallCovers] = await Promise.all([
     getTopArtistsFromStreams(userId, periodSince(period), TOP_LIMIT),
     getProfile(userId),
+    getPaddedWallCovers(userId, periodSince("1y"), 40),
   ]);
   const imported = hasImport;
   const shareUsername =
@@ -84,6 +91,8 @@ export default async function TopArtistsPage({
       : "Aucun artiste pour cette période.";
 
   return (
+    <>
+      <AlbumWall covers={wallCovers} />
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Top artistes</h1>
@@ -121,5 +130,6 @@ export default async function TopArtistsPage({
         </StaggerList>
       )}
     </main>
+    </>
   );
 }
