@@ -5,7 +5,11 @@ import { db } from "@/db/client";
 import { imports, tracks, type NewStream } from "@/db/schema";
 import { insertStreams } from "@/db/queries/streams";
 import { log } from "@/lib/log";
-import { enrichCatalogQueue } from "../queue";
+import { enrichCatalogQueue, enrichCatalogHotQueue } from "../queue";
+import {
+  getTopAlbumIdsForUser,
+  getTopArtistIdsForUser,
+} from "@/db/queries/enrich";
 import { albumArtists, albums, artists, trackArtists } from "@/db/schema";
 import { synthesizeAlbumId, synthesizeArtistId } from "@/lib/ids/synthesize";
 
@@ -255,6 +259,25 @@ export async function importHistory(
       wlog.error(
         { userId, err: enqueueErr },
         "failed to enqueue enrich job after import",
+      );
+    }
+
+    // Priority enrich : top 100 albums + top 50 artists. Runs in ~3 min so the
+    // user sees real covers on their dashboard / tops shortly after import.
+    try {
+      const [albumIds, artistIds] = await Promise.all([
+        getTopAlbumIdsForUser(userId, 100),
+        getTopArtistIdsForUser(userId, 50),
+      ]);
+      await enrichCatalogHotQueue.add(
+        "enrich-priority",
+        { userId, albumIds, artistIds },
+        { jobId: `enrich-priority:${userId}:${importId}` },
+      );
+    } catch (priorityErr) {
+      wlog.error(
+        { userId, err: priorityErr },
+        "failed to enqueue priority enrich (background sweep will cover it)",
       );
     }
 
