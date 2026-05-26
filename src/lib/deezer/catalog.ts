@@ -6,9 +6,8 @@ import { searchArtistByName } from "./search";
 const SENTINEL_DEEZER_ID = 0;
 
 /**
- * Fallback artist-image enrich via Deezer. Called when TheAudioDB returned
- * no match (artist.tadbId = 0). Deezer's catalog has stronger coverage of
- * French rap and non-English music.
+ * Enrich artist image via Deezer. Single enrichment source — Deezer's
+ * catalog covers ~99% of mainstream + non-English artists.
  *
  * Stores Deezer's artist ID for tracking. On miss, stores the sentinel (0)
  * so the same item isn't retried indefinitely. On match with no thumbnail,

@@ -59,9 +59,7 @@ export async function enrichCatalogSingle({
     .select({
       artistId: artists.id,
       name: artists.name,
-      mbid: artists.mbid,
       imageUrl: artists.imageUrl,
-      tadbId: artists.tadbId,
       deezerId: artists.deezerId,
     })
     .from(artists)
@@ -76,15 +74,14 @@ export async function enrichCatalogSingle({
     wlog.info({}, "artist already has image");
     return;
   }
-  if (row.tadbId !== null && row.deezerId !== null) {
-    wlog.info({ tadbId: row.tadbId, deezerId: row.deezerId }, "all sources already attempted");
+  if (row.deezerId !== null) {
+    wlog.info({ deezerId: row.deezerId }, "deezer already attempted");
     return;
   }
 
   await enrichArtistImageWithFallback({
     artistId: row.artistId,
     name: row.name,
-    mbid: row.mbid ?? null,
   });
   wlog.info({}, "artist image enriched");
 }
