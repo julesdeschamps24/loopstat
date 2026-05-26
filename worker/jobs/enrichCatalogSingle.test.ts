@@ -5,9 +5,8 @@ vi.mock("@/lib/musicbrainz/catalog", () => ({
   enrichAlbumByNames: vi.fn(),
   enrichArtistByName: vi.fn(),
 }));
-vi.mock("@/lib/theaudiodb/catalog", () => ({
-  enrichArtistImageByMbid: vi.fn(),
-  enrichArtistImageByName: vi.fn(),
+vi.mock("./enrichArtistImage", () => ({
+  enrichArtistImageWithFallback: vi.fn(),
 }));
 
 afterEach(() => vi.restoreAllMocks());

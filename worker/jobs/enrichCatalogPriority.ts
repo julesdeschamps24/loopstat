@@ -7,12 +7,8 @@ import {
   enrichAlbumByNames,
   enrichArtistByName,
 } from "@/lib/musicbrainz/catalog";
-import {
-  enrichArtistImageByMbid,
-  enrichArtistImageByName,
-} from "@/lib/theaudiodb/catalog";
+import { enrichArtistImageWithFallback } from "./enrichArtistImage";
 
-const SENTINEL_MBID = "00000000-0000-0000-0000-000000000000";
 const RATE_DELAY_MS = 1100;
 const MAX_TRANSIENT_RETRIES = 5;
 const RETRY_BUFFER_MS = 1000;
@@ -166,13 +162,12 @@ export async function enrichCatalogPriority({
   for (let i = 0; i < artistsForImages.length; i++) {
     await sleep(RATE_DELAY_MS);
     const row = artistsForImages[i];
-    const hasRealMbid = row.mbid !== null && row.mbid !== SENTINEL_MBID;
     try {
-      if (hasRealMbid) {
-        await enrichArtistImageByMbid({ artistId: row.artistId, mbid: row.mbid! });
-      } else {
-        await enrichArtistImageByName({ artistId: row.artistId, name: row.name });
-      }
+      await enrichArtistImageWithFallback({
+        artistId: row.artistId,
+        name: row.name,
+        mbid: row.mbid ?? null,
+      });
       imagesEnriched++;
     } catch (err) {
       wlog.error(
