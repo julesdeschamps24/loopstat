@@ -3,12 +3,7 @@ import { db } from "@/db/client";
 import { albums, albumArtists, artists } from "@/db/schema";
 import { log } from "@/lib/log";
 import { enrichAlbumByNames } from "@/lib/musicbrainz/catalog";
-import {
-  enrichArtistImageByMbid,
-  enrichArtistImageByName,
-} from "@/lib/theaudiodb/catalog";
-
-const SENTINEL_MBID = "00000000-0000-0000-0000-000000000000";
+import { enrichArtistImageWithFallback } from "./enrichArtistImage";
 
 export interface EnrichCatalogSingleArgs {
   type: "album" | "artist";
@@ -75,11 +70,10 @@ export async function enrichCatalogSingle({
     return;
   }
 
-  const hasRealMbid = row.mbid !== null && row.mbid !== SENTINEL_MBID;
-  if (hasRealMbid) {
-    await enrichArtistImageByMbid({ artistId: row.artistId, mbid: row.mbid! });
-  } else {
-    await enrichArtistImageByName({ artistId: row.artistId, name: row.name });
-  }
+  await enrichArtistImageWithFallback({
+    artistId: row.artistId,
+    name: row.name,
+    mbid: row.mbid ?? null,
+  });
   wlog.info({}, "artist image enriched");
 }

@@ -57,6 +57,13 @@
       "when": 1779220000000,
       "tag": "0007_add_artists_tadb_id",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1779840000000,
+      "tag": "0008_add_artists_deezer_id",
+      "breakpoints": true
     }
   ]
 }
