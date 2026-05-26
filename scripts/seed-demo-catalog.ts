@@ -27,7 +27,7 @@ import {
 } from "../src/lib/demo/data";
 import { synthesizeAlbumId, synthesizeArtistId } from "../src/lib/ids/synthesize";
 import { enrichAlbumByNames, enrichArtistByName } from "../src/lib/musicbrainz/catalog";
-import { enrichArtistImageByMbid, enrichArtistImageByName } from "../src/lib/theaudiodb/catalog";
+import { enrichArtistImageByDeezer } from "../src/lib/deezer/catalog";
 
 const RATE_MS = 1100;
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -115,13 +115,13 @@ async function main() {
     }
   }
 
-  // 5) Enrich each artist via MBz, then TheAudioDB for the image.
-  console.log("\n=== Enriching artists via MBz + TADB ===");
+  // 5) Enrich each artist via MBz, then Deezer for the image.
+  console.log("\n=== Enriching artists via MBz + Deezer ===");
   i = 0;
   for (const a of DEMO_TOP_ARTISTS) {
     if (i > 0) await sleep(RATE_MS);
     const artistId = synthesizeArtistId(a.name);
-    const [row] = await db.select({ mbid: artists.mbid, tadbId: artists.tadbId }).from(artists).where(eq(artists.id, artistId)).limit(1);
+    const [row] = await db.select({ mbid: artists.mbid, deezerId: artists.deezerId }).from(artists).where(eq(artists.id, artistId)).limit(1);
 
     if (!row?.mbid) {
       try {
@@ -132,16 +132,11 @@ async function main() {
       }
     }
 
-    if (row?.tadbId == null || row.tadbId === 0) {
+    if (row?.deezerId == null) {
       try {
-        const [updated] = await db.select({ mbid: artists.mbid }).from(artists).where(eq(artists.id, artistId)).limit(1);
-        if (updated?.mbid && updated.mbid !== "00000000-0000-0000-0000-000000000000") {
-          await enrichArtistImageByMbid({ artistId, mbid: updated.mbid });
-        } else {
-          await enrichArtistImageByName({ artistId, name: a.name });
-        }
+        await enrichArtistImageByDeezer({ artistId, name: a.name });
       } catch (err) {
-        console.error(`  [TADB] ${a.name}: FAILED`, (err as Error).message);
+        console.error(`  [Deezer] ${a.name}: FAILED`, (err as Error).message);
       }
     }
     console.log(`  [${++i}/${DEMO_TOP_ARTISTS.length}] ${a.name}: enriched`);
