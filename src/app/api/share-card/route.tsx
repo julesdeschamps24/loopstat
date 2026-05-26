@@ -4,6 +4,7 @@ import {
   getTopAlbumsFromStreams,
   getTopArtistsFromStreams,
   getTopTracksFromStreams,
+  getUserLatestPlayedAt,
 } from "@/db/queries/stats";
 import { isPremium } from "@/db/queries/billing";
 import { getPublicProfileByUsername } from "@/db/queries/users";
@@ -91,8 +92,9 @@ function albumToItem(a: {
 async function fetchFocus(
   userId: string,
   config: ShareCardConfig,
+  ref: Date,
 ): Promise<FocusItem[]> {
-  const since = periodSince(config.period);
+  const since = periodSince(config.period, ref);
   if (config.type === "tracks") {
     const rows = await getTopTracksFromStreams(userId, since, config.n);
     return rows.map(trackToItem);
@@ -108,8 +110,9 @@ async function fetchFocus(
 async function fetchRecap(
   userId: string,
   config: ShareCardConfig,
+  ref: Date,
 ): Promise<RecapData> {
-  const since = periodSince(config.period);
+  const since = periodSince(config.period, ref);
   const limit = RECAP_N_BY_FORMAT[config.format];
   const [tracks, artists, albums] = await Promise.all([
     getTopTracksFromStreams(userId, since, limit),
@@ -166,14 +169,17 @@ export async function GET(req: Request) {
   const config = parseShareCardParams(url.searchParams);
   const size = SIZE_BY_FORMAT[config.format];
 
+  const latestPlayedAt = await getUserLatestPlayedAt(profile.id);
+  const refDate = latestPlayedAt ?? new Date();
+
   const [data, rawCovers] = await Promise.all([
     config.mode === "focus"
-      ? fetchFocus(profile.id, config)
-      : fetchRecap(profile.id, config),
+      ? fetchFocus(profile.id, config, refDate)
+      : fetchRecap(profile.id, config, refDate),
     config.bg === "wall"
       ? getWallCovers(
           profile.id,
-          periodSince(config.period),
+          periodSince(config.period, refDate),
           WALL_COVER_LIMITS[config.format],
         )
       : Promise.resolve([] as { name: string; imageUrl: string | null }[]),

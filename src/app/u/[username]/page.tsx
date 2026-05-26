@@ -13,6 +13,7 @@ import {
   getTopAlbumsFromStreams,
   getTopArtistsFromStreams,
   getTopTracksFromStreams,
+  getUserLatestPlayedAt,
 } from "@/db/queries/stats";
 import { getPublicProfileByUsername } from "@/db/queries/users";
 import { users } from "@/db/schema";
@@ -89,9 +90,11 @@ export default async function PublicProfilePage({
     ownerIsPremium && isAccent(settings.accent) ? settings.accent : "violet";
   const accentHex = ACCENT_HEX[accent];
 
+  const latestPlayedAt = await getUserLatestPlayedAt(profile.id);
+  const refDate = latestPlayedAt ?? new Date();
   const wallCovers =
     background === "wall"
-      ? await getWallCovers(profile.id, periodSince("1y"), 40)
+      ? await getWallCovers(profile.id, periodSince("1y", refDate), 40)
       : [];
   const paddedCovers: { name: string; imageUrl: string | null }[] = [
     ...wallCovers,
@@ -115,7 +118,7 @@ export default async function PublicProfilePage({
           : { background: "#070710" /* wall has its own component layer */ }),
   };
 
-  const since = periodSince(DEFAULT_PERIOD);
+  const since = periodSince(DEFAULT_PERIOD, refDate);
   const [tracks, artists, albums] = await Promise.all([
     getTopTracksFromStreams(profile.id, since, TOP_LIMIT),
     getTopArtistsFromStreams(profile.id, since, TOP_LIMIT),

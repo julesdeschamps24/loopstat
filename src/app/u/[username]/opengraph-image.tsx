@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 import { isPremium } from "@/db/queries/billing";
-import { getTopTracksFromStreams } from "@/db/queries/stats";
+import { getTopTracksFromStreams, getUserLatestPlayedAt } from "@/db/queries/stats";
 import { getPublicProfileByUsername } from "@/db/queries/users";
 import { periodSince } from "@/lib/stats/period";
 
@@ -47,9 +47,11 @@ export default async function Image({
 
   const hideWatermark = await isPremium(profile.id);
 
+  const latestPlayedAt = await getUserLatestPlayedAt(profile.id);
+  const refDate = latestPlayedAt ?? new Date();
   const tracks = await getTopTracksFromStreams(
     profile.id,
-    periodSince("4w"),
+    periodSince("4w", refDate),
     3,
   );
   const displayName = profile.displayName ?? profile.username;
