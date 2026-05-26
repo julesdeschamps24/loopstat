@@ -6,6 +6,7 @@ import { db } from "@/db/client";
 import { imports } from "@/db/schema";
 import { log } from "@/lib/log";
 import {
+  ENRICH_CATALOG_HOT_QUEUE_NAME,
   ENRICH_CATALOG_QUEUE_NAME,
   ENRICH_CATALOG_SELF_HEAL_EVERY_MS,
   ENRICH_CATALOG_SELF_HEAL_SCHEDULER_ID,
@@ -16,6 +17,7 @@ import {
 } from "./queue";
 import { importHistory } from "./jobs/importHistory";
 import { enrichCatalog, selfHealEnrichCatalog } from "./jobs/enrichCatalog";
+import { enrichCatalogPriority } from "./jobs/enrichCatalogPriority";
 import { ImportJobData } from "./schemas";
 
 // Same layout as worker/jobs/importHistory.ts: <projectRoot>/.import-tmp/<importId>/.
@@ -186,6 +188,29 @@ enrichCatalogWorker.on("failed", (job, err) => {
 
 enrichCatalogWorker.on("error", (err) => {
   log.error({ worker: "enrich-catalog", err }, "worker error");
+});
+
+const enrichCatalogHotWorker = new Worker(
+  ENRICH_CATALOG_HOT_QUEUE_NAME,
+  async (job) => {
+    return enrichCatalogPriority(job.data);
+  },
+  { connection, concurrency: 2 },
+);
+
+enrichCatalogHotWorker.on("ready", () => {
+  log.info({ worker: ENRICH_CATALOG_HOT_QUEUE_NAME }, "worker ready");
+});
+
+enrichCatalogHotWorker.on("failed", (job, err) => {
+  log.error(
+    { worker: ENRICH_CATALOG_HOT_QUEUE_NAME, jobId: job?.id ?? "?", err },
+    "job failed",
+  );
+});
+
+enrichCatalogHotWorker.on("error", (err) => {
+  log.error({ worker: ENRICH_CATALOG_HOT_QUEUE_NAME, err }, "worker error");
 });
 
 // Register the repeatable self-heal scheduler. `upsertJobScheduler` is
