@@ -12,7 +12,6 @@ import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
 import { getBillingState } from "@/db/queries/billing";
 import { Sidebar } from "@/components/sidebar";
-import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -77,8 +76,7 @@ export default async function RootLayout({
   return (
     <html
       lang="fr"
-      suppressHydrationWarning
-      className={`${inter.variable} ${geistMono.variable} ${instrumentSerif.variable} ${dmSerifDisplay.variable} ${bricolageGrotesque.variable} h-full antialiased`}
+      className={`dark ${inter.variable} ${geistMono.variable} ${instrumentSerif.variable} ${dmSerifDisplay.variable} ${bricolageGrotesque.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <a
@@ -87,13 +85,7 @@ export default async function RootLayout({
         >
           Aller au contenu
         </a>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <div className="flex min-h-screen">
+        <div className="flex min-h-screen">
             {userId && (
               <Sidebar
                 hasImported={hasImported}
@@ -113,7 +105,6 @@ export default async function RootLayout({
             )}
             <div className="flex min-w-0 flex-1 flex-col">{children}</div>
           </div>
-        </ThemeProvider>
       </body>
     </html>
   );

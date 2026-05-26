@@ -1,0 +1,307 @@
+<h2>Police pour le logo "loopstat"</h2>
+<p class="subtitle">Chiffres KPI restent en <strong>DM Serif Display italic</strong> (constant — choix précédent). Seule la police du <strong>logo</strong> change. Clique celui qui te parle.</p>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@1&family=DM+Serif+Display:ital@1&family=Fraunces:wght@400;600;700;900&family=Playfair+Display:wght@400;600;700;900&family=Cormorant+Garamond:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Familjen+Grotesk:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+  .ft-card {
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.15s, border-color 0.15s;
+    background: #0a0a14;
+  }
+  .ft-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
+  .ft-card.selected { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124,58,237,0.4); }
+
+  .ft-preview {
+    position: relative;
+    min-height: 240px;
+    background: radial-gradient(ellipse at top, #1a0d2e 0%, #070710 60%);
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 16px;
+    padding: 18px;
+    color: #f4f0ff;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .mini-side {
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .mini-side .logo {
+    /* Override par carte */
+    font-size: 28px;
+    padding: 4px 6px;
+    margin-bottom: 10px;
+    color: #f4f0ff;
+    line-height: 1;
+  }
+  .mini-side .nav-item {
+    font-size: 12px;
+    color: rgba(244,240,255,0.55);
+    padding: 5px 8px;
+    border-radius: 5px;
+  }
+  .mini-side .nav-item.active {
+    background: #7c3aed;
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .mini-right {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .mini-glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .mini-glass .eyebrow {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(244,240,255,0.55);
+    margin: 0 0 4px;
+  }
+  .mini-glass .value {
+    font-family: 'DM Serif Display', serif;
+    font-style: italic;
+    font-size: 40px;
+    line-height: 1;
+    margin: 0;
+  }
+
+  .ft-body {
+    padding: 14px 18px;
+    background: #0a0a14;
+    color: #f4f0ff;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .ft-body h3 {
+    font-size: 15px;
+    margin: 0 0 4px;
+    font-family: 'Inter', sans-serif;
+  }
+  .ft-body p {
+    font-size: 12px;
+    color: rgba(244,240,255,0.6);
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Logo : variations */
+  .lg-instrument .logo { font-family: 'Instrument Serif', serif; font-weight: 400; }
+
+  .lg-fraunces-bold .logo { font-family: 'Fraunces', serif; font-weight: 700; }
+  .lg-fraunces-soft .logo { font-family: 'Fraunces', serif; font-weight: 500; font-variation-settings: "SOFT" 100, "WONK" 1; }
+
+  .lg-playfair .logo { font-family: 'Playfair Display', serif; font-weight: 700; }
+
+  .lg-bricolage .logo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+
+  .lg-syne .logo { font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+
+  .lg-spacegrotesk .logo { font-family: 'Space Grotesk', sans-serif; font-weight: 600; letter-spacing: -0.03em; }
+
+  .lg-instrument-sans .logo { font-family: 'Instrument Sans', sans-serif; font-weight: 600; letter-spacing: -0.02em; }
+
+  .lg-familjen .logo { font-family: 'Familjen Grotesk', sans-serif; font-weight: 600; letter-spacing: -0.02em; }
+</style>
+
+<div class="cards" style="grid-template-columns: repeat(2, 1fr); gap: 16px;">
+
+  <div class="ft-card" data-choice="instrument" onclick="toggleSelect(this)">
+    <div class="ft-preview lg-instrument">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="eyebrow">écoutes 30 jours</p>
+          <p class="value">2 456</p>
+        </div>
+      </div>
+    </div>
+    <div class="ft-body">
+      <h3>A · Instrument Serif (actuel)</h3>
+      <p>Serif fin, droit, éditorial. Neutre mais peu "logo".</p>
+    </div>
+  </div>
+
+  <div class="ft-card" data-choice="fraunces-bold" onclick="toggleSelect(this)">
+    <div class="ft-preview lg-fraunces-bold">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="eyebrow">écoutes 30 jours</p>
+          <p class="value">2 456</p>
+        </div>
+      </div>
+    </div>
+    <div class="ft-body">
+      <h3>B · Fraunces Bold</h3>
+      <p>Serif moderne, gras, caractère vintage. Cohérent avec DM Serif Display sur les chiffres.</p>
+    </div>
+  </div>
+
+  <div class="ft-card" data-choice="playfair" onclick="toggleSelect(this)">
+    <div class="ft-preview lg-playfair">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="eyebrow">écoutes 30 jours</p>
+          <p class="value">2 456</p>
+        </div>
+      </div>
+    </div>
+    <div class="ft-body">
+      <h3>C · Playfair Display Bold</h3>
+      <p>Serif "luxe / mode", contraste fort entre pleins et déliés. Très élégant.</p>
+    </div>
+  </div>
+
+  <div class="ft-card" data-choice="fraunces-soft" onclick="toggleSelect(this)">
+    <div class="ft-preview lg-fraunces-soft">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="eyebrow">écoutes 30 jours</p>
+          <p class="value">2 456</p>
+        </div>
+      </div>
+    </div>
+    <div class="ft-body">
+      <h3>D · Fraunces Wonky (variable)</h3>
+      <p>Fraunces avec axes SOFT + WONK poussés. Légère asymétrie organique, fait "fait main".</p>
+    </div>
+  </div>
+
+  <div class="ft-card" data-choice="bricolage" onclick="toggleSelect(this)">
+    <div class="ft-preview lg-bricolage">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="eyebrow">écoutes 30 jours</p>
+          <p class="value">2 456</p>
+        </div>
+      </div>
+    </div>
+    <div class="ft-body">
+      <h3>E · Bricolage Grotesque</h3>
+      <p>Sans-serif moderne tendance 2024-2026 (Linear-vibes). Contraste avec le serif des chiffres.</p>
+    </div>
+  </div>
+
+  <div class="ft-card" data-choice="syne" onclick="toggleSelect(this)">
+    <div class="ft-preview lg-syne">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="eyebrow">écoutes 30 jours</p>
+          <p class="value">2 456</p>
+        </div>
+      </div>
+    </div>
+    <div class="ft-body">
+      <h3>F · Syne</h3>
+      <p>Sans-serif géométrique avec caractère, vibe galerie d'art / studio créatif. Détails subtils.</p>
+    </div>
+  </div>
+
+  <div class="ft-card" data-choice="spacegrotesk" onclick="toggleSelect(this)">
+    <div class="ft-preview lg-spacegrotesk">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="eyebrow">écoutes 30 jours</p>
+          <p class="value">2 456</p>
+        </div>
+      </div>
+    </div>
+    <div class="ft-body">
+      <h3>G · Space Grotesk</h3>
+      <p>Sans-serif géométrique, vibe rétro-futur. Bon équilibre tech / friendly.</p>
+    </div>
+  </div>
+
+  <div class="ft-card" data-choice="instrument-sans" onclick="toggleSelect(this)">
+    <div class="ft-preview lg-instrument-sans">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="eyebrow">écoutes 30 jours</p>
+          <p class="value">2 456</p>
+        </div>
+      </div>
+    </div>
+    <div class="ft-body">
+      <h3>H · Instrument Sans</h3>
+      <p>Cousin sans-serif d'Instrument Serif. Pairing naturel si tu veux garder une cohérence "famille".</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top: 24px; font-size: 13px;">
+  A-D = serif (cohérent avec DM Serif Display sur les chiffres). E-H = sans-serif (contraste avec les chiffres). Dis-moi.
+</p>

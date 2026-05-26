@@ -1,0 +1,119 @@
+<h2>Redesign de la modal de bienvenue</h2>
+<p class="subtitle">3 directions. Compare et clique celle qui te parle.</p>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+
+  .modal-frame { background:rgba(7,7,16,0.85); padding:40px 20px; min-height:380px; display:flex; align-items:center; justify-content:center; font-family:'Inter',system-ui; position:relative; overflow:hidden }
+
+  /* A - bold gradient + serif title + preview chips */
+  .modal-a { background:linear-gradient(135deg,#2d1b4e 0%,#1a0d2e 50%,#0f0820 100%); border:1px solid rgba(124,58,237,0.4); border-radius:24px; padding:40px; max-width:540px; width:100%; box-shadow:0 24px 60px rgba(124,58,237,0.3); position:relative; overflow:hidden }
+  .modal-a::before { content:''; position:absolute; top:-40px; right:-40px; width:200px; height:200px; border-radius:100%; background:radial-gradient(circle,rgba(196,181,253,0.25),transparent 70%); pointer-events:none }
+  .modal-a .badge { display:inline-flex; align-items:center; gap:6px; background:rgba(124,58,237,0.18); color:#c4b5fd; padding:4px 10px; border-radius:99px; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase }
+  .modal-a h2 { font-family:'Instrument Serif',serif; font-style:italic; font-size:44px; font-weight:400; line-height:1.0; color:#f4f0ff; margin:16px 0 12px }
+  .modal-a p { font-size:15px; color:#a89ec8; line-height:1.5; margin:0 0 20px }
+  .modal-a .chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:24px }
+  .modal-a .chip { background:rgba(255,255,255,0.06); color:#c4b5fd; padding:4px 10px; border-radius:99px; font-size:11px; font-weight:500 }
+  .modal-a .btns { display:flex; gap:10px; justify-content:flex-end }
+  .modal-a .btn-skip { background:transparent; color:#a89ec8; border:1px solid rgba(168,158,200,0.25); padding:10px 20px; border-radius:99px; font-size:13px; font-weight:500 }
+  .modal-a .btn-import { background:#7c3aed; color:white; padding:10px 24px; border-radius:99px; font-size:13px; font-weight:600 }
+
+  /* B - split panel with album wall */
+  .modal-b { background:#0f0820; border:1px solid rgba(124,58,237,0.4); border-radius:24px; max-width:680px; width:100%; overflow:hidden; display:grid; grid-template-columns:240px 1fr; box-shadow:0 24px 60px rgba(124,58,237,0.3) }
+  .modal-b .visual { position:relative; padding:0; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(4,1fr); gap:3px; min-height:340px }
+  .modal-b .visual::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,7,16,0.3) 0%,rgba(7,7,16,0.85) 100%); z-index:1; pointer-events:none }
+  .modal-b .visual > div { background:linear-gradient(135deg,#7c3aed,#ec4899); filter:saturate(0.85) }
+  .modal-b .visual > div:nth-child(2) { background:linear-gradient(135deg,#3b82f6,#8b5cf6) }
+  .modal-b .visual > div:nth-child(3) { background:linear-gradient(135deg,#f59e0b,#ec4899) }
+  .modal-b .visual > div:nth-child(4) { background:linear-gradient(135deg,#10b981,#3b82f6) }
+  .modal-b .visual > div:nth-child(5) { background:linear-gradient(135deg,#a855f7,#7c3aed) }
+  .modal-b .visual > div:nth-child(6) { background:linear-gradient(135deg,#06b6d4,#8b5cf6) }
+  .modal-b .visual > div:nth-child(7) { background:linear-gradient(135deg,#ec4899,#a855f7) }
+  .modal-b .visual > div:nth-child(8) { background:linear-gradient(135deg,#f59e0b,#ef4444) }
+  .modal-b .visual > div:nth-child(9) { background:linear-gradient(135deg,#6366f1,#a855f7) }
+  .modal-b .visual > div:nth-child(10) { background:linear-gradient(135deg,#7c3aed,#3b82f6) }
+  .modal-b .visual > div:nth-child(11) { background:linear-gradient(135deg,#a855f7,#ec4899) }
+  .modal-b .visual > div:nth-child(12) { background:linear-gradient(135deg,#f59e0b,#a855f7) }
+  .modal-b .body { padding:32px 32px 28px; display:flex; flex-direction:column; gap:14px }
+  .modal-b h2 { font-size:24px; font-weight:700; line-height:1.2; color:#f4f0ff; margin:0; letter-spacing:-0.02em }
+  .modal-b p { font-size:13px; color:#a89ec8; line-height:1.55; margin:0 }
+  .modal-b .btns { display:flex; gap:8px; margin-top:8px }
+  .modal-b .btn-skip { background:transparent; color:#a89ec8; border:1px solid rgba(168,158,200,0.25); padding:9px 18px; border-radius:99px; font-size:12px; font-weight:500; flex:1 }
+  .modal-b .btn-import { background:#7c3aed; color:white; padding:9px 18px; border-radius:99px; font-size:12px; font-weight:600; flex:1.6 }
+
+  /* C - minimal premium Apple-style */
+  .modal-c { background:#0f0820; border:1px solid rgba(255,255,255,0.06); border-radius:20px; padding:48px 40px 36px; max-width:460px; width:100%; text-align:center }
+  .modal-c .logo { width:48px; height:48px; margin:0 auto 24px; background:linear-gradient(135deg,#7c3aed,#ec4899); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px }
+  .modal-c h2 { font-size:24px; font-weight:600; color:#f4f0ff; margin:0 0 10px; letter-spacing:-0.01em }
+  .modal-c .lead { font-size:14px; color:#a89ec8; line-height:1.5; margin:0 0 28px }
+  .modal-c .btn-import { width:100%; background:#7c3aed; color:white; padding:13px 24px; border-radius:12px; font-size:14px; font-weight:600; margin-bottom:12px }
+  .modal-c .btn-skip { background:transparent; color:#a89ec8; border:none; font-size:12px; cursor:pointer; padding:6px }
+</style>
+
+<div class="cards" style="grid-template-columns:1fr; gap:16px">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image modal-frame">
+      <div class="modal-a">
+        <span class="badge">✨ Démo</span>
+        <h2>Tes stats Spotify,<br>en chiffres.</h2>
+        <p>Tu regardes une démo. Importe ton historique pour voir TES top tracks, ta listening clock, ta personnalité musicale.</p>
+        <div class="chips">
+          <span class="chip">Top titres</span>
+          <span class="chip">Top artistes</span>
+          <span class="chip">Listening clock</span>
+          <span class="chip">Wrapped permanent</span>
+          <span class="chip">Profils partagés</span>
+        </div>
+        <div class="btns">
+          <span class="btn-skip">Explorer la démo</span>
+          <span class="btn-import">Importer →</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Bold gradient + serif italique + chips</h3>
+      <p>Headline serif italique (cohérent avec ton design system loopstat), badge démo, chips qui montrent les features. Plus chaleureux et "premium" que l'actuel.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image modal-frame">
+      <div class="modal-b">
+        <div class="visual">
+          <div></div><div></div><div></div><div></div><div></div><div></div>
+          <div></div><div></div><div></div><div></div><div></div><div></div>
+        </div>
+        <div class="body">
+          <h2>Bienvenue<br>sur loopstat.</h2>
+          <p>Ces stats sont fictives. Importe ton historique Spotify pour voir les tiennes — tops, listening clock, share cards.</p>
+          <div class="btns">
+            <span class="btn-skip">Démo</span>
+            <span class="btn-import">Importer maintenant</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Split panel avec mur d'albums visuel</h3>
+      <p>Mur d'albums colorés flouté à gauche = signal visuel "app musique" immédiat. Body droit avec hierarchy nette. Le plus accrocheur visuellement, mais plus large (680 px).</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image modal-frame">
+      <div class="modal-c">
+        <div class="logo">🎵</div>
+        <h2>Bienvenue sur loopstat</h2>
+        <p class="lead">Tu regardes des données fictives. Importe ton historique Spotify pour voir tes vraies stats.</p>
+        <div class="btn-import">Importer mon historique →</div>
+        <button class="btn-skip">Ou explorer la démo</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Minimal Apple-style</h3>
+      <p>Tighter, monochrome, single CTA principal + skip en text-link discret. Pousse fortement vers l'import (CTA pleine largeur). Moins chargé que A/B mais moins de personnalité.</p>
+    </div>
+  </div>
+
+</div>

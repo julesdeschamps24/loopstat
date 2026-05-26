@@ -1,0 +1,7 @@
+{"type":"server-started","port":52716,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:52716","screen_dir":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/85522-1779050446/content","state_dir":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/85522-1779050446/state"}
+{"type":"screen-added","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/85522-1779050446/content/welcome.html"}
+{"type":"screen-added","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/85522-1779050446/content/hero.html"}
+{"type":"screen-updated","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/85522-1779050446/content/hero.html"}
+{"source":"user-event","type":"click","text":"IPSÉITÉ\n        \n        \n          Album · 2017 · 14 titres\n          Ipséité\n          Damso\n          218 écoutes · 14 h 12 m d'écoute\n          Première écoute : 22 nov 2024 · Dernière : il y a 3 jours\n        \n      \n    \n    \n      A — Sober (alignement /track actuel)\n      Cover gauche + stats droite, fond uni nébuleuse. Cohérent avec /track et /artist actuels. Lisible, pas de risque visuel.","choice":"a","id":null,"timestamp":1779050644603}
+{"type":"screen-added","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/85522-1779050446/content/full-design.html"}
+{"type":"server-stopped","reason":"idle timeout"}

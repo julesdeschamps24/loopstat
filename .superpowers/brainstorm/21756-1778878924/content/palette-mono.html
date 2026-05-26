@@ -1,0 +1,221 @@
+<h2>4 palettes mono-couleur (zéro gradient)</h2>
+<p class="subtitle">Chaque option remplace le gradient cyan→magenta actuel par <strong>une seule couleur d'accent</strong>. Le fond reste violet profond. Tu vois : la sidebar (item actif), un bouton CTA, et une carte glass. Clique celle qui te parle.</p>
+
+<style>
+  .pal-card {
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.15s, border-color 0.15s;
+    background: #0a0a14;
+  }
+  .pal-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
+  .pal-card.selected { border-color: var(--pal-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--pal-accent) 30%, transparent); }
+
+  .pal-preview {
+    position: relative;
+    height: 280px;
+    background: radial-gradient(ellipse at top, #1a0d2e 0%, #070710 60%);
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 12px;
+    padding: 14px;
+    overflow: hidden;
+  }
+
+  /* Mini sidebar */
+  .mini-side {
+    background: rgba(255,255,255,0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .mini-side .logo {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: #f4f0ff;
+    font-size: 16px;
+    padding: 4px 6px;
+    margin-bottom: 8px;
+  }
+  .mini-side .nav-item {
+    font-size: 11px;
+    color: rgba(244,240,255,0.55);
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-family: ui-sans-serif, sans-serif;
+  }
+  .mini-side .nav-item.active {
+    background: var(--pal-accent);
+    color: var(--pal-on-accent, #000);
+    font-weight: 500;
+  }
+
+  /* Right column */
+  .mini-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+  .mini-glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #f4f0ff;
+  }
+  .mini-glass .label {
+    font-family: ui-sans-serif, sans-serif;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(244,240,255,0.55);
+    margin: 0 0 4px;
+  }
+  .mini-glass .value {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 32px;
+    line-height: 1;
+    margin: 0;
+  }
+  .mini-cta {
+    background: var(--pal-accent);
+    color: var(--pal-on-accent, #000);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    font-family: ui-sans-serif, sans-serif;
+  }
+
+  .pal-body {
+    padding: 14px 18px;
+    background: #0a0a14;
+    color: #f4f0ff;
+    font-family: ui-sans-serif, sans-serif;
+  }
+  .pal-body h3 { font-size: 14px; margin: 0 0 4px; }
+  .pal-body p { font-size: 12px; color: rgba(244,240,255,0.6); margin: 0; }
+  .swatch {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* Palettes */
+  .pal-cyan    { --pal-accent: #5dd9ff; --pal-on-accent: #000; }
+  .pal-magenta { --pal-accent: #ff5dc8; --pal-on-accent: #000; }
+  .pal-lilac   { --pal-accent: #c4a8ff; --pal-on-accent: #1a0a2a; }
+  .pal-cream   { --pal-accent: #f4e8d0; --pal-on-accent: #1a0a2a; }
+</style>
+
+<div class="cards" style="grid-template-columns: repeat(2, 1fr); gap: 16px;">
+
+  <div class="pal-card pal-cyan" data-choice="cyan" onclick="toggleSelect(this)">
+    <div class="pal-preview">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="label">écoutes</p>
+          <p class="value">2 456</p>
+        </div>
+        <div class="mini-cta">Se connecter avec Spotify</div>
+      </div>
+    </div>
+    <div class="pal-body">
+      <h3><span class="swatch" style="background:#5dd9ff"></span>A · Cyan mono</h3>
+      <p>Garde uniquement le cyan, retire la magenta. Plus tech / futuriste / "data". Lisible sur le violet.</p>
+    </div>
+  </div>
+
+  <div class="pal-card pal-magenta" data-choice="magenta" onclick="toggleSelect(this)">
+    <div class="pal-preview">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="label">écoutes</p>
+          <p class="value">2 456</p>
+        </div>
+        <div class="mini-cta">Se connecter avec Spotify</div>
+      </div>
+    </div>
+    <div class="pal-body">
+      <h3><span class="swatch" style="background:#ff5dc8"></span>B · Magenta mono</h3>
+      <p>Garde uniquement la magenta, retire le cyan. Plus chaud / pop / éditorial. Vibe vinyle néon.</p>
+    </div>
+  </div>
+
+  <div class="pal-card pal-lilac" data-choice="lilac" onclick="toggleSelect(this)">
+    <div class="pal-preview">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="label">écoutes</p>
+          <p class="value">2 456</p>
+        </div>
+        <div class="mini-cta">Se connecter avec Spotify</div>
+      </div>
+    </div>
+    <div class="pal-body">
+      <h3><span class="swatch" style="background:#c4a8ff"></span>C · Lavande monochromatique</h3>
+      <p>Accent dans la même famille que le fond violet. Très sobre, très cohérent — tout vit dans la palette violet-lavande. Très "single brand color".</p>
+    </div>
+  </div>
+
+  <div class="pal-card pal-cream" data-choice="cream" onclick="toggleSelect(this)">
+    <div class="pal-preview">
+      <div class="mini-side">
+        <div class="logo">loopstat</div>
+        <div class="nav-item active">Tableau de bord</div>
+        <div class="nav-item">Top titres</div>
+        <div class="nav-item">Top artistes</div>
+        <div class="nav-item">Réglages</div>
+      </div>
+      <div class="mini-right">
+        <div class="mini-glass">
+          <p class="label">écoutes</p>
+          <p class="value">2 456</p>
+        </div>
+        <div class="mini-cta">Se connecter avec Spotify</div>
+      </div>
+    </div>
+    <div class="pal-body">
+      <h3><span class="swatch" style="background:#f4e8d0"></span>D · Crème / off-white</h3>
+      <p>Accent quasi-neutre, chaleur ivoire. Très "magazine élégant", contraste maximum, le moins coloré possible. Style "Apple Music in dark mode".</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top: 24px; font-size: 13px;">
+  Si aucune ne parle, dis-moi (autre couleur, ou bien autre approche : 2 accents mais sans gradient — par ex. cyan pour les CTA, magenta uniquement sur le mur de fond).
+</p>

@@ -9,7 +9,6 @@ import { AppearanceForm } from "@/components/profile/appearance-form";
 import { PremiumGate } from "@/components/premium-gate";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { ProfileForm } from "@/components/settings/profile-form";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { isPremium } from "@/db/queries/billing";
 import { db } from "@/db/client";
 import { getPaddedWallCovers } from "@/db/queries/wall-covers";
@@ -61,18 +60,6 @@ export default async function SettingsPage() {
       <AppHeader session={session} />
 
       <div className="flex flex-col gap-12">
-        <section>
-          <h2 className="mb-2 text-lg font-semibold">Apparence</h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Choisis le thème de l&apos;interface. Le réglage est conservé sur
-            cet appareil.
-          </p>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium">Thème</span>
-            <ThemeToggle />
-          </div>
-        </section>
-
         <section>
           <h2 className="mb-2 text-lg font-semibold">Profil public</h2>
           <p className="mb-4 text-sm text-muted-foreground">

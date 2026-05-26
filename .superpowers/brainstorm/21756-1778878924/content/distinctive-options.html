@@ -1,0 +1,184 @@
+<h2>3 directions plus distinctives</h2>
+<p class="subtitle">Moins "background pattern", plus "parti pris graphique". Toutes tirent parti de l'identité déjà en place (italique serif + palette cyan/magenta). Clique celle qui te parle, ou dis pourquoi aucune.</p>
+
+<style>
+  .dis-card {
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.15s, border-color 0.15s;
+    background: #0a0a14;
+  }
+  .dis-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
+  .dis-card.selected { border-color: #5dd9ff; box-shadow: 0 0 0 2px rgba(93,217,255,0.3); }
+  .dis-preview {
+    position: relative;
+    height: 280px;
+    background: radial-gradient(ellipse at top, #1a0d2e 0%, #070710 60%);
+    overflow: hidden;
+  }
+  .dis-glass {
+    position: absolute;
+    top: 38%; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px 18px;
+    color: #f4f0ff;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 28px;
+    line-height: 1;
+    z-index: 5;
+  }
+  .dis-glass small {
+    display: block;
+    font-family: ui-sans-serif, sans-serif;
+    font-style: normal;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(244,240,255,0.55);
+    margin-bottom: 4px;
+  }
+  .dis-body {
+    padding: 14px 18px;
+    background: #0a0a14;
+    color: #f4f0ff;
+    font-family: ui-sans-serif, sans-serif;
+  }
+  .dis-body h3 { font-size: 14px; margin: 0 0 4px; }
+  .dis-body p { font-size: 12px; color: rgba(244,240,255,0.6); margin: 0; }
+
+  /* === A. Typo héro géante === */
+  .typo-bg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 1;
+  }
+  .typo-word {
+    font-family: 'Instrument Serif', 'Times New Roman', serif;
+    font-style: italic;
+    font-size: 240px;
+    line-height: 0.9;
+    color: transparent;
+    background: linear-gradient(135deg, #5dd9ff 0%, #ff5dc8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    opacity: 0.18;
+    white-space: nowrap;
+    transform: translateY(-15px);
+    letter-spacing: -0.04em;
+  }
+
+  /* === B. Color fields (Rothko-style) === */
+  .field {
+    position: absolute;
+    border-radius: 4px;
+    filter: blur(40px);
+    z-index: 1;
+  }
+  .field.cyan { width: 260px; height: 120px; background: #5dd9ff; opacity: 0.55; top: 20px; left: 20px; }
+  .field.magenta { width: 200px; height: 80px; background: #ff5dc8; opacity: 0.5; top: 130px; left: 90px; }
+  .field.deep { width: 240px; height: 200px; background: #6b3fa0; opacity: 0.3; bottom: -30px; right: -40px; }
+
+  /* === C. Mur d'album art === */
+  .album-wall {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 2px;
+    z-index: 1;
+    opacity: 0.42;
+    mix-blend-mode: luminosity;
+    transform: scale(1.1) rotate(-3deg);
+  }
+  .album-wall .cell {
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+  }
+  .album-tint {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(93,217,255,0.25), rgba(255,93,200,0.25));
+    z-index: 2;
+    mix-blend-mode: overlay;
+  }
+</style>
+
+<div class="cards" style="grid-template-columns: repeat(3, 1fr); gap: 16px;">
+
+  <div class="dis-card" data-choice="typo" onclick="toggleSelect(this)">
+    <div class="dis-preview">
+      <div class="typo-bg">
+        <span class="typo-word">écoutes</span>
+      </div>
+      <div class="dis-glass"><small>écoutes</small>2 456</div>
+    </div>
+    <div class="dis-body">
+      <h3>A · Typo héro éditoriale</h3>
+      <p>Un mot italique serif géant en bas opacity (gradient cyan→magenta clip), centré. Pourrait changer selon la page ("écoutes", "tops", "année"). Très magazine, très signature.</p>
+    </div>
+  </div>
+
+  <div class="dis-card" data-choice="fields" onclick="toggleSelect(this)">
+    <div class="dis-preview">
+      <div class="field cyan"></div>
+      <div class="field magenta"></div>
+      <div class="field deep"></div>
+      <div class="dis-glass"><small>écoutes</small>2 456</div>
+    </div>
+    <div class="dis-body">
+      <h3>B · Champs de couleur (Rothko)</h3>
+      <p>2-3 rectangles très flous, positionnés asymétriquement. Référence art moderniste. Différent des "aurora orbs" car formes architecturales pas circulaires.</p>
+    </div>
+  </div>
+
+  <div class="dis-card" data-choice="albumwall" onclick="toggleSelect(this)">
+    <div class="dis-preview">
+      <div class="album-wall" id="albumwall">
+        <!-- 40 cells generated by JS, simulating user's album covers -->
+      </div>
+      <div class="album-tint"></div>
+      <div class="dis-glass"><small>écoutes</small>2 456</div>
+    </div>
+    <div class="dis-body">
+      <h3>C · Mur d'albums (Wrapped vibe)</h3>
+      <p>Grille des pochettes de l'utilisateur, légèrement inclinée, traitée luminosity + tint cyan/magenta. Très personnel, change selon les goûts. Style Spotify Wrapped.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Génère 40 "pochettes" colorées pour le mockup de C
+(function(){
+  const wall = document.getElementById('albumwall');
+  if (!wall) return;
+  const palettes = [
+    ['#ff5dc8','#a83fff'], ['#5dd9ff','#3f7fff'], ['#ffb05d','#ff5d5d'],
+    ['#5dffaa','#3fff7f'], ['#ff5d6b','#a83fff'], ['#3fcfff','#5d9eff'],
+    ['#ff8c5d','#ff5d8c'], ['#a05dff','#5d3fff'], ['#5dffd9','#3fffa8'],
+  ];
+  for (let i=0; i<40; i++){
+    const p = palettes[i % palettes.length];
+    const c = document.createElement('div');
+    c.className = 'cell';
+    c.style.setProperty('--c1', p[0]);
+    c.style.setProperty('--c2', p[1]);
+    wall.appendChild(c);
+  }
+})();
+</script>
+
+<p class="subtitle" style="margin-top: 24px; font-size: 13px; line-height: 1.5;">
+  Si rien ici ne colle non plus, dis-moi ce qui ne va pas (trop gros, trop personnel, trop dispersé…) et on continue de chercher. <em>"Distinctif" est un vaste terrain.</em>
+</p>

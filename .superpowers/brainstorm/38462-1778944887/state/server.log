@@ -1,0 +1,5 @@
+{"type":"server-started","port":53459,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:53459","screen_dir":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/38462-1778944887/content","state_dir":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/38462-1778944887/state"}
+{"type":"screen-added","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/38462-1778944887/content/banner-styles.html"}
+{"type":"screen-added","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/38462-1778944887/content/waiting.html"}
+{"type":"screen-updated","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/38462-1778944887/content/waiting.html"}
+{"type":"server-stopped","reason":"idle timeout"}

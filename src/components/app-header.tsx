@@ -4,7 +4,6 @@ import type { Session } from "next-auth";
 
 import { signOut } from "@/auth";
 import { ShareButton } from "@/components/share-button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import type { ShareContext } from "@/lib/share/card-config";
 
 export function AppHeader({
@@ -40,7 +39,6 @@ export function AppHeader({
         {shareUsername ? (
           <ShareButton username={shareUsername} context={shareContext} />
         ) : null}
-        <ThemeToggle />
         <Link
           href="/settings"
           aria-label="Paramètres"

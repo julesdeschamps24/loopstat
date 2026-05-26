@@ -1,0 +1,104 @@
+<h2>Quel style de hero pour /artist ?</h2>
+<p class="subtitle">3 directions visuelles. Le hero, c'est la 1ère impression — il porte l'identité de l'artiste et tes stats clés. Clique celui que tu préfères.</p>
+
+<style>
+  .preview-frame { background:#070710; padding:24px; border-radius:16px; min-height:280px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative }
+
+  /* === A : Compact (proche actuel mais enrichi) === */
+  .hero-a { display:flex; gap:24px; align-items:flex-end; width:100%; max-width:480px }
+  .hero-a .avatar { width:128px; height:128px; border-radius:100%; background:linear-gradient(135deg,#7c3aed,#ec4899); flex-shrink:0; box-shadow:0 12px 32px rgba(124,58,237,0.4) }
+  .hero-a .info { min-width:0 }
+  .hero-a .kind { font-size:11px; color:#a89ec8; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px }
+  .hero-a .name { font-size:32px; font-weight:700; color:#f4f0ff; line-height:1.1; margin-bottom:12px; letter-spacing:-0.02em }
+  .hero-a .badges { display:flex; flex-wrap:wrap; gap:6px }
+  .hero-a .badge { background:rgba(124,58,237,0.18); color:#c4b5fd; padding:4px 10px; border-radius:99px; font-size:11px; font-weight:600 }
+
+  /* === B : Spotify-style full-bleed bg image + overlay === */
+  .hero-b { width:100%; max-width:560px; height:240px; position:relative; border-radius:16px; overflow:hidden; background:url('https://i.scdn.co/image/ab6761610000e5eb3a4c10e60d908f7f4dc8d8e3') center/cover; box-shadow:0 8px 32px rgba(0,0,0,0.5) }
+  .hero-b::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(7,7,16,0.1) 0%,rgba(7,7,16,0.85) 100%) }
+  .hero-b .content { position:relative; padding:24px; height:100%; display:flex; flex-direction:column; justify-content:flex-end }
+  .hero-b .kind { font-size:11px; color:#c4b5fd; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px }
+  .hero-b .name { font-family:'Instrument Serif',serif; font-style:italic; font-size:56px; font-weight:400; color:#fff; line-height:1; margin-bottom:14px; letter-spacing:-0.01em; text-shadow:0 4px 24px rgba(0,0,0,0.5) }
+  .hero-b .badges { display:flex; flex-wrap:wrap; gap:6px }
+  .hero-b .badge { background:rgba(255,255,255,0.12); backdrop-filter:blur(8px); color:#f4f0ff; padding:5px 12px; border-radius:99px; font-size:11px; font-weight:600; border:1px solid rgba(255,255,255,0.1) }
+
+  /* === C : Editorial split (gros chiffre proéminent à droite) === */
+  .hero-c { width:100%; max-width:560px; display:grid; grid-template-columns:144px 1fr auto; gap:24px; align-items:center; padding:24px; background:rgba(124,58,237,0.06); border:1px solid rgba(124,58,237,0.2); border-radius:20px }
+  .hero-c .avatar { width:144px; height:144px; border-radius:100%; background:url('https://i.scdn.co/image/ab6761610000e5eb3a4c10e60d908f7f4dc8d8e3') center/cover; box-shadow:0 8px 24px rgba(124,58,237,0.3) }
+  .hero-c .info { min-width:0 }
+  .hero-c .kind { font-size:10px; color:#a89ec8; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px }
+  .hero-c .name { font-family:'Instrument Serif',serif; font-style:italic; font-size:32px; font-weight:400; color:#f4f0ff; line-height:1; margin-bottom:10px }
+  .hero-c .meta { font-size:13px; color:#a89ec8; line-height:1.5 }
+  .hero-c .meta strong { color:#c4b5fd }
+  .hero-c .big { text-align:right }
+  .hero-c .big-num { font-family:'Instrument Serif',serif; font-style:italic; font-size:64px; font-weight:400; color:#c4b5fd; line-height:1; letter-spacing:-0.03em; background:linear-gradient(135deg,#c4b5fd,#ec4899); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent }
+  .hero-c .big-label { font-size:10px; color:#a89ec8; text-transform:uppercase; letter-spacing:1.5px; margin-top:4px }
+</style>
+
+<div class="cards" style="grid-template-columns:1fr; gap:16px">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image preview-frame">
+      <div class="hero-a">
+        <div class="avatar"></div>
+        <div class="info">
+          <div class="kind">Artiste</div>
+          <div class="name">Sabrina Carpenter</div>
+          <div class="badges">
+            <span class="badge">#1 de ton top</span>
+            <span class="badge">2 695 écoutes</span>
+            <span class="badge">12% de ton total</span>
+            <span class="badge">depuis juil. 2022</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Compact + badges</h3>
+      <p>Proche du hero actuel, juste enrichi de 4 badges sous le nom. Le avatar reste petit (128px). <strong>Plus discret, cohérent avec /track et /album existants.</strong></p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image preview-frame">
+      <div class="hero-b">
+        <div class="content">
+          <div class="kind">Artiste</div>
+          <div class="name">Sabrina Carpenter</div>
+          <div class="badges">
+            <span class="badge">#1 de ton top</span>
+            <span class="badge">2 695 écoutes</span>
+            <span class="badge">12% de ton total</span>
+            <span class="badge">depuis juil. 2022</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Full-bleed Spotify-style</h3>
+      <p>L'image artiste devient le background (240px de haut, dégradé sombre en bas). Nom en serif italique XL (56px). <strong>Le + impressionnant visuellement, dans l'esprit Spotify/Apple Music.</strong> Mais : casse l'uniformité avec /track et /album (qui ont avatar à côté).</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image preview-frame">
+      <div class="hero-c">
+        <div class="avatar"></div>
+        <div class="info">
+          <div class="kind">Artiste</div>
+          <div class="name">Sabrina Carpenter</div>
+          <div class="meta">Découvert <strong>il y a 2 ans 10 mois</strong><br>Dernière écoute <strong>il y a 2 jours</strong></div>
+        </div>
+        <div class="big">
+          <div class="big-num">12%</div>
+          <div class="big-label">de ton temps</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Editorial split (gros chiffre)</h3>
+      <p>Layout grid 3 colonnes : avatar (144px) à gauche, infos textuelles au centre, <strong>gros chiffre proéminent à droite</strong> (% du temps). Le chiffre fait l'effet "wow". Les autres stats sont en texte plutôt qu'en badges chips. Plus éditorial, comme une page de magazine.</p>
+    </div>
+  </div>
+
+</div>

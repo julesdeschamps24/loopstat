@@ -1,0 +1,9 @@
+{"type":"server-started","port":62252,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:62252","screen_dir":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/28049-1778926013/content","state_dir":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/28049-1778926013/state"}
+{"type":"screen-added","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/28049-1778926013/content/fonts-compare.html"}
+{"type":"screen-updated","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/28049-1778926013/content/fonts-compare.html"}
+{"type":"screen-updated","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/28049-1778926013/content/fonts-compare.html"}
+{"type":"screen-updated","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/28049-1778926013/content/fonts-compare.html"}
+{"type":"screen-updated","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/28049-1778926013/content/fonts-compare.html"}
+{"source":"user-event","type":"click","text":"loopstat\n      \n        écoutes 30 jours\n        2 456\n      \n      \n        minutes12 847\n        artistes342\n        titres1 089\n      \n    \n    \n      D · DM Serif Display italic\n      Gras, plein, italique généreux. Les chiffres pèsent à l'écran — plus présent qu'Instrument.","choice":"dmserif","id":null,"timestamp":1778926652904}
+{"type":"screen-updated","file":"/Users/poney53/Documents/Projets/loopstat/.superpowers/brainstorm/28049-1778926013/content/fonts-compare.html"}
+{"type":"server-stopped","reason":"idle timeout"}

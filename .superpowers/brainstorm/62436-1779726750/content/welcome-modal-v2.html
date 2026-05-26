@@ -1,0 +1,134 @@
+<h2>Modal de bienvenue — 3 directions</h2>
+<p class="subtitle">Choisis celle qui te parle le plus pour maximiser la conversion → import</p>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
+
+  .modal-frame { background:rgba(7,7,16,0.85); padding:32px 20px; min-height:380px; display:flex; align-items:center; justify-content:center; font-family:'Inter',system-ui; position:relative; overflow:hidden }
+
+  /* === A — Current B1 + REAL covers (minimum change) === */
+  .modal-a { background:#0a0612; border:1px solid rgba(124,58,237,0.25); border-radius:28px; max-width:720px; width:100%; overflow:hidden; display:grid; grid-template-columns:260px 1fr; box-shadow:0 32px 80px rgba(124,58,237,0.25) }
+  .modal-a .visual { position:relative; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(4,1fr); gap:1px; min-height:380px; background:#0a0612 }
+  .modal-a .visual > div { background-size:cover; background-position:center; filter:saturate(0.9) }
+  /* simulate real covers via gradients but with image overlay vibe */
+  .modal-a .visual > div:nth-child(1) { background:linear-gradient(135deg,#ec4899,#f59e0b),#0a0612 }
+  .modal-a .visual > div:nth-child(2) { background:linear-gradient(135deg,#7c3aed,#3b0764) }
+  .modal-a .visual > div:nth-child(3) { background:linear-gradient(135deg,#0ea5e9,#1e1b4b) }
+  .modal-a .visual > div:nth-child(4) { background:linear-gradient(135deg,#fb923c,#dc2626) }
+  .modal-a .visual > div:nth-child(5) { background:linear-gradient(135deg,#10b981,#0f766e) }
+  .modal-a .visual > div:nth-child(6) { background:linear-gradient(135deg,#a855f7,#581c87) }
+  .modal-a .visual > div:nth-child(7) { background:linear-gradient(135deg,#f43f5e,#831843) }
+  .modal-a .visual > div:nth-child(8) { background:linear-gradient(135deg,#06b6d4,#0e7490) }
+  .modal-a .visual > div:nth-child(9) { background:linear-gradient(135deg,#facc15,#854d0e) }
+  .modal-a .visual > div:nth-child(10) { background:linear-gradient(135deg,#6366f1,#1e1b4b) }
+  .modal-a .visual > div:nth-child(11) { background:linear-gradient(135deg,#22c55e,#14532d) }
+  .modal-a .visual > div:nth-child(12) { background:linear-gradient(135deg,#d946ef,#6b21a8) }
+  .modal-a .visual::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,rgba(10,6,18,0) 60%,rgba(10,6,18,0.95) 100%); pointer-events:none }
+  .modal-a .body { padding:48px 40px; display:flex; flex-direction:column; gap:14px; background:linear-gradient(135deg,#0a0612,#1a0d2e); color:#f4f0ff }
+  .modal-a .badge { display:inline-flex; width:fit-content; gap:6px; background:rgba(124,58,237,0.18); color:#c4b5fd; padding:5px 11px; border-radius:99px; font-size:10px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase }
+  .modal-a h2 { font-family:'Instrument Serif',serif; font-style:italic; font-size:42px; font-weight:400; line-height:0.95; margin:8px 0 4px }
+  .modal-a h2 .accent { background:linear-gradient(135deg,#c4b5fd,#ec4899); -webkit-background-clip:text; background-clip:text; color:transparent }
+  .modal-a p { font-size:14px; color:#a89ec8; line-height:1.55; margin:8px 0 0 }
+  .modal-a .btns { display:flex; gap:10px; margin-top:14px }
+  .modal-a .btn-skip { flex:1; background:transparent; color:#a89ec8; border:1px solid rgba(168,158,200,0.2); padding:11px 18px; border-radius:99px; font-size:13px; font-weight:500; cursor:pointer }
+  .modal-a .btn-import { flex:1.4; background:#7c3aed; color:white; padding:11px 18px; border-radius:99px; font-size:13px; font-weight:600; text-align:center; box-shadow:0 8px 20px rgba(124,58,237,0.4) }
+
+  /* === B — Stat tease (big numbers FOMO) === */
+  .modal-b { background:#0a0612; border:1px solid rgba(124,58,237,0.25); border-radius:28px; max-width:560px; width:100%; padding:48px 44px; text-align:center; box-shadow:0 32px 80px rgba(124,58,237,0.25); color:#f4f0ff }
+  .modal-b .badge { display:inline-flex; gap:6px; background:rgba(124,58,237,0.18); color:#c4b5fd; padding:5px 11px; border-radius:99px; font-size:10px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:24px }
+  .modal-b .question { font-size:16px; color:#a89ec8; margin:0 0 4px; font-weight:400 }
+  .modal-b .big-num { font-family:'Instrument Serif',serif; font-style:italic; font-size:80px; line-height:1; background:linear-gradient(135deg,#c4b5fd,#ec4899); -webkit-background-clip:text; background-clip:text; color:transparent; margin:0 0 4px }
+  .modal-b .unit { font-size:14px; color:#a89ec8; margin:0 0 28px; font-style:italic }
+  .modal-b .lead { font-size:15px; color:#c4b5fd; line-height:1.55; margin:0 0 24px; font-weight:500 }
+  .modal-b .btn-import { display:block; width:100%; background:#7c3aed; color:white; padding:14px 24px; border-radius:14px; font-size:14px; font-weight:600; box-shadow:0 8px 20px rgba(124,58,237,0.4); margin-bottom:10px }
+  .modal-b .btn-skip { background:transparent; color:#a89ec8; border:none; font-size:12px; padding:8px; cursor:pointer; text-decoration:underline; text-underline-offset:3px }
+
+  /* === C — Editorial (Wrapped-style storytelling) === */
+  .modal-c { background:#0a0612; border:1px solid rgba(124,58,237,0.25); border-radius:28px; max-width:540px; width:100%; box-shadow:0 32px 80px rgba(124,58,237,0.25); overflow:hidden; color:#f4f0ff }
+  .modal-c .top { padding:36px 36px 0; position:relative }
+  .modal-c .top::before { content:''; position:absolute; top:-100px; right:-100px; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle,rgba(236,72,153,0.3),transparent 70%); pointer-events:none }
+  .modal-c .top::after { content:''; position:absolute; top:-60px; left:-60px; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle,rgba(124,58,237,0.35),transparent 70%); pointer-events:none }
+  .modal-c .label { position:relative; font-size:10px; letter-spacing:2px; color:#c4b5fd; text-transform:uppercase; font-weight:600 }
+  .modal-c h2 { position:relative; font-family:'Instrument Serif',serif; font-style:italic; font-size:54px; font-weight:400; line-height:0.92; margin:14px 0 0; letter-spacing:-0.01em }
+  .modal-c h2 .accent { background:linear-gradient(135deg,#c4b5fd,#ec4899); -webkit-background-clip:text; background-clip:text; color:transparent }
+  .modal-c .preview-row { padding:24px 36px; display:flex; gap:8px; overflow-x:hidden }
+  .modal-c .preview-row > div { flex:1; aspect-ratio:1; border-radius:8px; background-size:cover; background-position:center }
+  .modal-c .preview-row > div:nth-child(1) { background:linear-gradient(135deg,#ec4899,#f59e0b) }
+  .modal-c .preview-row > div:nth-child(2) { background:linear-gradient(135deg,#7c3aed,#3b0764) }
+  .modal-c .preview-row > div:nth-child(3) { background:linear-gradient(135deg,#0ea5e9,#1e1b4b) }
+  .modal-c .preview-row > div:nth-child(4) { background:linear-gradient(135deg,#10b981,#0f766e) }
+  .modal-c .preview-row > div:nth-child(5) { background:linear-gradient(135deg,#facc15,#854d0e) }
+  .modal-c .bottom { padding:0 36px 32px }
+  .modal-c .lead { font-size:14px; color:#a89ec8; line-height:1.6; margin:0 0 20px }
+  .modal-c .btn-import { display:block; width:100%; background:#7c3aed; color:white; padding:14px 24px; border-radius:14px; font-size:14px; font-weight:600; text-align:center; box-shadow:0 8px 20px rgba(124,58,237,0.4); margin-bottom:8px }
+  .modal-c .btn-skip { background:transparent; color:#a89ec8; border:none; font-size:12px; padding:8px; width:100%; cursor:pointer }
+</style>
+
+<div class="cards" style="grid-template-columns:1fr; gap:14px">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image modal-frame">
+      <div class="modal-a">
+        <div class="visual">
+          <div></div><div></div><div></div><div></div><div></div><div></div>
+          <div></div><div></div><div></div><div></div><div></div><div></div>
+        </div>
+        <div class="body">
+          <span class="badge">✨ Démo</span>
+          <h2>Tes stats,<br><span class="accent">en chiffres.</span></h2>
+          <p>Tu regardes une démo. Importe ton historique Spotify pour voir TES top tracks, ta listening clock, et plus.</p>
+          <div class="btns">
+            <span class="btn-skip">Explorer la démo</span>
+            <span class="btn-import">Importer →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Actuelle, polie (vraies covers à gauche)</h3>
+      <p>Le design B1 existant, mais les 12 cases du mur affichent les vraies covers du catalog global (au lieu des gradients violet). Plus authentique, change peu de chose. <strong>Risque minimum.</strong></p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image modal-frame">
+      <div class="modal-b">
+        <span class="badge">✨ Démo Live</span>
+        <p class="question">Combien d'heures de musique tu écoutes par mois ?</p>
+        <div class="big-num">423</div>
+        <p class="unit">heures — moyenne de loopstat</p>
+        <p class="lead">Le user moyen passe 1.5 mois entier de musique par an. Et toi, tu en es où ?</p>
+        <span class="btn-import">Importer mon historique →</span>
+        <button class="btn-skip">explorer une démo d'abord</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Stat tease (FOMO via gros chiffre)</h3>
+      <p>Un seul gros chiffre central qui pose une question — "et toi ?" — exploitant la curiosité. Hiérarchie ultra-claire : tu vois le chiffre, tu te projettes, tu importes. CTA primaire dominant.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image modal-frame">
+      <div class="modal-c">
+        <div class="top">
+          <span class="label">✨ Bienvenue sur loopstat</span>
+          <h2>Wrapped,<br>mais <span class="accent">toute l'année.</span></h2>
+        </div>
+        <div class="preview-row">
+          <div></div><div></div><div></div><div></div><div></div>
+        </div>
+        <div class="bottom">
+          <p class="lead">On a importé une démo. Tu peux la regarder pour te faire une idée — ou importer ton historique Spotify pour voir TES vraies stats : tops, listening clock, share cards.</p>
+          <span class="btn-import">Importer mon Spotify →</span>
+          <button class="btn-skip">Explorer la démo d'abord</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Editorial "Wrapped 365"</h3>
+      <p>Headline éditorial qui pose la promesse de valeur en 2 mots ("Wrapped, mais toute l'année"). Halos colorés en arrière-plan rappellent Spotify Wrapped. Mini-preview de 5 covers en bas pour suggérer le contenu.</p>
+    </div>
+  </div>
+
+</div>

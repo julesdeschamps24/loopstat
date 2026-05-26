@@ -1,0 +1,74 @@
+<h2>Quelle structure / ambition pour la page ?</h2>
+<p class="subtitle">Du plus sobre au plus produit-y. Wireframes — on regarde la structure, pas le polish.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: radial-gradient(ellipse at top, #1a0d2e 0%, #070710 60%); padding: 24px; display: flex; flex-direction: column; gap: 12px; min-height: 280px;">
+      <div style="font-size:11px;color:#a89ec8;letter-spacing:1px">┌─ Logo · navbar ──────────┐</div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;text-align:center">
+        <div style="font-size:24px;color:#f4f0ff;font-weight:600;line-height:1.1">Ton Spotify,<br>en chiffres.</div>
+        <div style="font-size:11px;color:#a89ec8;max-width:200px">Tops, historique, listening clock — toutes tes stats.</div>
+        <div style="background:#7c3aed;color:white;padding:8px 20px;border-radius:99px;font-size:12px;font-weight:600">Se connecter avec Spotify →</div>
+      </div>
+      <div style="font-size:10px;color:#5a5070;text-align:center">Footer légal</div>
+    </div>
+    <div class="card-body">
+      <h3>A — Hero pur (actuel, mais propre)</h3>
+      <p>Une seule vue, centrée, message + CTA. Comme aujourd'hui, en mieux exécuté (palette unifiée, typo). 1 écran = 1 décision. Risque : ne dit rien du produit, mise sur la curiosité.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: radial-gradient(ellipse at top, #1a0d2e 0%, #070710 60%); padding: 16px; display: flex; flex-direction: column; gap: 10px; min-height: 280px; font-family: system-ui;">
+      <div style="font-size:10px;color:#a89ec8">┌─ Logo · navbar ──────────┐</div>
+      <div style="text-align:center;padding:8px 0;border-bottom:1px dashed #38325a">
+        <div style="font-size:16px;color:#f4f0ff;font-weight:600">Ton Spotify, en chiffres.</div>
+        <div style="font-size:9px;color:#a89ec8;margin:4px 0">Sous-titre</div>
+        <div style="background:#7c3aed;color:white;padding:5px 12px;border-radius:99px;font-size:10px;display:inline-block;margin-top:4px">CTA</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:6px 0">
+        <div style="background:rgba(124,58,237,0.15);border:1px dashed #38325a;padding:8px;border-radius:6px;text-align:center;font-size:9px;color:#a89ec8">🎵<br>Top tracks</div>
+        <div style="background:rgba(124,58,237,0.15);border:1px dashed #38325a;padding:8px;border-radius:6px;text-align:center;font-size:9px;color:#a89ec8">🕐<br>Listening<br>clock</div>
+        <div style="background:rgba(124,58,237,0.15);border:1px dashed #38325a;padding:8px;border-radius:6px;text-align:center;font-size:9px;color:#a89ec8">📤<br>Share cards</div>
+      </div>
+      <div style="background:rgba(124,58,237,0.15);border:1px dashed #38325a;padding:10px;border-radius:6px;text-align:center;font-size:9px;color:#a89ec8;flex:1">📸 Mockup du dashboard / preview</div>
+      <div style="font-size:10px;color:#a89ec8;text-align:center;padding-top:4px">⬇ Premium · FAQ · Footer</div>
+    </div>
+    <div class="card-body">
+      <h3>B — Hero + sections produit</h3>
+      <p>Hero compact en haut, puis 3 features visuelles (tops / listening clock / share cards) + screenshot du dashboard + bloc Premium. Donne envie en montrant. Plus long à scroller, mais convertit mieux les sceptiques.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: #070710; padding: 0; display: flex; flex-direction: column; gap: 0; min-height: 280px; position: relative; overflow: hidden;">
+      <!-- Mur d'albums flou en fond -->
+      <div style="position:absolute;inset:0;display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(4,1fr);gap:2px;opacity:0.18;filter:blur(3px)">
+        <div style="background:linear-gradient(135deg,#7c3aed,#ec4899)"></div>
+        <div style="background:linear-gradient(135deg,#5dd9ff,#7c3aed)"></div>
+        <div style="background:linear-gradient(135deg,#ec4899,#f59e0b)"></div>
+        <div style="background:linear-gradient(135deg,#7c3aed,#5dd9ff)"></div>
+        <div style="background:linear-gradient(135deg,#a855f7,#ec4899)"></div>
+        <div style="background:linear-gradient(135deg,#6366f1,#a855f7)"></div>
+        <div style="background:linear-gradient(135deg,#ec4899,#7c3aed)"></div>
+        <div style="background:linear-gradient(135deg,#7c3aed,#a855f7)"></div>
+        <div style="background:linear-gradient(135deg,#5dd9ff,#6366f1)"></div>
+        <div style="background:linear-gradient(135deg,#f59e0b,#ec4899)"></div>
+        <div style="background:linear-gradient(135deg,#a855f7,#6366f1)"></div>
+        <div style="background:linear-gradient(135deg,#7c3aed,#ec4899)"></div>
+      </div>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,7,16,0.4),rgba(7,7,16,0.85))"></div>
+      <div style="position:relative;padding:24px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;text-align:center;flex:1">
+        <div style="font-size:10px;color:#a89ec8;letter-spacing:2px;text-transform:uppercase">↑ Mur d'albums animé</div>
+        <div style="font-size:24px;color:#f4f0ff;font-weight:600;line-height:1.1">Ton Spotify,<br><em style="color:#c4b5fd">en chiffres</em>.</div>
+        <div style="font-size:11px;color:#a89ec8;max-width:200px">Sous-titre</div>
+        <div style="background:#7c3aed;color:white;padding:8px 20px;border-radius:99px;font-size:12px;font-weight:600;box-shadow:0 0 30px rgba(124,58,237,0.4)">Se connecter avec Spotify</div>
+        <div style="font-size:10px;color:#5a5070">↓ scroll pour découvrir</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Hero atmosphérique animé</h3>
+      <p>1 écran, mais avec un mur d'albums flou animé en fond (le même que sur /dashboard) — montre la matière du produit sans rien expliquer. Vibe Apple Music / Spotify Wrapped. Plus de personnalité, peut être ralenti à charger.</p>
+    </div>
+  </div>
+</div>
