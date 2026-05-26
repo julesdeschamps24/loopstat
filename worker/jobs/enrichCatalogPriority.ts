@@ -119,7 +119,7 @@ export async function enrichCatalogPriority({
     artistIds.length === 0
       ? []
       : await db
-          .select({ artistId: artists.id, name: artists.name, mbid: artists.mbid })
+          .select({ artistId: artists.id, name: artists.name })
           .from(artists)
           .where(and(inArray(artists.id, artistIds), isNull(artists.mbid)));
 
@@ -142,26 +142,22 @@ export async function enrichCatalogPriority({
     }
   }
 
-  // TheAudioDB images for the same artists (now that mbid is set).
+  // Deezer images for the same artists.
   const artistsForImages =
     artistIds.length === 0
       ? []
       : await db
-          .select({ artistId: artists.id, name: artists.name, mbid: artists.mbid })
+          .select({ artistId: artists.id, name: artists.name })
           .from(artists)
           .where(
             and(
               inArray(artists.id, artistIds),
               isNull(artists.imageUrl),
-              // Include artists where TADB was already tried but missed
-              // (tadb_id sentinel). The helper skips TADB on those and goes
-              // straight to Deezer. Filter `deezer_id IS NULL` to avoid
-              // re-attempting Deezer items that also failed.
               isNull(artists.deezerId),
             ),
           );
 
-  wlog.info({ artists: artistsForImages.length }, "priority image sweep (TADB → Deezer fallback)");
+  wlog.info({ artists: artistsForImages.length }, "priority image sweep (Deezer)");
 
   for (let i = 0; i < artistsForImages.length; i++) {
     await sleep(RATE_DELAY_MS);
@@ -170,13 +166,12 @@ export async function enrichCatalogPriority({
       await enrichArtistImageWithFallback({
         artistId: row.artistId,
         name: row.name,
-        mbid: row.mbid ?? null,
       });
       imagesEnriched++;
     } catch (err) {
       wlog.error(
         { err, msg: (err as Error)?.message, artistId: row.artistId },
-        "priority tadb image failed",
+        "priority deezer image failed",
       );
     }
   }

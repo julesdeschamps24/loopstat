@@ -95,9 +95,6 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
   const [imgCount] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(artists)
-    // Include artists where TADB already missed (tadb_id set) — the helper
-    // skips TADB and tries Deezer. Filter `deezer_id IS NULL` to avoid
-    // re-attempting items that also failed on Deezer.
     .where(and(isNull(artists.imageUrl), isNull(artists.deezerId)));
 
   const unenrichedAlbums = Number(albCount?.n ?? 0);
@@ -212,16 +209,13 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
     }
   }
 
-  // TheAudioDB image sweep : artists without image_url and not yet tried (tadb_id IS NULL).
+  // Deezer image sweep : artists without image_url and not yet tried (deezer_id IS NULL).
   const unenrichedImages = await db
-    .select({ artistId: artists.id, name: artists.name, mbid: artists.mbid })
+    .select({ artistId: artists.id, name: artists.name })
     .from(artists)
-    // Include artists where TADB already missed (tadb_id set) — the helper
-    // skips TADB and tries Deezer. Filter `deezer_id IS NULL` to avoid
-    // re-attempting items that also failed on Deezer.
     .where(and(isNull(artists.imageUrl), isNull(artists.deezerId)));
 
-  wlog.info({ artists: unenrichedImages.length }, "tadb image sweep starting");
+  wlog.info({ artists: unenrichedImages.length }, "deezer image sweep starting");
 
   let imagesEnriched = 0;
   for (let i = 0; i < unenrichedImages.length; i++) {
@@ -233,7 +227,6 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
       await enrichArtistImageWithFallback({
         artistId: row.artistId,
         name: row.name,
-        mbid: row.mbid ?? null,
       });
       imagesEnriched++;
     } catch (err) {
