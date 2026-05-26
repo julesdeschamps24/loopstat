@@ -16,17 +16,17 @@ export const STREAM_PERIODS: { value: StreamPeriod; label: string }[] = [
 
 const DAY_MS = 86_400_000;
 
-export function periodSince(p: StreamPeriod): Date | null {
-  const now = Date.now();
+export function periodSince(p: StreamPeriod, ref: Date = new Date()): Date | null {
+  const refMs = ref.getTime();
   switch (p) {
     case "1w":
-      return new Date(now - 7 * DAY_MS);
+      return new Date(refMs - 7 * DAY_MS);
     case "4w":
-      return new Date(now - 28 * DAY_MS);
+      return new Date(refMs - 28 * DAY_MS);
     case "6m":
-      return new Date(now - 182 * DAY_MS);
+      return new Date(refMs - 182 * DAY_MS);
     case "1y":
-      return new Date(now - 365 * DAY_MS);
+      return new Date(refMs - 365 * DAY_MS);
     case "all":
       return null;
   }

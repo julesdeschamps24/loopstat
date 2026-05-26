@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { and, asc, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
@@ -18,12 +20,30 @@ const QUALIFYING_PLAY = or(
   isNull(streams.msPlayed),
 );
 
+/**
+ * The user's most recent play timestamp, cached per request. Used as the
+ * reference "now" for period windows on user-owned pages — since the data
+ * is a static JSON import that may end days/weeks before today, anchoring
+ * "last 7 days" to MAX(played_at) keeps the windows meaningful.
+ *
+ * Returns null if the user has no plays — callers should fall back to
+ * `Date.now()` so the UI doesn't break for fresh accounts.
+ */
+export const getUserLatestPlayedAt = cache(async (userId: string): Promise<Date | null> => {
+  const [row] = await db
+    .select({ max: sql<Date | null>`max(${streams.playedAt})` })
+    .from(streams)
+    .where(eq(streams.userId, userId));
+  return row?.max ?? null;
+});
+
 type ListeningWindow = "7d" | "30d" | "lifetime";
 
 export async function getListeningTotals(
   userId: string,
+  ref: Date = new Date(),
 ): Promise<{ window: ListeningWindow; count: number; msPlayed: number }[]> {
-  const now = Date.now();
+  const now = ref.getTime();
   const windows: { window: ListeningWindow; since: Date | null }[] = [
     { window: "7d", since: new Date(now - 7 * 24 * 60 * 60 * 1000) },
     { window: "30d", since: new Date(now - 30 * 24 * 60 * 60 * 1000) },
