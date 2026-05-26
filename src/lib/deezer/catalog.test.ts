@@ -21,7 +21,7 @@ afterEach(() => {
   whereMock.mockClear();
 });
 
-import { enrichArtistImageByDeezer } from "./catalog";
+import { enrichAlbumImageByDeezer, enrichArtistImageByDeezer } from "./catalog";
 
 describe("enrichArtistImageByDeezer", () => {
   it("updates artist with deezerId + imageUrl on match with picture", async () => {
@@ -55,5 +55,51 @@ describe("enrichArtistImageByDeezer", () => {
     await enrichArtistImageByDeezer({ artistId: "art_x", name: "NoPic" });
 
     expect(setMock).toHaveBeenCalledWith({ deezerId: 99, imageUrl: null });
+  });
+});
+
+describe("enrichAlbumImageByDeezer", () => {
+  it("updates albums.imageUrl when cover found", async () => {
+    vi.spyOn(search, "searchAlbumByName").mockResolvedValue({
+      deezerAlbumId: 101,
+      coverUrl: "https://cdn-images.dzcdn.net/images/cover/abc.jpg",
+    });
+
+    await enrichAlbumImageByDeezer({
+      albumId: "alb_x",
+      artistName: "PNL",
+      albumName: "Deux Frères",
+    });
+
+    expect(setMock).toHaveBeenCalledWith({
+      imageUrl: "https://cdn-images.dzcdn.net/images/cover/abc.jpg",
+    });
+  });
+
+  it("is a no-op when cover is null", async () => {
+    vi.spyOn(search, "searchAlbumByName").mockResolvedValue({
+      deezerAlbumId: 101,
+      coverUrl: null,
+    });
+
+    await enrichAlbumImageByDeezer({
+      albumId: "alb_x",
+      artistName: "PNL",
+      albumName: "Deux Frères",
+    });
+
+    expect(setMock).not.toHaveBeenCalled();
+  });
+
+  it("is a no-op when search returns null", async () => {
+    vi.spyOn(search, "searchAlbumByName").mockResolvedValue(null);
+
+    await enrichAlbumImageByDeezer({
+      albumId: "alb_x",
+      artistName: "Ghost",
+      albumName: "Unknown",
+    });
+
+    expect(setMock).not.toHaveBeenCalled();
   });
 });

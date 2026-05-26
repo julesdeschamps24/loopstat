@@ -9,6 +9,20 @@ interface ArtistSearchResponse {
   data: RawArtist[] | null;
 }
 
+interface RawAlbum {
+  id?: number;
+  cover_medium?: string;
+}
+
+interface AlbumSearchResponse {
+  data: RawAlbum[] | null;
+}
+
+export interface DeezerAlbumMatch {
+  deezerAlbumId: number;
+  coverUrl: string | null;
+}
+
 export interface DeezerArtistMatch {
   deezerId: number;
   pictureUrl: string | null;
@@ -41,5 +55,30 @@ export async function searchArtistByName({
     pictureUrl: top.picture_medium && top.picture_medium.length > 0
       ? top.picture_medium
       : null,
+  };
+}
+
+/**
+ * Search Deezer for an album by (artist + title). Used by the ultra-priority
+ * tier to fetch covers in parallel — bypasses the MBz → CAA sequential chain.
+ * Returns the top result (Deezer ranks by popularity).
+ */
+export async function searchAlbumByName({
+  artistName,
+  albumName,
+}: {
+  artistName: string;
+  albumName: string;
+}): Promise<DeezerAlbumMatch | null> {
+  // Combine artist + album in the query for a stronger match.
+  const q = `${artistName} ${albumName}`;
+  const data = await deezerFetch<AlbumSearchResponse>(
+    `/search/album?q=${encodeURIComponent(q)}&limit=1`,
+  );
+  const top = data.data?.[0];
+  if (!top || typeof top.id !== "number") return null;
+  return {
+    deezerAlbumId: top.id,
+    coverUrl: top.cover_medium && top.cover_medium.length > 0 ? top.cover_medium : null,
   };
 }
