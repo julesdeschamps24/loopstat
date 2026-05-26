@@ -1,24 +1,28 @@
-import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { albumArtists, albums, streams, tracks, trackArtists } from "@/db/schema";
 
 const QUALIFYING_PLAY = sql`(${streams.msPlayed} >= 30000 OR ${streams.msPlayed} IS NULL)`;
 
 /**
- * Top-N album IDs ranked by play count for `userId`. Used by the priority
- * enrich job to schedule visible-first cover fetches. No join with `albums`
- * table here — the worker only needs the IDs to filter its sweep.
+ * Top-N album IDs ranked by play count for `userId`. When `since` is provided,
+ * filter to streams played at or after that date. Used by the priority enrich
+ * job to compute per-window top items.
  */
 export async function getTopAlbumIdsForUser(
   userId: string,
   limit: number,
+  since: Date | null = null,
 ): Promise<string[]> {
+  const whereClause = since
+    ? and(eq(streams.userId, userId), gte(streams.playedAt, since), QUALIFYING_PLAY)
+    : and(eq(streams.userId, userId), QUALIFYING_PLAY);
   const rows = await db
     .select({ albumId: albums.id })
     .from(streams)
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
     .innerJoin(albums, eq(albums.id, tracks.albumId))
-    .where(and(eq(streams.userId, userId), QUALIFYING_PLAY))
+    .where(whereClause)
     .groupBy(albums.id)
     .orderBy(desc(sql`count(${streams.id})`))
     .limit(limit);
@@ -26,18 +30,22 @@ export async function getTopAlbumIdsForUser(
 }
 
 /**
- * Top-N artist IDs ranked by play count for `userId`. Mirror of the album
- * version at artist granularity.
+ * Top-N artist IDs ranked by play count for `userId`. When `since` is provided,
+ * filter to streams played at or after that date.
  */
 export async function getTopArtistIdsForUser(
   userId: string,
   limit: number,
+  since: Date | null = null,
 ): Promise<string[]> {
+  const whereClause = since
+    ? and(eq(streams.userId, userId), gte(streams.playedAt, since), QUALIFYING_PLAY)
+    : and(eq(streams.userId, userId), QUALIFYING_PLAY);
   const rows = await db
     .select({ artistId: trackArtists.artistId })
     .from(streams)
     .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
-    .where(and(eq(streams.userId, userId), QUALIFYING_PLAY))
+    .where(whereClause)
     .groupBy(trackArtists.artistId)
     .orderBy(desc(sql`count(${streams.id})`))
     .limit(limit);
@@ -45,29 +53,29 @@ export async function getTopArtistIdsForUser(
 }
 
 /**
- * Album IDs belonging to the user's top-N tracks. Tracks render their
- * album's cover in the UI, so enriching these albums is what makes the
- * /top/tracks list look complete. Distinct from getTopAlbumIdsForUser
- * because a track in top-100 may live on an album not itself in top-100.
+ * Album IDs belonging to the user's top-N tracks. When `since` is provided,
+ * filter to streams played at or after that date.
  */
 export async function getTopTrackAlbumIdsForUser(
   userId: string,
   limit: number,
+  since: Date | null = null,
 ): Promise<string[]> {
+  const whereClause = since
+    ? and(
+        eq(streams.userId, userId),
+        gte(streams.playedAt, since),
+        QUALIFYING_PLAY,
+        isNotNull(tracks.albumId),
+      )
+    : and(eq(streams.userId, userId), QUALIFYING_PLAY, isNotNull(tracks.albumId));
   const rows = await db
     .select({ albumId: tracks.albumId, plays: sql<number>`count(${streams.id})::int` })
     .from(streams)
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
-    .where(
-      and(
-        eq(streams.userId, userId),
-        QUALIFYING_PLAY,
-        isNotNull(tracks.albumId),
-      ),
-    )
+    .where(whereClause)
     .groupBy(streams.trackId, tracks.albumId)
     .orderBy(desc(sql`count(${streams.id})`))
     .limit(limit);
-  // Dedup album IDs (top tracks can share an album).
   return Array.from(new Set(rows.map((r) => r.albumId!).filter((id) => id !== null)));
 }
