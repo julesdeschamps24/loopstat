@@ -56,7 +56,14 @@ export async function enrichCatalogSingle({
 
   // type === "artist"
   const [row] = await db
-    .select({ artistId: artists.id, name: artists.name, mbid: artists.mbid, tadbId: artists.tadbId })
+    .select({
+      artistId: artists.id,
+      name: artists.name,
+      mbid: artists.mbid,
+      imageUrl: artists.imageUrl,
+      tadbId: artists.tadbId,
+      deezerId: artists.deezerId,
+    })
     .from(artists)
     .where(eq(artists.id, id))
     .limit(1);
@@ -65,8 +72,12 @@ export async function enrichCatalogSingle({
     wlog.warn({}, "artist not found");
     return;
   }
-  if (row.tadbId !== null) {
-    wlog.info({ tadbId: row.tadbId }, "artist image already attempted");
+  if (row.imageUrl !== null) {
+    wlog.info({}, "artist already has image");
+    return;
+  }
+  if (row.tadbId !== null && row.deezerId !== null) {
+    wlog.info({ tadbId: row.tadbId, deezerId: row.deezerId }, "all sources already attempted");
     return;
   }
 

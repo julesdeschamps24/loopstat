@@ -95,7 +95,10 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
   const [imgCount] = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(artists)
-    .where(and(isNull(artists.imageUrl), isNull(artists.tadbId)));
+    // Include artists where TADB already missed (tadb_id set) — the helper
+    // skips TADB and tries Deezer. Filter `deezer_id IS NULL` to avoid
+    // re-attempting items that also failed on Deezer.
+    .where(and(isNull(artists.imageUrl), isNull(artists.deezerId)));
 
   const unenrichedAlbums = Number(albCount?.n ?? 0);
   const unenrichedArtists = Number(artCount?.n ?? 0);
@@ -213,7 +216,10 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
   const unenrichedImages = await db
     .select({ artistId: artists.id, name: artists.name, mbid: artists.mbid })
     .from(artists)
-    .where(and(isNull(artists.imageUrl), isNull(artists.tadbId)));
+    // Include artists where TADB already missed (tadb_id set) — the helper
+    // skips TADB and tries Deezer. Filter `deezer_id IS NULL` to avoid
+    // re-attempting items that also failed on Deezer.
+    .where(and(isNull(artists.imageUrl), isNull(artists.deezerId)));
 
   wlog.info({ artists: unenrichedImages.length }, "tadb image sweep starting");
 

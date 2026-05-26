@@ -153,11 +153,15 @@ export async function enrichCatalogPriority({
             and(
               inArray(artists.id, artistIds),
               isNull(artists.imageUrl),
-              isNull(artists.tadbId),
+              // Include artists where TADB was already tried but missed
+              // (tadb_id sentinel). The helper skips TADB on those and goes
+              // straight to Deezer. Filter `deezer_id IS NULL` to avoid
+              // re-attempting Deezer items that also failed.
+              isNull(artists.deezerId),
             ),
           );
 
-  wlog.info({ artists: artistsForImages.length }, "priority tadb image sweep");
+  wlog.info({ artists: artistsForImages.length }, "priority image sweep (TADB → Deezer fallback)");
 
   for (let i = 0; i < artistsForImages.length; i++) {
     await sleep(RATE_DELAY_MS);
