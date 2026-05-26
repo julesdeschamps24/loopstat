@@ -42,7 +42,7 @@ export async function enrichCatalogSingle({
       .limit(1);
 
     if (!row) {
-      wlog.warn("album not found");
+      wlog.warn({}, "album not found");
       return;
     }
     if (row.mbid !== null) {
@@ -55,7 +55,7 @@ export async function enrichCatalogSingle({
       albumName: row.albumName,
       artistName: row.artistName,
     });
-    wlog.info("album enriched");
+    wlog.info({}, "album enriched");
     return;
   }
 
@@ -67,7 +67,7 @@ export async function enrichCatalogSingle({
     .limit(1);
 
   if (!row) {
-    wlog.warn("artist not found");
+    wlog.warn({}, "artist not found");
     return;
   }
   if (row.tadbId !== null) {
@@ -81,5 +81,5 @@ export async function enrichCatalogSingle({
   } else {
     await enrichArtistImageByName({ artistId: row.artistId, name: row.name });
   }
-  wlog.info("artist image enriched");
+  wlog.info({}, "artist image enriched");
 }
