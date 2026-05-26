@@ -79,3 +79,84 @@ export async function getTopTrackAlbumIdsForUser(
     .limit(limit);
   return Array.from(new Set(rows.map((r) => r.albumId!).filter((id) => id !== null)));
 }
+
+import { periodSince, type StreamPeriod } from "@/lib/stats/period";
+
+/**
+ * Tiered limits per time window for the priority enrich pass. 1w is the
+ * default period shown on /top/* — gets the largest slice. Older windows
+ * get smaller slices since they're consulted less often.
+ */
+const WINDOW_LIMITS: { window: StreamPeriod; limit: number }[] = [
+  { window: "1w", limit: 50 },
+  { window: "4w", limit: 30 },
+  { window: "6m", limit: 20 },
+  { window: "1y", limit: 20 },
+];
+
+/**
+ * Album IDs ordered by window-priority for the priority enrich job. For each
+ * window (1w, 4w, 6m, 1y) fetch the top-N by play count; concatenate with
+ * dedup so an item only appears in the earliest window it qualifies for.
+ *
+ * `refDate` is the "now" used to compute `since` boundaries — typically the
+ * user's MAX(played_at), since the dataset is a static snapshot.
+ */
+export async function getOrderedTopAlbumIdsForUser(
+  userId: string,
+  refDate: Date,
+): Promise<string[]> {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const { window, limit } of WINDOW_LIMITS) {
+    const since = periodSince(window, refDate);
+    const ids = await getTopAlbumIdsForUser(userId, limit, since);
+    for (const id of ids) {
+      if (!seen.has(id)) {
+        seen.add(id);
+        ordered.push(id);
+      }
+    }
+  }
+  return ordered;
+}
+
+/** Mirror of getOrderedTopAlbumIdsForUser at artist granularity. */
+export async function getOrderedTopArtistIdsForUser(
+  userId: string,
+  refDate: Date,
+): Promise<string[]> {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const { window, limit } of WINDOW_LIMITS) {
+    const since = periodSince(window, refDate);
+    const ids = await getTopArtistIdsForUser(userId, limit, since);
+    for (const id of ids) {
+      if (!seen.has(id)) {
+        seen.add(id);
+        ordered.push(id);
+      }
+    }
+  }
+  return ordered;
+}
+
+/** Album IDs derived from the user's top tracks, window-ordered. */
+export async function getOrderedTopTrackAlbumIdsForUser(
+  userId: string,
+  refDate: Date,
+): Promise<string[]> {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const { window, limit } of WINDOW_LIMITS) {
+    const since = periodSince(window, refDate);
+    const ids = await getTopTrackAlbumIdsForUser(userId, limit, since);
+    for (const id of ids) {
+      if (!seen.has(id)) {
+        seen.add(id);
+        ordered.push(id);
+      }
+    }
+  }
+  return ordered;
+}

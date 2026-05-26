@@ -90,3 +90,48 @@ describe("getTopTrackAlbumIdsForUser with since", () => {
     expect(ids).toEqual([]);
   });
 });
+
+describe("getOrderedTopAlbumIdsForUser", () => {
+  it("returns empty array for non-existent user", async () => {
+    const { getOrderedTopAlbumIdsForUser } = await import("./enrich");
+    const ids = await getOrderedTopAlbumIdsForUser(
+      "00000000-0000-0000-0000-000000000000",
+      new Date(),
+    );
+    expect(ids).toEqual([]);
+  });
+
+  it("returns deduped string array shape", async () => {
+    const { getOrderedTopAlbumIdsForUser } = await import("./enrich");
+    const ids = await getOrderedTopAlbumIdsForUser(
+      "00000000-0000-0000-0000-000000000000",
+      new Date(),
+    );
+    expect(Array.isArray(ids)).toBe(true);
+    // Dedup check : Set size == array length means no duplicates
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe("getOrderedTopArtistIdsForUser", () => {
+  it("returns deduped string array", async () => {
+    const { getOrderedTopArtistIdsForUser } = await import("./enrich");
+    const ids = await getOrderedTopArtistIdsForUser(
+      "00000000-0000-0000-0000-000000000000",
+      new Date(),
+    );
+    expect(ids).toEqual([]);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe("getOrderedTopTrackAlbumIdsForUser", () => {
+  it("returns deduped string array", async () => {
+    const { getOrderedTopTrackAlbumIdsForUser } = await import("./enrich");
+    const ids = await getOrderedTopTrackAlbumIdsForUser(
+      "00000000-0000-0000-0000-000000000000",
+      new Date(),
+    );
+    expect(ids).toEqual([]);
+  });
+});
