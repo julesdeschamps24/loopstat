@@ -210,12 +210,14 @@ export async function getArtistPlayStats(
         QUALIFYING_PLAY,
       );
 
+  // postgres-js returns timestamp aggregates as ISO strings, not Date —
+  // the `sql<Date>` annotation lies at runtime. Type as string + coerce.
   const [row] = await db
     .select({
       count: sql<number>`count(*)::int`,
       msPlayed: sql<number>`coalesce(sum(${streams.msPlayed}), 0)::bigint`,
-      firstPlayedAt: sql<Date | null>`min(${streams.playedAt})`,
-      lastPlayedAt: sql<Date | null>`max(${streams.playedAt})`,
+      firstPlayedAt: sql<string | null>`min(${streams.playedAt})`,
+      lastPlayedAt: sql<string | null>`max(${streams.playedAt})`,
     })
     .from(streams)
     .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
@@ -224,8 +226,8 @@ export async function getArtistPlayStats(
   return {
     count: Number(row?.count ?? 0),
     msPlayed: Number(row?.msPlayed ?? 0),
-    firstPlayedAt: row?.firstPlayedAt ?? null,
-    lastPlayedAt: row?.lastPlayedAt ?? null,
+    firstPlayedAt: row?.firstPlayedAt ? new Date(row.firstPlayedAt) : null,
+    lastPlayedAt: row?.lastPlayedAt ? new Date(row.lastPlayedAt) : null,
   };
 }
 
