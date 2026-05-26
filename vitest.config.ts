@@ -18,8 +18,6 @@ export default defineConfig({
     // connection is fully released between files.
     // Future improvement : mock `@/db/client` in smoke tests + re-enable.
     fileParallelism: false,
-    pool: "forks",
-    poolOptions: { forks: { singleFork: true } },
     // Some smoke tests hit the dev Postgres (via `@/db/client` import).
     // When the worker is busy enriching catalog rows in parallel, simple
     // SELECTs can briefly stall past the 5s default. 15s is large enough

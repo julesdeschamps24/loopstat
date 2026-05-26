@@ -29,24 +29,41 @@ export async function enrichArtistImageWithFallback(row: {
   name: string;
   mbid: string | null;
 }): Promise<void> {
-  const hasRealMbid = row.mbid !== null && row.mbid !== SENTINEL_MBID;
-  if (hasRealMbid) {
-    await enrichArtistImageByMbid({ artistId: row.artistId, mbid: row.mbid! });
-  } else {
-    await enrichArtistImageByName({ artistId: row.artistId, name: row.name });
-  }
-
-  // Check if TADB missed (image_url still null, deezer_id not yet set).
-  const [post] = await db
+  // Look at current state. If TADB was already tried (tadb_id set), skip
+  // straight to Deezer — re-querying TADB would waste a rate-limited call
+  // and return the same miss.
+  const [pre] = await db
     .select({
+      tadbId: artists.tadbId,
       imageUrl: artists.imageUrl,
       deezerId: artists.deezerId,
     })
     .from(artists)
     .where(eq(artists.id, row.artistId))
     .limit(1);
+  if (!pre || pre.imageUrl !== null) return;
 
-  if (post && post.imageUrl === null && post.deezerId === null) {
+  const tadbAlreadyTried = pre.tadbId !== null;
+  if (!tadbAlreadyTried) {
+    const hasRealMbid = row.mbid !== null && row.mbid !== SENTINEL_MBID;
+    if (hasRealMbid) {
+      await enrichArtistImageByMbid({ artistId: row.artistId, mbid: row.mbid! });
+    } else {
+      await enrichArtistImageByName({ artistId: row.artistId, name: row.name });
+    }
+
+    // Re-check after TADB. If it returned a URL, we're done.
+    const [post] = await db
+      .select({ imageUrl: artists.imageUrl })
+      .from(artists)
+      .where(eq(artists.id, row.artistId))
+      .limit(1);
+    if (post && post.imageUrl !== null) return;
+  }
+
+  // Either TADB was already tried, OR we just tried and missed. Either way,
+  // attempt Deezer if not already done.
+  if (pre.deezerId === null) {
     await enrichArtistImageByDeezer({ artistId: row.artistId, name: row.name });
     // Extra API call made — courtesy sleep.
     await sleep(300);
