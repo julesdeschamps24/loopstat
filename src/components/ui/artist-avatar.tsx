@@ -1,4 +1,4 @@
-import { avatarGradient } from "@/lib/ui/avatar-color";
+import { User } from "lucide-react";
 
 interface Props {
   name: string;
@@ -8,9 +8,10 @@ interface Props {
 }
 
 /**
- * Avatar for an artist. Shows the real photo if `imageUrl` is provided,
- * otherwise falls back to a deterministic gradient circle with the artist's
- * initial. The gradient palette stays on-brand (violet/mauve nébuleuse).
+ * Avatar for an artist. Shows the real photo when `imageUrl` is provided,
+ * otherwise a neutral User icon centered in a muted circle — same visual
+ * treatment as the music-note placeholder used for tracks/albums without
+ * cover (see RankedRow).
  */
 export function ArtistAvatar({ name, imageUrl, size = 48, className = "" }: Props) {
   if (imageUrl) {
@@ -18,7 +19,7 @@ export function ArtistAvatar({ name, imageUrl, size = 48, className = "" }: Prop
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={imageUrl}
-        alt=""
+        alt={name}
         loading="lazy"
         decoding="async"
         className={`shrink-0 rounded-full object-cover ${className}`}
@@ -27,22 +28,17 @@ export function ArtistAvatar({ name, imageUrl, size = 48, className = "" }: Prop
     );
   }
 
-  const initial = (name.trim()[0] ?? "?").toUpperCase();
-  const bg = avatarGradient(name);
-  const fontSize = Math.round(size * 0.42);
+  // Icon scales with the container — same 42% ratio as the Music icon
+  // inside the track placeholder (size-5 inside size-12).
+  const iconSize = Math.round(size * 0.42);
 
   return (
     <div
-      className={`flex shrink-0 items-center justify-center rounded-full text-white font-semibold ${className}`}
-      style={{
-        width: size,
-        height: size,
-        background: bg,
-        fontSize,
-      }}
+      className={`flex shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground ${className}`}
+      style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      {initial}
+      <User style={{ width: iconSize, height: iconSize }} />
     </div>
   );
 }
