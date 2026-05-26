@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { albums, albumArtists, artists } from "@/db/schema";
 import { log } from "@/lib/log";
-import { enrichAlbumByNames } from "@/lib/musicbrainz/catalog";
+import { enrichAlbumImageByDeezer } from "@/lib/deezer/catalog";
 import { enrichArtistImageWithFallback } from "./enrichArtistImage";
 
 export interface EnrichCatalogSingleArgs {
@@ -28,7 +28,7 @@ export async function enrichCatalogSingle({
         albumId: albums.id,
         albumName: albums.name,
         artistName: artists.name,
-        mbid: albums.mbid,
+        imageUrl: albums.imageUrl,
       })
       .from(albums)
       .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
@@ -40,17 +40,20 @@ export async function enrichCatalogSingle({
       wlog.warn({}, "album not found");
       return;
     }
-    if (row.mbid !== null) {
-      wlog.info({ mbid: row.mbid }, "album already attempted");
+    if (row.imageUrl !== null) {
+      wlog.info({}, "album already has image");
       return;
     }
 
-    await enrichAlbumByNames({
+    // Click-triggered enrich : use Deezer (fast, parallel-safe, ~150ms) instead
+    // of MBz → CAA chain (~2s rate-limited). The background sweep still runs
+    // MBz to fill canonical metadata (release date, album type, mbid).
+    await enrichAlbumImageByDeezer({
       albumId: row.albumId,
       albumName: row.albumName,
       artistName: row.artistName,
     });
-    wlog.info({}, "album enriched");
+    wlog.info({}, "album image enriched (Deezer)");
     return;
   }
 

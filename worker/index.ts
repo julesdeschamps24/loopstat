@@ -163,7 +163,7 @@ importWorker.on("failed", (job, err) => {
 });
 
 importWorker.on("error", (err) => {
-  log.error({ worker: "import", err }, "worker error");
+  log.error({ worker: "import", msg: (err as Error)?.message, code: (err as { code?: string })?.code }, "worker error");
 });
 
 const enrichCatalogWorker = new Worker(
@@ -189,7 +189,7 @@ enrichCatalogWorker.on("failed", (job, err) => {
 });
 
 enrichCatalogWorker.on("error", (err) => {
-  log.error({ worker: "enrich-catalog", err }, "worker error");
+  log.error({ worker: "enrich-catalog", msg: (err as Error)?.message, code: (err as { code?: string })?.code }, "worker error");
 });
 
 const enrichCatalogHotWorker = new Worker(
@@ -212,7 +212,7 @@ enrichCatalogHotWorker.on("failed", (job, err) => {
 });
 
 enrichCatalogHotWorker.on("error", (err) => {
-  log.error({ worker: ENRICH_CATALOG_HOT_QUEUE_NAME, err }, "worker error");
+  log.error({ worker: ENRICH_CATALOG_HOT_QUEUE_NAME, msg: (err as Error)?.message, code: (err as { code?: string })?.code }, "worker error");
 });
 
 const enrichCatalogSingleWorker = new Worker(
@@ -235,7 +235,7 @@ enrichCatalogSingleWorker.on("failed", (job, err) => {
 });
 
 enrichCatalogSingleWorker.on("error", (err) => {
-  log.error({ worker: ENRICH_CATALOG_SINGLE_QUEUE_NAME, err }, "worker error");
+  log.error({ worker: ENRICH_CATALOG_SINGLE_QUEUE_NAME, msg: (err as Error)?.message, code: (err as { code?: string })?.code }, "worker error");
 });
 
 // Register the repeatable self-heal scheduler. `upsertJobScheduler` is
