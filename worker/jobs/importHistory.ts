@@ -7,10 +7,11 @@ import { insertStreams } from "@/db/queries/streams";
 import { log } from "@/lib/log";
 import { enrichCatalogQueue, enrichCatalogHotQueue } from "../queue";
 import {
-  getTopAlbumIdsForUser,
-  getTopArtistIdsForUser,
-  getTopTrackAlbumIdsForUser,
+  getOrderedTopAlbumIdsForUser,
+  getOrderedTopArtistIdsForUser,
+  getOrderedTopTrackAlbumIdsForUser,
 } from "@/db/queries/enrich";
+import { getUserLatestPlayedAt } from "@/db/queries/stats";
 import { albumArtists, albums, artists, trackArtists } from "@/db/schema";
 import { synthesizeAlbumId, synthesizeArtistId } from "@/lib/ids/synthesize";
 
@@ -263,20 +264,21 @@ export async function importHistory(
       );
     }
 
-    // Priority enrich : top 100 albums + albums of top 100 tracks + top 100
-    // artists. Track-album union ensures tracks (which render the album
-    // cover) get their covers even if their album isn't itself in the
-    // top-100 albums list. ~3-4 min total at 1.1s/call.
+    // Priority enrich : top items in window-priority order (1w → 4w → 6m → 1y).
+    // Tiered limits per window so the user sees this-week covers within
+    // ~minutes of import, then the longer windows trickle in.
     try {
-      const [topAlbumIds, topTrackAlbumIds, artistIds] = await Promise.all([
-        getTopAlbumIdsForUser(userId, 100),
-        getTopTrackAlbumIdsForUser(userId, 100),
-        getTopArtistIdsForUser(userId, 100),
+      const refDate = (await getUserLatestPlayedAt(userId)) ?? new Date();
+      const [orderedAlbumIds, orderedTrackAlbumIds, orderedArtistIds] = await Promise.all([
+        getOrderedTopAlbumIdsForUser(userId, refDate),
+        getOrderedTopTrackAlbumIdsForUser(userId, refDate),
+        getOrderedTopArtistIdsForUser(userId, refDate),
       ]);
-      const albumIds = Array.from(new Set([...topAlbumIds, ...topTrackAlbumIds]));
+      // Union preserves order : JS `Set` keeps insertion order.
+      const albumIds = Array.from(new Set([...orderedAlbumIds, ...orderedTrackAlbumIds]));
       await enrichCatalogHotQueue.add(
         "enrich-priority",
-        { userId, albumIds, artistIds },
+        { userId, albumIds, artistIds: orderedArtistIds },
         { jobId: `enrich-priority:${userId}:${importId}` },
       );
     } catch (priorityErr) {

@@ -76,7 +76,7 @@ export async function enrichCatalogPriority({
   let imagesEnriched = 0;
 
   // Albums : filter to ones not yet enriched.
-  const unenrichedAlbums =
+  const unenrichedAlbumRows =
     albumIds.length === 0
       ? []
       : await db
@@ -90,11 +90,20 @@ export async function enrichCatalogPriority({
           .innerJoin(artists, eq(artists.id, albumArtists.artistId))
           .where(and(inArray(albums.id, albumIds), isNull(albums.mbid)));
 
-  wlog.info({ albums: unenrichedAlbums.length }, "priority album sweep");
+  // Build a lookup map so we can iterate `albumIds` (the caller's order)
+  // without losing the window-priority sequence the SELECT can't preserve.
+  const albumMap = new Map(unenrichedAlbumRows.map((a) => [a.albumId, a]));
 
-  for (let i = 0; i < unenrichedAlbums.length; i++) {
-    if (i > 0) await sleep(RATE_DELAY_MS);
-    const row = unenrichedAlbums[i];
+  wlog.info(
+    { albums: albumMap.size, total: albumIds.length },
+    "priority album sweep (window-ordered)",
+  );
+
+  let albumsProcessed = 0;
+  for (const id of albumIds) {
+    const row = albumMap.get(id);
+    if (!row) continue; // already enriched (mbid set) or row missing
+    if (albumsProcessed > 0) await sleep(RATE_DELAY_MS);
     try {
       await withMbzRetry(
         () => enrichAlbumByNames({
@@ -112,10 +121,11 @@ export async function enrichCatalogPriority({
       );
       // Don't throw — partial progress is fine for the priority pass.
     }
+    albumsProcessed++;
   }
 
   // Artists : same pattern.
-  const unenrichedArtists =
+  const unenrichedArtistRows =
     artistIds.length === 0
       ? []
       : await db
@@ -123,11 +133,18 @@ export async function enrichCatalogPriority({
           .from(artists)
           .where(and(inArray(artists.id, artistIds), isNull(artists.mbid)));
 
-  wlog.info({ artists: unenrichedArtists.length }, "priority artist mbz sweep");
+  const mbzMap = new Map(unenrichedArtistRows.map((a) => [a.artistId, a]));
 
-  for (let i = 0; i < unenrichedArtists.length; i++) {
-    if (i > 0 || unenrichedAlbums.length > 0) await sleep(RATE_DELAY_MS);
-    const row = unenrichedArtists[i];
+  wlog.info(
+    { artists: mbzMap.size, total: artistIds.length },
+    "priority artist mbz sweep (window-ordered)",
+  );
+
+  let mbzProcessed = 0;
+  for (const id of artistIds) {
+    const row = mbzMap.get(id);
+    if (!row) continue;
+    if (mbzProcessed > 0 || albumMap.size > 0) await sleep(RATE_DELAY_MS);
     try {
       await withMbzRetry(
         () => enrichArtistByName({ artistId: row.artistId, name: row.name }),
@@ -140,10 +157,11 @@ export async function enrichCatalogPriority({
         "priority artist mbz failed",
       );
     }
+    mbzProcessed++;
   }
 
   // Deezer images for the same artists.
-  const artistsForImages =
+  const artistImageRows =
     artistIds.length === 0
       ? []
       : await db
@@ -157,11 +175,18 @@ export async function enrichCatalogPriority({
             ),
           );
 
-  wlog.info({ artists: artistsForImages.length }, "priority image sweep (Deezer)");
+  const imageMap = new Map(artistImageRows.map((a) => [a.artistId, a]));
 
-  for (let i = 0; i < artistsForImages.length; i++) {
+  wlog.info(
+    { artists: imageMap.size, total: artistIds.length },
+    "priority image sweep (Deezer, window-ordered)",
+  );
+
+  let imageProcessed = 0;
+  for (const id of artistIds) {
+    const row = imageMap.get(id);
+    if (!row) continue;
     await sleep(RATE_DELAY_MS);
-    const row = artistsForImages[i];
     try {
       await enrichArtistImageWithFallback({
         artistId: row.artistId,
@@ -174,6 +199,7 @@ export async function enrichCatalogPriority({
         "priority deezer image failed",
       );
     }
+    imageProcessed++;
   }
 
   wlog.info(

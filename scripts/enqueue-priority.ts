@@ -1,27 +1,29 @@
 import { enrichCatalogHotQueue } from "../worker/queue";
 import {
-  getTopAlbumIdsForUser,
-  getTopArtistIdsForUser,
-  getTopTrackAlbumIdsForUser,
+  getOrderedTopAlbumIdsForUser,
+  getOrderedTopArtistIdsForUser,
+  getOrderedTopTrackAlbumIdsForUser,
 } from "../src/db/queries/enrich";
+import { getUserLatestPlayedAt } from "../src/db/queries/stats";
 
 async function main() {
   const userId = "606faa26-da96-4e7c-935d-2a803eaefc01";
-  const [topAlbumIds, topTrackAlbumIds, artistIds] = await Promise.all([
-    getTopAlbumIdsForUser(userId, 100),
-    getTopTrackAlbumIdsForUser(userId, 100),
-    getTopArtistIdsForUser(userId, 100),
+  const refDate = (await getUserLatestPlayedAt(userId)) ?? new Date();
+  const [orderedAlbumIds, orderedTrackAlbumIds, orderedArtistIds] = await Promise.all([
+    getOrderedTopAlbumIdsForUser(userId, refDate),
+    getOrderedTopTrackAlbumIdsForUser(userId, refDate),
+    getOrderedTopArtistIdsForUser(userId, refDate),
   ]);
-  const albumIds = Array.from(new Set([...topAlbumIds, ...topTrackAlbumIds]));
+  const albumIds = Array.from(new Set([...orderedAlbumIds, ...orderedTrackAlbumIds]));
   console.log(
-    `Top ${topAlbumIds.length} albums + ${topTrackAlbumIds.length} track-albums (union=${albumIds.length}) + ${artistIds.length} artists`,
+    `Ordered ${orderedAlbumIds.length} albums + ${orderedTrackAlbumIds.length} track-albums (union=${albumIds.length}) + ${orderedArtistIds.length} artists [refDate=${refDate.toISOString()}]`,
   );
   await enrichCatalogHotQueue.add(
     "enrich-priority",
-    { userId, albumIds, artistIds },
+    { userId, albumIds, artistIds: orderedArtistIds },
     { jobId: `enrich-priority:${userId}:manual-${Date.now()}` },
   );
-  console.log("Enqueued enrich-priority");
+  console.log("Enqueued enrich-priority (window-ordered)");
   process.exit(0);
 }
 
