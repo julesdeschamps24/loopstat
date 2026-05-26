@@ -30,11 +30,13 @@ const QUALIFYING_PLAY = or(
  * `Date.now()` so the UI doesn't break for fresh accounts.
  */
 export const getUserLatestPlayedAt = cache(async (userId: string): Promise<Date | null> => {
+  // postgres-js returns timestamp columns as strings, not Date objects —
+  // the Drizzle `sql<Date>` type hint lies at runtime. Coerce explicitly.
   const [row] = await db
-    .select({ max: sql<Date | null>`max(${streams.playedAt})` })
+    .select({ max: sql<string | null>`max(${streams.playedAt})` })
     .from(streams)
     .where(eq(streams.userId, userId));
-  return row?.max ?? null;
+  return row?.max ? new Date(row.max) : null;
 });
 
 type ListeningWindow = "7d" | "30d" | "lifetime";
