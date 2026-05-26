@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { searchArtistByName } from "./search";
+import { searchAlbumByName, searchArtistByName } from "./search";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -45,5 +45,33 @@ describe("searchArtistByName", () => {
     await searchArtistByName({ name: "Booba & Kaaris" });
     const url = fetchMock.mock.calls[0][0] as string;
     expect(url).toContain("/search/artist?q=Booba%20%26%20Kaaris&limit=1");
+  });
+});
+
+describe("searchAlbumByName", () => {
+  it("returns deezerAlbumId + coverUrl on match", async () => {
+    mockFetch({
+      data: [
+        { id: 101, cover_medium: "https://cdn-images.dzcdn.net/images/cover/abc.jpg" },
+      ],
+    });
+    expect(
+      await searchAlbumByName({ artistName: "PNL", albumName: "Deux Frères" }),
+    ).toEqual({
+      deezerAlbumId: 101,
+      coverUrl: "https://cdn-images.dzcdn.net/images/cover/abc.jpg",
+    });
+  });
+
+  it("returns null when data is null or empty", async () => {
+    mockFetch({ data: null });
+    expect(
+      await searchAlbumByName({ artistName: "Unknown", albumName: "Ghost" }),
+    ).toBeNull();
+
+    mockFetch({ data: [] });
+    expect(
+      await searchAlbumByName({ artistName: "Unknown", albumName: "Ghost" }),
+    ).toBeNull();
   });
 });
