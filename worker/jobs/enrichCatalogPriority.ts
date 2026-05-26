@@ -7,8 +7,10 @@ import {
   enrichAlbumByNames,
   enrichArtistByName,
 } from "@/lib/musicbrainz/catalog";
+import { enrichAlbumImageByDeezer, enrichArtistImageByDeezer } from "@/lib/deezer/catalog";
 import { enrichArtistImageWithFallback } from "./enrichArtistImage";
 
+const ULTRA_PRIORITY_LIMIT = 20;
 const RATE_DELAY_MS = 1100;
 const MAX_TRANSIENT_RETRIES = 5;
 const RETRY_BUFFER_MS = 1000;
@@ -74,6 +76,62 @@ export async function enrichCatalogPriority({
   let albumsEnriched = 0;
   let artistsEnriched = 0;
   let imagesEnriched = 0;
+
+  // Ultra-priority : fire the FIRST 20 of each in parallel via Deezer.
+  // Bypasses MBz/CAA's 1.1s/call rate limit — Deezer is no-auth and accepts
+  // ~50 req/s. Result : ~2s for 40 images instead of ~44s sequentially.
+  // The normal MBz sweep below still runs on these items for canonical
+  // metadata (release date, album type, mbid) — only the image is fast-pathed.
+  const ultraAlbumIds = albumIds.slice(0, ULTRA_PRIORITY_LIMIT);
+  const ultraArtistIds = artistIds.slice(0, ULTRA_PRIORITY_LIMIT);
+
+  // Fetch the metadata needed for Deezer queries (album name + primary
+  // artist name for albums ; artist name for artists). Only include items
+  // that don't already have an image.
+  const [ultraAlbumRows, ultraArtistRows] = await Promise.all([
+    ultraAlbumIds.length === 0
+      ? Promise.resolve([])
+      : db
+          .select({
+            albumId: albums.id,
+            albumName: albums.name,
+            artistName: artists.name,
+          })
+          .from(albums)
+          .innerJoin(albumArtists, eq(albumArtists.albumId, albums.id))
+          .innerJoin(artists, eq(artists.id, albumArtists.artistId))
+          .where(and(inArray(albums.id, ultraAlbumIds), isNull(albums.imageUrl))),
+    ultraArtistIds.length === 0
+      ? Promise.resolve([])
+      : db
+          .select({ artistId: artists.id, name: artists.name })
+          .from(artists)
+          .where(and(inArray(artists.id, ultraArtistIds), isNull(artists.imageUrl))),
+  ]);
+
+  wlog.info(
+    { albums: ultraAlbumRows.length, artists: ultraArtistRows.length },
+    "ultra-priority sweep (Deezer, parallel)",
+  );
+
+  const ultraStart = Date.now();
+  const ultraResults = await Promise.allSettled([
+    ...ultraAlbumRows.map((row) =>
+      enrichAlbumImageByDeezer({
+        albumId: row.albumId,
+        artistName: row.artistName,
+        albumName: row.albumName,
+      }),
+    ),
+    ...ultraArtistRows.map((row) =>
+      enrichArtistImageByDeezer({ artistId: row.artistId, name: row.name }),
+    ),
+  ]);
+  const ultraSuccess = ultraResults.filter((r) => r.status === "fulfilled").length;
+  wlog.info(
+    { success: ultraSuccess, total: ultraResults.length, durationMs: Date.now() - ultraStart },
+    "ultra-priority complete",
+  );
 
   // Albums : filter to ones not yet enriched.
   const unenrichedAlbumRows =
