@@ -49,10 +49,12 @@ export const artists = pgTable("artists", {
   imageUrl: text("image_url"),
   mbid: uuid("mbid"),
   tadbId: integer("tadb_id"),
+  deezerId: integer("deezer_id"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
   mbidIdx: index("artists_mbid_idx").on(t.mbid),
   tadbIdIdx: index("artists_tadb_id_idx").on(t.tadbId),
+  deezerIdIdx: index("artists_deezer_id_idx").on(t.deezerId),
 }));
 
 export const albums = pgTable("albums", {
