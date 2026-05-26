@@ -25,6 +25,7 @@ import { getDemoArtist, isDemoId } from "@/lib/demo/data";
 import { enrichDemoFixtures } from "@/lib/demo/enrich";
 import { formatRelativeDate } from "@/lib/format/date";
 import { cn, formatNumber, glassCard } from "@/lib/utils";
+import { triggerSingleEnrich } from "@/lib/enrich/trigger";
 
 export const revalidate = 3600;
 
@@ -222,6 +223,11 @@ export default async function ArtistDetailPage({
   // ===== REAL MODE =====
   const [artist] = await db.select().from(artists).where(eq(artists.id, id)).limit(1);
   if (!artist) notFound();
+
+  if (artist.imageUrl === null) {
+    // Fire-and-forget — don't await, don't block render.
+    void triggerSingleEnrich("artist", artist.id);
+  }
 
   const [stats, topTracks, topAlbums, monthly, related, totalMs, wallCovers] =
     await Promise.all([

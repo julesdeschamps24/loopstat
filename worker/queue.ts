@@ -21,6 +21,8 @@ const globalCache = globalThis as unknown as {
   __loopstatRedis?: IORedis;
   __loopstatImportQueue?: Queue;
   __loopstatEnrichCatalogQueue?: Queue;
+  __loopstatEnrichCatalogHotQueue?: Queue;
+  __loopstatEnrichCatalogSingleQueue?: Queue;
 };
 
 // BullMQ requires maxRetriesPerRequest: null on the connection used by Workers.
@@ -58,5 +60,33 @@ export const enrichCatalogQueue =
       backoff: { type: "exponential", delay: 5000 },
       removeOnComplete: { age: 24 * 3600, count: 100 },
       removeOnFail: { age: 24 * 3600 },
+    },
+  }));
+
+export const ENRICH_CATALOG_HOT_QUEUE_NAME = "enrich-catalog-hot";
+
+export const enrichCatalogHotQueue: Queue =
+  globalCache.__loopstatEnrichCatalogHotQueue ??
+  (globalCache.__loopstatEnrichCatalogHotQueue = new Queue(ENRICH_CATALOG_HOT_QUEUE_NAME, {
+    connection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: "exponential", delay: 5000 },
+      removeOnComplete: { age: 86400, count: 100 },
+      removeOnFail: { age: 86400 },
+    },
+  }));
+
+export const ENRICH_CATALOG_SINGLE_QUEUE_NAME = "enrich-catalog-single";
+
+export const enrichCatalogSingleQueue: Queue =
+  globalCache.__loopstatEnrichCatalogSingleQueue ??
+  (globalCache.__loopstatEnrichCatalogSingleQueue = new Queue(ENRICH_CATALOG_SINGLE_QUEUE_NAME, {
+    connection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: "exponential", delay: 5000 },
+      removeOnComplete: { age: 3600, count: 50 },
+      removeOnFail: { age: 3600 },
     },
   }));

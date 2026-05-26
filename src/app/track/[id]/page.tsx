@@ -20,6 +20,7 @@ import {
 } from "@/db/queries/stats";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 import { formatDate } from "@/lib/format/date";
+import { triggerSingleEnrich } from "@/lib/enrich/trigger";
 
 export const revalidate = 3600;
 
@@ -182,6 +183,12 @@ export default async function TrackDetailPage({
   ]);
 
   const albumImage = album?.imageUrl ?? null;
+
+  if (album && album.imageUrl === null) {
+    // Fire-and-forget — don't await, don't block render.
+    void triggerSingleEnrich("album", album.id);
+  }
+
   const hasPlays = stats.count > 0;
 
   return (

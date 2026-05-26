@@ -26,6 +26,7 @@ import {
   getOtherAlbumsByArtist,
 } from "@/db/queries/stats";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
+import { triggerSingleEnrich } from "@/lib/enrich/trigger";
 
 export const revalidate = 3600;
 
@@ -200,6 +201,11 @@ export default async function AlbumDetailPage({
     .where(eq(albums.id, id))
     .limit(1);
   if (!albumRow) notFound();
+
+  if (albumRow.imageUrl === null) {
+    // Fire-and-forget — don't await, don't block render.
+    void triggerSingleEnrich("album", albumRow.id);
+  }
 
   // Fetch primary artist for this album (position 0 or first).
   const albumArtistRows = await db
