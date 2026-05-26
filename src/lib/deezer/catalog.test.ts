@@ -1,0 +1,59 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as search from "./search";
+
+vi.mock("@/db/client", () => ({
+  db: { update: vi.fn() },
+}));
+
+const setMock = vi.fn().mockReturnThis();
+const whereMock = vi.fn().mockResolvedValue(undefined);
+
+beforeEach(async () => {
+  const { db } = await import("@/db/client");
+  (db.update as ReturnType<typeof vi.fn>).mockReturnValue({
+    set: setMock.mockReturnValue({ where: whereMock }),
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  setMock.mockClear();
+  whereMock.mockClear();
+});
+
+import { enrichArtistImageByDeezer } from "./catalog";
+
+describe("enrichArtistImageByDeezer", () => {
+  it("updates artist with deezerId + imageUrl on match with picture", async () => {
+    vi.spyOn(search, "searchArtistByName").mockResolvedValue({
+      deezerId: 56,
+      pictureUrl: "https://cdn-images.dzcdn.net/images/artist/pnl.jpg",
+    });
+
+    await enrichArtistImageByDeezer({ artistId: "art_x", name: "PNL" });
+
+    expect(setMock).toHaveBeenCalledWith({
+      deezerId: 56,
+      imageUrl: "https://cdn-images.dzcdn.net/images/artist/pnl.jpg",
+    });
+  });
+
+  it("stores sentinel deezerId=0 when no match", async () => {
+    vi.spyOn(search, "searchArtistByName").mockResolvedValue(null);
+
+    await enrichArtistImageByDeezer({ artistId: "art_x", name: "Unknown" });
+
+    expect(setMock).toHaveBeenCalledWith({ deezerId: 0 });
+  });
+
+  it("stores deezerId but null imageUrl when picture missing", async () => {
+    vi.spyOn(search, "searchArtistByName").mockResolvedValue({
+      deezerId: 99,
+      pictureUrl: null,
+    });
+
+    await enrichArtistImageByDeezer({ artistId: "art_x", name: "NoPic" });
+
+    expect(setMock).toHaveBeenCalledWith({ deezerId: 99, imageUrl: null });
+  });
+});
