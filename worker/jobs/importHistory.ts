@@ -9,6 +9,7 @@ import { enrichCatalogQueue, enrichCatalogHotQueue } from "../queue";
 import {
   getTopAlbumIdsForUser,
   getTopArtistIdsForUser,
+  getTopTrackAlbumIdsForUser,
 } from "@/db/queries/enrich";
 import { albumArtists, albums, artists, trackArtists } from "@/db/schema";
 import { synthesizeAlbumId, synthesizeArtistId } from "@/lib/ids/synthesize";
@@ -262,13 +263,17 @@ export async function importHistory(
       );
     }
 
-    // Priority enrich : top 100 albums + top 50 artists. Runs in ~3 min so the
-    // user sees real covers on their dashboard / tops shortly after import.
+    // Priority enrich : top 100 albums + albums of top 100 tracks + top 100
+    // artists. Track-album union ensures tracks (which render the album
+    // cover) get their covers even if their album isn't itself in the
+    // top-100 albums list. ~3-4 min total at 1.1s/call.
     try {
-      const [albumIds, artistIds] = await Promise.all([
+      const [topAlbumIds, topTrackAlbumIds, artistIds] = await Promise.all([
         getTopAlbumIdsForUser(userId, 100),
-        getTopArtistIdsForUser(userId, 50),
+        getTopTrackAlbumIdsForUser(userId, 100),
+        getTopArtistIdsForUser(userId, 100),
       ]);
+      const albumIds = Array.from(new Set([...topAlbumIds, ...topTrackAlbumIds]));
       await enrichCatalogHotQueue.add(
         "enrich-priority",
         { userId, albumIds, artistIds },

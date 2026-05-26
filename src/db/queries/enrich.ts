@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { albumArtists, albums, streams, tracks, trackArtists } from "@/db/schema";
 
@@ -42,4 +42,32 @@ export async function getTopArtistIdsForUser(
     .orderBy(desc(sql`count(${streams.id})`))
     .limit(limit);
   return rows.map((r) => r.artistId);
+}
+
+/**
+ * Album IDs belonging to the user's top-N tracks. Tracks render their
+ * album's cover in the UI, so enriching these albums is what makes the
+ * /top/tracks list look complete. Distinct from getTopAlbumIdsForUser
+ * because a track in top-100 may live on an album not itself in top-100.
+ */
+export async function getTopTrackAlbumIdsForUser(
+  userId: string,
+  limit: number,
+): Promise<string[]> {
+  const rows = await db
+    .select({ albumId: tracks.albumId, plays: sql<number>`count(${streams.id})::int` })
+    .from(streams)
+    .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .where(
+      and(
+        eq(streams.userId, userId),
+        QUALIFYING_PLAY,
+        isNotNull(tracks.albumId),
+      ),
+    )
+    .groupBy(streams.trackId, tracks.albumId)
+    .orderBy(desc(sql`count(${streams.id})`))
+    .limit(limit);
+  // Dedup album IDs (top tracks can share an album).
+  return Array.from(new Set(rows.map((r) => r.albumId!).filter((id) => id !== null)));
 }
