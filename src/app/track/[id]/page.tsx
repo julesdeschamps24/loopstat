@@ -21,8 +21,7 @@ import {
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 import { formatDate } from "@/lib/format/date";
 import { triggerSingleEnrich } from "@/lib/enrich/trigger";
-
-export const revalidate = 3600;
+import { enrichAlbumImageByDeezer } from "@/lib/deezer/catalog";
 
 function formatPercent(ratio: number): string {
   return `${Math.round(ratio * 100)} %`;
@@ -182,13 +181,36 @@ export default async function TrackDetailPage({
     getPaddedWallCovers(userId, null, 40),
   ]);
 
-  const albumImage = album?.imageUrl ?? null;
-
   if (album && album.imageUrl === null) {
-    // Fire-and-forget — don't await, don't block render.
-    void triggerSingleEnrich("album", album.id);
+    // Try inline Deezer enrich with a tight timeout — cover loads on first
+    // visit instead of after a refresh. Falls back to background queue if
+    // Deezer is slow.
+    const primaryArtistName = trackArtistRows[0]?.name ?? "";
+    try {
+      await Promise.race([
+        enrichAlbumImageByDeezer({
+          albumId: album.id,
+          albumName: album.name,
+          artistName: primaryArtistName,
+        }),
+        new Promise<void>((_, reject) =>
+          setTimeout(() => reject(new Error("deezer-timeout")), 500),
+        ),
+      ]);
+      // Re-fetch the album row to pick up the just-written image_url
+      const [refreshed] = await db
+        .select()
+        .from(albums)
+        .where(eq(albums.id, album.id))
+        .limit(1);
+      if (refreshed?.imageUrl) album.imageUrl = refreshed.imageUrl;
+    } catch {
+      // Inline failed (timeout or Deezer error) — enqueue background fallback
+      void triggerSingleEnrich("album", album.id);
+    }
   }
 
+  const albumImage = album?.imageUrl ?? null;
   const hasPlays = stats.count > 0;
 
   return (

@@ -27,8 +27,7 @@ import {
 } from "@/db/queries/stats";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 import { triggerSingleEnrich } from "@/lib/enrich/trigger";
-
-export const revalidate = 3600;
+import { enrichAlbumImageByDeezer } from "@/lib/deezer/catalog";
 
 function formatPercent(ratio: number): string {
   return `${Math.round(ratio * 100)} %`;
@@ -202,11 +201,6 @@ export default async function AlbumDetailPage({
     .limit(1);
   if (!albumRow) notFound();
 
-  if (albumRow.imageUrl === null) {
-    // Fire-and-forget — don't await, don't block render.
-    void triggerSingleEnrich("album", albumRow.id);
-  }
-
   // Fetch primary artist for this album (position 0 or first).
   const albumArtistRows = await db
     .select({ artistId: albumArtists.artistId, name: artists.name })
@@ -216,7 +210,36 @@ export default async function AlbumDetailPage({
     .limit(5);
 
   const primaryArtistId = albumArtistRows[0]?.artistId ?? null;
+  const primaryArtistName = albumArtistRows[0]?.name ?? "";
   const artistNames = albumArtistRows.map((r) => r.name).join(", ");
+
+  if (albumRow.imageUrl === null) {
+    // Try inline Deezer enrich with a tight timeout — cover loads on first
+    // visit instead of after a refresh. Falls back to background queue if
+    // Deezer is slow.
+    try {
+      await Promise.race([
+        enrichAlbumImageByDeezer({
+          albumId: albumRow.id,
+          albumName: albumRow.name,
+          artistName: primaryArtistName,
+        }),
+        new Promise<void>((_, reject) =>
+          setTimeout(() => reject(new Error("deezer-timeout")), 500),
+        ),
+      ]);
+      // Re-fetch the album row to pick up the just-written image_url
+      const [refreshed] = await db
+        .select()
+        .from(albums)
+        .where(eq(albums.id, albumRow.id))
+        .limit(1);
+      if (refreshed?.imageUrl) albumRow.imageUrl = refreshed.imageUrl;
+    } catch {
+      // Inline failed (timeout or Deezer error) — enqueue background fallback
+      void triggerSingleEnrich("album", albumRow.id);
+    }
+  }
 
   const [stats, trackPlays, breakdown, monthly, hours, quality, otherAlbums, wallCovers] =
     await Promise.all([

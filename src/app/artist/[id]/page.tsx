@@ -26,8 +26,7 @@ import { enrichDemoFixtures } from "@/lib/demo/enrich";
 import { formatRelativeDate } from "@/lib/format/date";
 import { cn, formatNumber, glassCard } from "@/lib/utils";
 import { triggerSingleEnrich } from "@/lib/enrich/trigger";
-
-export const revalidate = 3600;
+import { enrichArtistImageByDeezer } from "@/lib/deezer/catalog";
 
 function PercentDisplay({ percent }: { percent: number }) {
   // 2-decimal precision with French comma separator. "0.005" still rounds to
@@ -225,8 +224,30 @@ export default async function ArtistDetailPage({
   if (!artist) notFound();
 
   if (artist.imageUrl === null) {
-    // Fire-and-forget — don't await, don't block render.
-    void triggerSingleEnrich("artist", artist.id);
+    // Try inline Deezer enrich with a tight timeout — image loads on first
+    // visit instead of after a refresh. Falls back to background queue if
+    // Deezer is slow.
+    try {
+      await Promise.race([
+        enrichArtistImageByDeezer({
+          artistId: artist.id,
+          name: artist.name,
+        }),
+        new Promise<void>((_, reject) =>
+          setTimeout(() => reject(new Error("deezer-timeout")), 500),
+        ),
+      ]);
+      // Re-fetch the artist row to pick up the just-written image_url
+      const [refreshed] = await db
+        .select()
+        .from(artists)
+        .where(eq(artists.id, artist.id))
+        .limit(1);
+      if (refreshed?.imageUrl) artist.imageUrl = refreshed.imageUrl;
+    } catch {
+      // Inline failed (timeout or Deezer error) — enqueue background fallback
+      void triggerSingleEnrich("artist", artist.id);
+    }
   }
 
   const [stats, topTracks, topAlbums, monthly, related, totalMs, wallCovers] =
