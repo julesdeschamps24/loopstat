@@ -7,7 +7,7 @@ import { RankedRow } from "@/components/stats/ranked-list";
 import { PeriodSelector } from "@/components/stats/period-selector";
 import { ShareButton } from "@/components/share-button";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
-import { getTopArtistsFromStreams } from "@/db/queries/stats";
+import { getTopArtistsFromStreams, getUserLatestPlayedAt } from "@/db/queries/stats";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
 import { getPaddedWallCovers } from "@/db/queries/wall-covers";
@@ -79,10 +79,12 @@ export default async function TopArtistsPage({
     );
   }
 
+  const latestPlayedAt = await getUserLatestPlayedAt(userId);
+  const refDate = latestPlayedAt ?? new Date();
   const [artists, profile, wallCovers] = await Promise.all([
-    getTopArtistsFromStreams(userId, periodSince(period), TOP_LIMIT),
+    getTopArtistsFromStreams(userId, periodSince(period, refDate), TOP_LIMIT),
     getProfile(userId),
-    getPaddedWallCovers(userId, periodSince("1y"), 40),
+    getPaddedWallCovers(userId, periodSince("1y", refDate), 40),
   ]);
   const imported = hasImport;
   const shareUsername =

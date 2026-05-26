@@ -23,6 +23,7 @@ import {
   getListeningTotals,
   getTopTracksFromStreams,
   getTopArtistsFromStreams,
+  getUserLatestPlayedAt,
 } from "@/db/queries/stats";
 import { getProfile } from "@/db/queries/users";
 import { getWallCovers } from "@/db/queries/wall-covers";
@@ -211,13 +212,16 @@ export default async function DashboardPage() {
 
   // --- MODE RÉEL ---
   // Cutoff "4 semaines" ≈ 28 jours ; "1 an" pour le mur de fond.
-  const now = new Date();
-  const since4w = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
-  const since1y = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+  // On pivote sur le dernier played_at de l'utilisateur (données d'import
+  // statique potentiellement antérieures à aujourd'hui) plutôt que sur now().
+  const latestPlayedAt = await getUserLatestPlayedAt(userId);
+  const refDate = latestPlayedAt ?? new Date();
+  const since4w = new Date(refDate.getTime() - 28 * 24 * 60 * 60 * 1000);
+  const since1y = new Date(refDate.getTime() - 365 * 24 * 60 * 60 * 1000);
 
   const [totals, topTracks, topArtists, wallAlbums, profile, premium] =
     await Promise.all([
-      getListeningTotals(userId),
+      getListeningTotals(userId, refDate),
       getTopTracksFromStreams(userId, since4w, 5),
       getTopArtistsFromStreams(userId, since4w, 5),
       getWallCovers(userId, since1y, WALL_CELLS),
