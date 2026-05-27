@@ -71,6 +71,20 @@
       "when": 1779850000000,
       "tag": "0009_drop_artists_tadb_id",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1779842315940,
+      "tag": "0010_supreme_maximus",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1779843484036,
+      "tag": "0011_known_yellow_claw",
+      "breakpoints": true
     }
   ]
 }

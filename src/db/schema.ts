@@ -47,11 +47,9 @@ export const artists = pgTable("artists", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   imageUrl: text("image_url"),
-  mbid: uuid("mbid"),
   deezerId: integer("deezer_id"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
-  mbidIdx: index("artists_mbid_idx").on(t.mbid),
   deezerIdIdx: index("artists_deezer_id_idx").on(t.deezerId),
 }));
 
@@ -60,12 +58,11 @@ export const albums = pgTable("albums", {
   name: text("name").notNull(),
   releaseDate: date("release_date"),
   imageUrl: text("image_url"),
+  deezerId: integer("deezer_id"),
   totalTracks: smallint("total_tracks"),
-  albumType: text("album_type"),
-  mbid: uuid("mbid"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => ({
-  mbidIdx: index("albums_mbid_idx").on(t.mbid),
+  deezerIdIdx: index("albums_deezer_id_idx").on(t.deezerId),
 }));
 
 export const tracks = pgTable("tracks", {

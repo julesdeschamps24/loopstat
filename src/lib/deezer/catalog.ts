@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { albums, artists } from "@/db/schema";
 import { searchAlbumByName, searchArtistByName } from "./search";
+import { fetchAlbumDetails } from "./album";
 
 const SENTINEL_DEEZER_ID = 0;
 
@@ -34,12 +35,7 @@ export async function enrichArtistImageByDeezer({
     .where(eq(artists.id, artistId));
 }
 
-/**
- * Best-effort album cover enrich via Deezer. Used by the ultra-priority tier
- * to bypass the slow MBz → CAA chain. Sets `albums.image_url` directly.
- * No sentinel column (the MBz background sweep will set mbid later anyway,
- * and our retry filter is based on image_url IS NULL).
- */
+/** Enrich an album via Deezer: sentinel on miss, image + release_date on hit. */
 export async function enrichAlbumImageByDeezer({
   albumId,
   artistName,
@@ -50,9 +46,28 @@ export async function enrichAlbumImageByDeezer({
   albumName: string;
 }): Promise<void> {
   const match = await searchAlbumByName({ artistName, albumName });
-  if (!match || !match.coverUrl) return;
+  if (!match) {
+    await db
+      .update(albums)
+      .set({ deezerId: SENTINEL_DEEZER_ID })
+      .where(eq(albums.id, albumId));
+    return;
+  }
+
+  let releaseDate: string | null = null;
+  try {
+    const details = await fetchAlbumDetails({ deezerAlbumId: match.deezerAlbumId });
+    releaseDate = details?.releaseDate ?? null;
+  } catch {
+    // best-effort
+  }
+
   await db
     .update(albums)
-    .set({ imageUrl: match.coverUrl })
+    .set({
+      deezerId: match.deezerAlbumId,
+      imageUrl: match.coverUrl,
+      releaseDate,
+    })
     .where(eq(albums.id, albumId));
 }

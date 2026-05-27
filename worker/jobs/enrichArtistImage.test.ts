@@ -7,9 +7,9 @@ vi.mock("@/lib/deezer/catalog", () => ({
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("enrichArtistImageWithFallback (smoke)", () => {
+describe("enrichArtistImage (smoke)", () => {
   it("exports the function", async () => {
     const mod = await import("./enrichArtistImage");
-    expect(typeof mod.enrichArtistImageWithFallback).toBe("function");
+    expect(typeof mod.enrichArtistImage).toBe("function");
   });
 });
