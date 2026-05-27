@@ -3,7 +3,7 @@ import { db } from "@/db/client";
 import { albums, albumArtists, artists } from "@/db/schema";
 import { log } from "@/lib/log";
 import { enrichAlbumImageByDeezer } from "@/lib/deezer/catalog";
-import { enrichArtistImageWithFallback } from "./enrichArtistImage";
+import { enrichArtistImage } from "./enrichArtistImage";
 
 export interface EnrichCatalogSingleArgs {
   type: "album" | "artist";
@@ -82,7 +82,7 @@ export async function enrichCatalogSingle({
     return;
   }
 
-  await enrichArtistImageWithFallback({
+  await enrichArtistImage({
     artistId: row.artistId,
     name: row.name,
   });

@@ -3,15 +3,8 @@ import { db } from "@/db/client";
 import { artists } from "@/db/schema";
 import { enrichArtistImageByDeezer } from "@/lib/deezer/catalog";
 
-/**
- * Enrich an artist's image via Deezer. Single source — Deezer's catalog
- * covers ~99% of mainstream + non-English artists, so the dual-source
- * (TADB → Deezer fallback) of earlier iterations was dead complexity.
- *
- * Skips the API call entirely if image_url is already set or Deezer was
- * already attempted (deezer_id NOT NULL).
- */
-export async function enrichArtistImageWithFallback(row: {
+/** Pre-check then enrich via Deezer; skip if already attempted (deezer_id set) or image present. */
+export async function enrichArtistImage(row: {
   artistId: string;
   name: string;
 }): Promise<void> {
