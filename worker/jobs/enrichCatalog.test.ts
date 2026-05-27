@@ -6,12 +6,9 @@ vi.mock("@/db/client", () => ({
     update: vi.fn(),
   },
 }));
-vi.mock("@/lib/musicbrainz/catalog", () => ({
-  enrichAlbumByNames: vi.fn(),
-  enrichArtistByName: vi.fn(),
-}));
-vi.mock("./enrichArtistImage", () => ({
-  enrichArtistImageWithFallback: vi.fn(),
+vi.mock("@/lib/deezer/catalog", () => ({
+  enrichAlbumImageByDeezer: vi.fn(),
+  enrichArtistImageByDeezer: vi.fn(),
 }));
 vi.mock("../queue", () => ({
   enrichCatalogQueue: { getJob: vi.fn(), add: vi.fn() },
