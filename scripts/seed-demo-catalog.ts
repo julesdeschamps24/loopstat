@@ -4,7 +4,7 @@
  * Why : the demo dashboard shows top Sabrina Carpenter / Taylor Swift / etc.
  * If no real user has imported these albums, the catalog doesn't have them
  * and enrichDemoFixtures can't substitute real covers. This script ensures
- * the catalog has minimal rows + real MBz/CAA covers for every demo fixture.
+ * the catalog has minimal rows + real Deezer covers for every demo fixture.
  *
  * Idempotent : re-runs are safe (ON CONFLICT DO NOTHING / DO UPDATE).
  *
@@ -26,8 +26,7 @@ import {
   DEMO_TOP_TRACKS,
 } from "../src/lib/demo/data";
 import { synthesizeAlbumId, synthesizeArtistId } from "../src/lib/ids/synthesize";
-import { enrichAlbumByNames, enrichArtistByName } from "../src/lib/musicbrainz/catalog";
-import { enrichArtistImageByDeezer } from "../src/lib/deezer/catalog";
+import { enrichAlbumImageByDeezer, enrichArtistImageByDeezer } from "../src/lib/deezer/catalog";
 
 const RATE_MS = 1100;
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -92,19 +91,19 @@ async function main() {
   }
   console.log(`Inserted ${trackRows.length} track rows + ${trackArtistRows.length} track_artists junctions`);
 
-  // 4) Enrich each album via MBz + CAA (skip ones already enriched).
-  console.log("\n=== Enriching albums via MBz + CAA ===");
+  // 4) Enrich each album via Deezer (skip ones already enriched).
+  console.log("\n=== Enriching albums via Deezer ===");
   let i = 0;
   for (const a of DEMO_TOP_ALBUMS) {
     if (i > 0) await sleep(RATE_MS);
     const albumId = synthesizeAlbumId(a.artistNames[0], a.name);
-    const [row] = await db.select({ mbid: albums.mbid }).from(albums).where(eq(albums.id, albumId)).limit(1);
-    if (row?.mbid) {
-      console.log(`  [${++i}/${DEMO_TOP_ALBUMS.length}] ${a.artistNames[0]} — ${a.name}: already enriched (mbid=${row.mbid.slice(0, 8)}…)`);
+    const [row] = await db.select({ deezerId: albums.deezerId }).from(albums).where(eq(albums.id, albumId)).limit(1);
+    if (row?.deezerId != null) {
+      console.log(`  [${++i}/${DEMO_TOP_ALBUMS.length}] ${a.artistNames[0]} — ${a.name}: already enriched`);
       continue;
     }
     try {
-      await enrichAlbumByNames({
+      await enrichAlbumImageByDeezer({
         albumId,
         artistName: a.artistNames[0],
         albumName: a.name,
@@ -115,22 +114,13 @@ async function main() {
     }
   }
 
-  // 5) Enrich each artist via MBz, then Deezer for the image.
-  console.log("\n=== Enriching artists via MBz + Deezer ===");
+  // 5) Enrich each artist via Deezer.
+  console.log("\n=== Enriching artists via Deezer ===");
   i = 0;
   for (const a of DEMO_TOP_ARTISTS) {
     if (i > 0) await sleep(RATE_MS);
     const artistId = synthesizeArtistId(a.name);
-    const [row] = await db.select({ mbid: artists.mbid, deezerId: artists.deezerId }).from(artists).where(eq(artists.id, artistId)).limit(1);
-
-    if (!row?.mbid) {
-      try {
-        await enrichArtistByName({ artistId, name: a.name });
-        await sleep(RATE_MS);
-      } catch (err) {
-        console.error(`  [MBz] ${a.name}: FAILED`, (err as Error).message);
-      }
-    }
+    const [row] = await db.select({ deezerId: artists.deezerId }).from(artists).where(eq(artists.id, artistId)).limit(1);
 
     if (row?.deezerId == null) {
       try {

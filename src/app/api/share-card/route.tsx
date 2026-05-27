@@ -17,7 +17,7 @@ import {
 } from "@/lib/share/card-config";
 import { prefetchImages } from "@/lib/share/prefetch-images";
 import { periodSince } from "@/lib/stats/period";
-// Image URLs now come from MusicBrainz (already-sized JPEGs) — no CDN
+// Image URLs now come from Deezer (already-sized JPEGs) — no CDN
 // shrinking needed. Identity function keeps call-sites unchanged.
 function shrinkAlbumCoverUrl(url: string | null, _size: "medium" | "small"): string | null {
   return url ?? null;

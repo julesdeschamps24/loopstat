@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/db/client", () => ({ db: {} }));
-vi.mock("@/lib/musicbrainz/catalog", () => ({
-  enrichAlbumByNames: vi.fn(),
-  enrichArtistByName: vi.fn(),
-}));
 vi.mock("./enrichArtistImage", () => ({
   enrichArtistImage: vi.fn(),
 }));
