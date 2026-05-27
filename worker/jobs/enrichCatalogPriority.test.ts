@@ -1,13 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/db/client", () => ({ db: {} }));
-vi.mock("@/lib/musicbrainz/catalog", () => ({
-  enrichAlbumByNames: vi.fn(),
-  enrichArtistByName: vi.fn(),
-}));
-vi.mock("@/lib/musicbrainz/client", () => ({ MusicBrainzError: class {} }));
-vi.mock("./enrichArtistImage", () => ({
-  enrichArtistImageWithFallback: vi.fn(),
+vi.mock("@/lib/deezer/catalog", () => ({
+  enrichAlbumImageByDeezer: vi.fn(),
+  enrichArtistImageByDeezer: vi.fn(),
 }));
 
 afterEach(() => vi.restoreAllMocks());
@@ -27,6 +23,5 @@ describe("enrichCatalogPriority (smoke)", () => {
     });
     expect(result.albumsEnriched).toBe(0);
     expect(result.artistsEnriched).toBe(0);
-    expect(result.imagesEnriched).toBe(0);
   });
 });
