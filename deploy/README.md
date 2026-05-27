@@ -102,7 +102,7 @@ ssh root@204.168.178.52 'cd /opt/loopstat && \
   pnpm exec dotenv -e .env.production -- tsx scripts/seed-demo-catalog.ts'
 ```
 
-Durée : ~2 min (~15 albums × 1.1s MBz + ~15 artistes × 2.2s MBz+TADB).
+Durée : <1 min (~30 entités × ~150ms Deezer, soft-throttled).
 Idempotent : ré-exécutable sans danger, skip ce qui est déjà enrichi.
 
 À relancer si :
