@@ -22,7 +22,6 @@
    ```sh
    openssl rand -base64 32   # AUTH_SECRET
    openssl rand -hex 24      # POSTGRES_PASSWORD
-   openssl rand -hex 32      # TOKEN_ENC_KEY (32 bytes pour AES-256-GCM)
    ```
 
 ## Déploiement initial

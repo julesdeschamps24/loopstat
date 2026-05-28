@@ -24,12 +24,9 @@ export default defineConfig({
     // to ride out worker load without hiding real bugs.
     testTimeout: 15000,
     env: {
-      // Provide harmless defaults so module-level env checks (DATABASE_URL,
-      // TOKEN_ENC_KEY) don't throw at import time. Individual tests override
-      // these via vi.stubEnv when needed.
+      // Provide a harmless default so module-level env checks (DATABASE_URL)
+      // don't throw at import time. Individual tests override via vi.stubEnv.
       DATABASE_URL: "postgres://loopstat:loopstat@127.0.0.1:5432/loopstat",
-      TOKEN_ENC_KEY:
-        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     },
   },
 });

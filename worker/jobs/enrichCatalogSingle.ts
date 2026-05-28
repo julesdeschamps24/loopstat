@@ -45,9 +45,9 @@ export async function enrichCatalogSingle({
       return;
     }
 
-    // Click-triggered enrich : use Deezer (fast, parallel-safe, ~150ms) instead
-    // of MBz → CAA chain (~2s rate-limited). The background sweep still runs
-    // MBz to fill canonical metadata (release date, album type, mbid).
+    // Click-triggered enrich via Deezer (fast, parallel-safe, ~150ms). Fills
+    // image_url + release_date in one shot; the background sweep uses the same
+    // Deezer path.
     await enrichAlbumImageByDeezer({
       albumId: row.albumId,
       albumName: row.albumName,

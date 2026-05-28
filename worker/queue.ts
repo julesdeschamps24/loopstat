@@ -53,8 +53,9 @@ export const enrichCatalogQueue =
   (globalCache.__loopstatEnrichCatalogQueue = new Queue(ENRICH_CATALOG_QUEUE_NAME, {
     connection,
     defaultJobOptions: {
-      // Enrichment is idempotent (enriched rows have mbid set, so a retry
-      // won't re-select them) — safe to retry transient MBz failures.
+      // Enrichment is idempotent (enriched rows have deezer_id set — including
+      // the sentinel 0 on a miss — so a retry won't re-select them) — safe to
+      // retry transient Deezer failures.
       // attempts=3 with exp backoff; hourly self-heal re-enqueues if still needed.
       attempts: 3,
       backoff: { type: "exponential", delay: 5000 },
