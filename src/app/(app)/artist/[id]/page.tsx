@@ -2,7 +2,6 @@ import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
-import { AlbumWall } from "@/components/album-wall";
 import { OtherArtistAlbums } from "@/components/album/other-artist-albums";
 import { RelatedArtists } from "@/components/artist/related-artists";
 import { EmptyState } from "@/components/stats/empty-state";
@@ -19,7 +18,6 @@ import {
   getUserTopTracksByArtist,
   getUserTotalMsPlayed,
 } from "@/db/queries/stats";
-import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import { artists } from "@/db/schema";
 import { getDemoArtist, isDemoId } from "@/lib/demo/data";
 import { enrichDemoFixtures } from "@/lib/demo/enrich";
@@ -136,16 +134,11 @@ export default async function ArtistDetailPage({
     if (!demo) notFound();
     const { artist, stats, topTracks, topAlbums, monthly, related, totalPercent } = demo;
 
-    const [{ artistImages, trackImages }, wallCovers] = await Promise.all([
-      enrichDemoFixtures(),
-      getPaddedWallCovers(userId, null, 40),
-    ]);
+    const { artistImages, trackImages } = await enrichDemoFixtures();
     const artistImage = artistImages.get(artist.artistId) ?? artist.imageUrl;
 
     return (
-      <>
-        <AlbumWall covers={wallCovers} />
-        <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
+      <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
           <ArtistHero
             name={artist.name}
             imageUrl={artistImage}
@@ -214,8 +207,7 @@ export default async function ArtistDetailPage({
               />
             </section>
           ) : null}
-        </main>
-      </>
+      </main>
     );
   }
 
@@ -250,7 +242,7 @@ export default async function ArtistDetailPage({
     }
   }
 
-  const [stats, topTracks, topAlbums, monthly, related, totalMs, wallCovers] =
+  const [stats, topTracks, topAlbums, monthly, related, totalMs] =
     await Promise.all([
       getArtistPlayStats(userId, id),
       getUserTopTracksByArtist(userId, id, 20),
@@ -258,16 +250,13 @@ export default async function ArtistDetailPage({
       getArtistMonthlyPlays(userId, id),
       getCoListenedArtists(userId, id, 5),
       getUserTotalMsPlayed(userId),
-      getPaddedWallCovers(userId, null, 40),
     ]);
 
   // % du temps d'écoute total — basé sur ms_played lifetime.
   const totalPercent = totalMs > 0 ? (stats.msPlayed / totalMs) * 100 : 0;
 
   return (
-    <>
-      <AlbumWall covers={wallCovers} />
-      <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
+    <main id="main" className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full">
         <ArtistHero
           name={artist.name}
           imageUrl={artist.imageUrl}
@@ -325,7 +314,6 @@ export default async function ArtistDetailPage({
             <RelatedArtists artists={related} />
           </section>
         ) : null}
-      </main>
-    </>
+    </main>
   );
 }

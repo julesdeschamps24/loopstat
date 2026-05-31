@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 
-import { searchUsersAction } from "@/app/find/actions";
+import { searchUsersAction } from "@/app/(app)/find/actions";
 import { ResultCard } from "@/components/find/result-card";
 import type { PublicProfileSummary } from "@/db/queries/users";
 

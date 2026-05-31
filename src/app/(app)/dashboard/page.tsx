@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 
 import { auth } from "@/auth";
-import { AlbumWall } from "@/components/album-wall";
 import { AppHeader } from "@/components/app-header";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
 import { WelcomeModal } from "@/components/onboarding/welcome-modal";
@@ -85,14 +84,10 @@ export default async function DashboardPage() {
     // affiche les albums les plus populaires de tous les users déjà sur
     // loopstat. La wall est belle dès le premier load. Padding final
     // (artefact) au cas où le catalog serait vide (très premier user).
+    // Le mur de fond est rendu par le layout du groupe (app) ; ici on ne
+    // garde que les covers pour le panneau gauche de la WelcomeModal.
     const wallAlbums = await getWallCovers(userId, null, WALL_CELLS);
-    const wallCovers: { name: string; imageUrl: string | null }[] = [
-      ...wallAlbums,
-    ];
-    while (wallCovers.length < WALL_CELLS) {
-      wallCovers.push({ name: `slot-${wallCovers.length}`, imageUrl: null });
-    }
-    // Les 12 premiers covers du wall alimentent aussi le panneau gauche de
+    // Les 12 premiers covers alimentent le panneau gauche de
     // la WelcomeModal — vraies pochettes plutôt que gradients violet.
     const modalCovers = wallAlbums
       .map((a) => a.imageUrl)
@@ -103,7 +98,6 @@ export default async function DashboardPage() {
       <>
         <WelcomeModal covers={modalCovers} />
         <DemoModeBanner />
-        <AlbumWall covers={wallCovers} />
         <main
           id="main"
           className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full"
@@ -211,20 +205,18 @@ export default async function DashboardPage() {
   }
 
   // --- MODE RÉEL ---
-  // Cutoff "4 semaines" ≈ 28 jours ; "1 an" pour le mur de fond.
-  // On pivote sur le dernier played_at de l'utilisateur (données d'import
-  // statique potentiellement antérieures à aujourd'hui) plutôt que sur now().
+  // Cutoff "4 semaines" ≈ 28 jours. On pivote sur le dernier played_at de
+  // l'utilisateur (données d'import statique potentiellement antérieures à
+  // aujourd'hui) plutôt que sur now().
   const latestPlayedAt = await getUserLatestPlayedAt(userId);
   const refDate = latestPlayedAt ?? new Date();
   const since4w = new Date(refDate.getTime() - 28 * 24 * 60 * 60 * 1000);
-  const since1y = new Date(refDate.getTime() - 365 * 24 * 60 * 60 * 1000);
 
-  const [totals, topTracks, topArtists, wallAlbums, profile, premium] =
+  const [totals, topTracks, topArtists, profile, premium] =
     await Promise.all([
       getListeningTotals(userId, refDate),
       getTopTracksFromStreams(userId, since4w, 5),
       getTopArtistsFromStreams(userId, since4w, 5),
-      getWallCovers(userId, since1y, WALL_CELLS),
       getProfile(userId),
       isPremium(userId),
     ]);
@@ -237,19 +229,8 @@ export default async function DashboardPage() {
   const top5Tracks = topTracks;
   const top5Artists = topArtists;
 
-  // Mur de fond : top albums du user (déduplication par album_id côté query).
-  // Si certains albums n'ont pas encore d'image_url (worker enrich en cours),
-  // AlbumWall render un gradient déterministe par nom — chaque reload
-  // remplace progressivement les gradients par les vraies covers.
-  const wallCovers: { name: string; imageUrl: string | null }[] = [...wallAlbums];
-  while (wallCovers.length < WALL_CELLS) {
-    wallCovers.push({ name: `slot-${wallCovers.length}`, imageUrl: null });
-  }
-
   return (
-    <>
-      <AlbumWall covers={wallCovers} />
-      <main
+    <main
         id="main"
         className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full"
       >
@@ -376,6 +357,5 @@ export default async function DashboardPage() {
           </section>
         </div>
       </main>
-    </>
   );
 }

@@ -2,14 +2,12 @@ import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
-import { AlbumWall } from "@/components/album-wall";
 import type { AlbumTrack } from "@/components/album/album-tracklist";
 import { AlbumTracklist } from "@/components/album/album-tracklist";
 import { OtherArtistAlbums } from "@/components/album/other-artist-albums";
 import { TopTrackCard } from "@/components/album/top-track-card";
 import { getDemoAlbum, isDemoId } from "@/lib/demo/data";
 import { enrichDemoFixtures } from "@/lib/demo/enrich";
-import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import { HourHeatmap } from "@/components/stats/hour-heatmap";
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
 import { SparklineMonthly } from "@/components/stats/sparkline-monthly";
@@ -60,15 +58,10 @@ export default async function AlbumDetailPage({
         ? tracks.reduce((a, b) => (a.plays >= b.plays ? a : b))
         : null;
 
-    const [{ albumImages, trackImages }, wallCovers] = await Promise.all([
-      enrichDemoFixtures(),
-      getPaddedWallCovers(userId, null, 40),
-    ]);
+    const { albumImages, trackImages } = await enrichDemoFixtures();
     const cover = albumImages.get(album.albumId) ?? null;
 
     return (
-      <>
-        <AlbumWall covers={wallCovers} />
       <main
         id="main"
         className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full"
@@ -189,7 +182,6 @@ export default async function AlbumDetailPage({
           />
         ) : null}
       </main>
-      </>
     );
   }
 
@@ -241,7 +233,7 @@ export default async function AlbumDetailPage({
     }
   }
 
-  const [stats, trackPlays, breakdown, monthly, hours, quality, otherAlbums, wallCovers] =
+  const [stats, trackPlays, breakdown, monthly, hours, quality, otherAlbums] =
     await Promise.all([
       getAlbumPlayStats(userId, id),
       getAlbumTrackPlays(userId, id),
@@ -252,7 +244,6 @@ export default async function AlbumDetailPage({
       primaryArtistId
         ? getOtherAlbumsByArtist(userId, primaryArtistId, id, 10)
         : Promise.resolve([]),
-      getPaddedWallCovers(userId, null, 40),
     ]);
 
   const image = albumRow.imageUrl;
@@ -287,8 +278,6 @@ export default async function AlbumDetailPage({
       : null;
 
   return (
-    <>
-      <AlbumWall covers={wallCovers} />
     <main
       id="main"
       className="flex-1 flex flex-col gap-8 px-6 py-12 max-w-3xl mx-auto w-full"
@@ -434,6 +423,5 @@ export default async function AlbumDetailPage({
         />
       ) : null}
     </main>
-    </>
   );
 }

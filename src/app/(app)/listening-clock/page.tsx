@@ -2,10 +2,8 @@ import { redirect } from "next/navigation";
 import { Clock } from "lucide-react";
 
 import { auth } from "@/auth";
-import { AlbumWall } from "@/components/album-wall";
 import { EmptyState } from "@/components/stats/empty-state";
 import { getListeningClock, getListeningTotals } from "@/db/queries/stats";
-import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import { formatNumber } from "@/lib/utils";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
@@ -25,11 +23,9 @@ export default async function ListeningClockPage() {
 
   if (!hasImport) {
     const demoMax = Math.max(...DEMO_LISTENING_HOURS.map((c) => c.count), 1);
-    const wallCovers = await getPaddedWallCovers(userId, null, 40);
     return (
       <>
         <DemoModeBanner />
-        <AlbumWall covers={wallCovers} />
         <main
           id="main"
           className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full"
@@ -72,18 +68,15 @@ export default async function ListeningClockPage() {
     );
   }
 
-  const [clock, totals, wallCovers] = await Promise.all([
+  const [clock, totals] = await Promise.all([
     getListeningClock(userId),
     getListeningTotals(userId),
-    getPaddedWallCovers(userId, null, 40),
   ]);
 
   const totalStreams = totals.find((t) => t.window === "lifetime")?.count ?? 0;
   const maxCount = Math.max(...clock.map((c) => c.count), 1);
 
   return (
-    <>
-      <AlbumWall covers={wallCovers} />
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
       <header className="mb-8">
         <h1 className="text-2xl font-semibold">Horloge d&apos;écoute</h1>
@@ -139,6 +132,5 @@ export default async function ListeningClockPage() {
         </section>
       )}
     </main>
-    </>
   );
 }

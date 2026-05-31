@@ -5,7 +5,7 @@ import { useActionState, useState } from "react";
 import {
   type ProfileFormState,
   updateProfileAction,
-} from "@/app/settings/actions";
+} from "@/app/(app)/settings/actions";
 
 type Props = {
   username: string;

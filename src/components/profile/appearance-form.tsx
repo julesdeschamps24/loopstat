@@ -5,7 +5,7 @@ import { useActionState, useState } from "react";
 import {
   type AppearanceFormState,
   updateAppearanceAction,
-} from "@/app/settings/actions";
+} from "@/app/(app)/settings/actions";
 import { ProfilePreview } from "@/components/profile/profile-preview";
 import {
   ACCENTS,

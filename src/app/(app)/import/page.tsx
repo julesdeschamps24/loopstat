@@ -2,10 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ExternalLink, FileJson } from "lucide-react";
 import { auth } from "@/auth";
-import { AlbumWall } from "@/components/album-wall";
 import { ImageZoom } from "@/components/image-zoom";
 import { ImportUpload } from "@/components/import-upload";
-import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 
 export default async function ImportPage({
   searchParams,
@@ -17,11 +15,7 @@ export default async function ImportPage({
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const wallCovers = await getPaddedWallCovers(session.user.id, null, 40);
-
   return (
-    <>
-      <AlbumWall covers={wallCovers} />
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-2xl mx-auto w-full">
       <header className="mb-8">
         <Link
@@ -170,7 +164,6 @@ export default async function ImportPage({
         <ImportUpload />
       </section>
     </main>
-    </>
   );
 }
 
