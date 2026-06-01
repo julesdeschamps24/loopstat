@@ -205,21 +205,23 @@ export default async function DashboardPage() {
   }
 
   // --- MODE RÉEL ---
-  // Cutoff "4 semaines" ≈ 28 jours. On pivote sur le dernier played_at de
-  // l'utilisateur (données d'import statique potentiellement antérieures à
-  // aujourd'hui) plutôt que sur now().
+  // On pivote sur le dernier played_at de l'utilisateur (import statique
+  // potentiellement antérieur à aujourd'hui) plutôt que sur now().
   const latestPlayedAt = await getUserLatestPlayedAt(userId);
   const refDate = latestPlayedAt ?? new Date();
-  const since4w = new Date(refDate.getTime() - 28 * 24 * 60 * 60 * 1000);
+  const premium = await isPremium(userId);
+  // 4w is a Premium-only period — free users get their lifetime top 5 instead
+  // (the impressive, on-brand hook). Premium keeps the recent 28-day snapshot.
+  const previewSince = premium
+    ? new Date(refDate.getTime() - 28 * 24 * 60 * 60 * 1000)
+    : null;
 
-  const [totals, topTracks, topArtists, profile, premium] =
-    await Promise.all([
-      getListeningTotals(userId, refDate),
-      getTopTracksFromStreams(userId, since4w, 5),
-      getTopArtistsFromStreams(userId, since4w, 5),
-      getProfile(userId),
-      isPremium(userId),
-    ]);
+  const [totals, topTracks, topArtists, profile] = await Promise.all([
+    getListeningTotals(userId, refDate),
+    getTopTracksFromStreams(userId, previewSince, 5),
+    getTopArtistsFromStreams(userId, previewSince, 5),
+    getProfile(userId),
+  ]);
   const shareUsername =
     profile?.isPublic && profile.username ? profile.username : undefined;
 

@@ -8,6 +8,8 @@ import { formatNumber } from "@/lib/utils";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
 import { DEMO_LISTENING_HOURS } from "@/lib/demo/data";
+import { isPremium } from "@/db/queries/billing";
+import { PremiumGate } from "@/components/premium-gate";
 
 // The hourly distribution shifts slowly — re-derive it at most once an hour.
 export const revalidate = 3600;
@@ -68,9 +70,10 @@ export default async function ListeningClockPage() {
     );
   }
 
-  const [clock, totals] = await Promise.all([
+  const [clock, totals, premium] = await Promise.all([
     getListeningClock(userId),
     getListeningTotals(userId),
+    isPremium(userId),
   ]);
 
   const totalStreams = totals.find((t) => t.window === "lifetime")?.count ?? 0;
@@ -92,6 +95,7 @@ export default async function ListeningClockPage() {
           icon={Clock}
         />
       ) : (
+        <PremiumGate isPremium={premium}>
         <section className="rounded-2xl border bg-card p-6">
           {totalStreams < LOW_DATA_THRESHOLD ? (
             <p className="mb-6 rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">
@@ -130,6 +134,7 @@ export default async function ListeningClockPage() {
             total · heures en fuseau du serveur.
           </p>
         </section>
+        </PremiumGate>
       )}
     </main>
   );
