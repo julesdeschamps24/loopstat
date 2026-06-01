@@ -205,9 +205,8 @@ export default async function DashboardPage() {
   }
 
   // --- MODE RÉEL ---
-  // Cutoff "4 semaines" ≈ 28 jours. On pivote sur le dernier played_at de
-  // l'utilisateur (données d'import statique potentiellement antérieures à
-  // aujourd'hui) plutôt que sur now().
+  // On pivote sur le dernier played_at de l'utilisateur (import statique
+  // potentiellement antérieur à aujourd'hui) plutôt que sur now().
   const latestPlayedAt = await getUserLatestPlayedAt(userId);
   const refDate = latestPlayedAt ?? new Date();
   const premium = await isPremium(userId);
