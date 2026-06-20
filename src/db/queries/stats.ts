@@ -4,6 +4,7 @@ import { and, asc, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "dr
 
 import { db } from "@/db/client";
 import { albumArtists, albums, artists, streams, trackArtists, tracks } from "@/db/schema";
+import { escapeLikePattern } from "@/db/queries/users";
 import { periodSince, type StreamPeriod } from "@/lib/stats/period";
 
 /**
@@ -748,7 +749,7 @@ export async function searchTracks(
     .where(
       and(
         eq(streams.userId, userId),
-        ilike(tracks.name, `%${query}%`),
+        ilike(tracks.name, `%${escapeLikePattern(query)}%`),
         QUALIFYING_PLAY,
       ),
     )
