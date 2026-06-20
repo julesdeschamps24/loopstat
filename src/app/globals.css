@@ -111,8 +111,8 @@ body {
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(5, 1fr);
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(6, 1fr);
   gap: 2px;
   opacity: 0.15;
   mix-blend-mode: luminosity;
