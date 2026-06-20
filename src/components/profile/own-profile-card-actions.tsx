@@ -1,15 +1,8 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { Check, Link as LinkIcon } from "lucide-react";
-
-function useIsClient(): boolean {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-}
+import { useIsClient } from "@/lib/use-is-client";
 
 export function CopyProfileLinkButton({ username }: { username: string }) {
   const isClient = useIsClient();

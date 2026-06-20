@@ -1,14 +1,10 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Download, Link as LinkIcon, Share2 } from "lucide-react";
 
 import { Preview } from "@/components/share/preview";
+import { useIsClient } from "@/lib/use-is-client";
 import {
   FORMAT_N_OPTIONS,
   SHARE_BACKGROUNDS,
@@ -53,14 +49,6 @@ const BG_LABEL = {
   mesh: "Mesh",
   wall: "Pochettes",
 } as const;
-
-function useIsClient(): boolean {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-}
 
 // Debounce delay (ms) between the user's last tweak and the actual
 // preview re-fetch. Each /api/share-card hit does a DB query + Satori
