@@ -4,7 +4,7 @@ import { getUserLatestPlayedAt } from "@/db/queries/stats";
 import { getPaddedWallCovers } from "@/db/queries/wall-covers";
 import { periodSince } from "@/lib/stats/period";
 
-const WALL_CELLS = 40;
+const WALL_CELLS = 60;
 
 // User-scoped DB aggregation for the background — always dynamic.
 export const dynamic = "force-dynamic";
