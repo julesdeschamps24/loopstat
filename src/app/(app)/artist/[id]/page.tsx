@@ -280,6 +280,7 @@ export default async function ArtistDetailPage({
                   rank={i + 1}
                   title={t.trackName}
                   href={`/track/${t.trackId}`}
+                  imageUrl={t.albumImageUrl ?? undefined}
                   metric={`${formatNumber(t.playCount)} écoutes`}
                 />
               ))}
@@ -310,7 +311,12 @@ export default async function ArtistDetailPage({
 
         {related.length > 0 ? (
           <section>
-            <h2 className="mb-4 text-lg font-semibold">Artistes connexes</h2>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              Artistes connexes
+              <HelpTooltip>
+                Les artistes que tu écoutes souvent dans la même session (±30 min) que celui-ci. Plus le nombre de co-écoutes est élevé, plus la connexion est forte.
+              </HelpTooltip>
+            </h2>
             <RelatedArtists artists={related} />
           </section>
         ) : null}
