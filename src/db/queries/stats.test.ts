@@ -141,3 +141,47 @@ describe("searchTracks", () => {
     }
   });
 });
+
+describe("getUserTopTracksByArtist", () => {
+  it("returns each track's album cover so the artist page can show it", async () => {
+    const { db } = await import("@/db/client");
+    const { users, artists, albums, tracks, trackArtists, streams } =
+      await import("@/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const { getUserTopTracksByArtist } = await import("./stats");
+
+    const s = crypto.randomUUID().slice(0, 8);
+    const artistId = `art_${s}`;
+    const albumId = `alb_${s}`;
+    const trackId = `trk_${s}`;
+    const cover = `https://cdn.example/cover-${s}.jpg`;
+    const [u] = await db
+      .insert(users)
+      .values({ email: `topbyartist-${s}@test.local` })
+      .returning({ id: users.id });
+
+    try {
+      await db.insert(artists).values({ id: artistId, name: `Artist ${s}` });
+      await db.insert(albums).values({ id: albumId, name: `Album ${s}`, imageUrl: cover });
+      await db.insert(tracks).values({ id: trackId, name: `Track ${s}`, albumId });
+      await db.insert(trackArtists).values({ trackId, artistId, position: 0 });
+      await db.insert(streams).values({
+        userId: u.id,
+        trackId,
+        playedAt: new Date("2026-01-01T00:00:00Z"),
+        msPlayed: 60000,
+        source: "import",
+      });
+
+      const rows = await getUserTopTracksByArtist(u.id, artistId, 10);
+
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ trackId, albumImageUrl: cover });
+    } finally {
+      await db.delete(users).where(eq(users.id, u.id)); // cascades streams
+      await db.delete(tracks).where(eq(tracks.id, trackId)); // cascades track_artists
+      await db.delete(albums).where(eq(albums.id, albumId));
+      await db.delete(artists).where(eq(artists.id, artistId));
+    }
+  });
+});

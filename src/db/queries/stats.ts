@@ -237,7 +237,14 @@ export async function getUserTopTracksByArtist(
   artistId: string,
   limit: number,
   since: Date | null = null,
-): Promise<{ trackId: string; trackName: string; playCount: number }[]> {
+): Promise<
+  {
+    trackId: string;
+    trackName: string;
+    albumImageUrl: string | null;
+    playCount: number;
+  }[]
+> {
   const whereClause = since
     ? and(
         eq(streams.userId, userId),
@@ -255,19 +262,22 @@ export async function getUserTopTracksByArtist(
     .select({
       trackId: streams.trackId,
       trackName: tracks.name,
+      albumImageUrl: albums.imageUrl,
       playCount: sql<number>`count(*)::int`,
     })
     .from(streams)
     .innerJoin(trackArtists, eq(trackArtists.trackId, streams.trackId))
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
+    .leftJoin(albums, eq(albums.id, tracks.albumId))
     .where(whereClause)
-    .groupBy(streams.trackId, tracks.name)
+    .groupBy(streams.trackId, tracks.name, albums.imageUrl)
     .orderBy(desc(sql`count(*)`))
     .limit(limit);
 
   return rows.map((r) => ({
     trackId: r.trackId,
     trackName: r.trackName,
+    albumImageUrl: r.albumImageUrl,
     playCount: Number(r.playCount),
   }));
 }
