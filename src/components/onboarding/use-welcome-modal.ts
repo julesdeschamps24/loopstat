@@ -1,37 +1,47 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "loopstat-welcome-shown";
 
+// Registre d'abonnés au niveau module pour que `close()` puisse notifier le
+// hook de relire localStorage (useSyncExternalStore rejoue getSnapshot à l'emit).
+const listeners = new Set<() => void>();
+
+function subscribe(onChange: () => void): () => void {
+  listeners.add(onChange);
+  return () => {
+    listeners.delete(onChange);
+  };
+}
+
+function getSnapshot(): boolean {
+  return window.localStorage.getItem(STORAGE_KEY) !== "true";
+}
+
+function getServerSnapshot(): boolean {
+  return false;
+}
+
 /**
  * Détermine si la modal de bienvenue doit s'afficher au premier load après
- * auth pour un user en mode démo. Utilise localStorage pour éviter de
- * la ré-afficher au refresh.
+ * auth pour un user en mode démo. Lit localStorage via `useSyncExternalStore`
+ * pour éviter de la ré-afficher au refresh (et éviter un setState dans un effect).
  *
  * Retourne :
- *  - `isOpen` : true tant qu'on ne ferme pas (initial false, devient true
- *    au mount si flag absent du localStorage)
+ *  - `isOpen` : false au SSR/hydratation, devient true côté client si le flag
+ *    est absent du localStorage
  *  - `close()` : ferme la modal et persiste le flag
  */
 export function useWelcomeModalState(): {
   isOpen: boolean;
   close: () => void;
 } {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem(STORAGE_KEY) !== "true") {
-      setIsOpen(true);
-    }
-  }, []);
+  const isOpen = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const close = useCallback(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, "true");
-    }
-    setIsOpen(false);
+    window.localStorage.setItem(STORAGE_KEY, "true");
+    for (const listener of listeners) listener();
   }, []);
 
   return { isOpen, close };

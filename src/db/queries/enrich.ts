@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
-import { albumArtists, albums, streams, tracks, trackArtists } from "@/db/schema";
+import { albums, streams, tracks, trackArtists } from "@/db/schema";
 
 const QUALIFYING_PLAY = sql`(${streams.msPlayed} >= 30000 OR ${streams.msPlayed} IS NULL)`;
 

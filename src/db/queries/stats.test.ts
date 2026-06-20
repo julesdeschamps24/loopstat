@@ -92,3 +92,52 @@ describe("getCoListenedArtists", () => {
     expect(Array.isArray(expectShape)).toBe(true);
   });
 });
+
+describe("searchTracks", () => {
+  it("treats % in the query as a literal character, not a LIKE wildcard", async () => {
+    const { db } = await import("@/db/client");
+    const { users, tracks, streams } = await import("@/db/schema");
+    const { inArray, eq } = await import("drizzle-orm");
+    const { searchTracks } = await import("./stats");
+
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const literalId = `tk_lit_${suffix}`; // name contains a literal "100%"
+    const decoyId = `tk_decoy_${suffix}`; // contains "100" but NOT "100%"
+    const [u] = await db
+      .insert(users)
+      .values({ email: `searchtracks-${suffix}@test.local` })
+      .returning({ id: users.id });
+
+    try {
+      await db.insert(tracks).values([
+        { id: literalId, name: `100% Pure ${suffix}` },
+        { id: decoyId, name: `1000 Reasons ${suffix}` },
+      ]);
+      await db.insert(streams).values([
+        {
+          userId: u.id,
+          trackId: literalId,
+          playedAt: new Date("2026-01-01T00:00:00Z"),
+          msPlayed: 60000,
+          source: "import",
+        },
+        {
+          userId: u.id,
+          trackId: decoyId,
+          playedAt: new Date("2026-01-02T00:00:00Z"),
+          msPlayed: 60000,
+          source: "import",
+        },
+      ]);
+
+      // Unescaped, `%100%%` matches both rows (substring "100"). Escaped,
+      // `%100\%%` matches only the row with a literal "100%".
+      const results = await searchTracks(u.id, "100%", 10);
+
+      expect(results.map((r) => r.trackId)).toEqual([literalId]);
+    } finally {
+      await db.delete(users).where(eq(users.id, u.id)); // cascades streams
+      await db.delete(tracks).where(inArray(tracks.id, [literalId, decoyId]));
+    }
+  });
+});

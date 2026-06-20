@@ -1,30 +1,14 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Download, Link as LinkIcon, Share2, Sparkles } from "lucide-react";
 import type { ShareContext } from "@/lib/share/card-config";
+import { useIsClient } from "@/lib/use-is-client";
 
 type Props = {
   username: string;
   context?: ShareContext;
 };
-
-// Évite le setState-in-effect anti-pattern (React 19 strict) tout en
-// laissant SSR retourner false : sur le serveur on rend rien de
-// browser-dépendant, sur le client on bascule au mount sans re-render
-// cascade.
-function useIsClient(): boolean {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-}
 
 export function ShareButton({ username, context }: Props) {
   const isClient = useIsClient();

@@ -44,7 +44,6 @@ export default async function TrackDetailPage({
     if (!demo) notFound();
     const { track, stats, breakdown, monthly, hours, quality } = demo;
     const artistNames = track.artistNames.join(", ");
-    const hasPlays = stats.count > 0;
     const { trackImages } = await enrichDemoFixtures();
     const cover = trackImages.get(track.trackId) ?? null;
 

@@ -126,9 +126,11 @@ async function fetchRecap(
   };
 }
 
-// Apply Spotify CDN size shrinking + inline as data URL using the
-// prefetch cache. Returns the original URL if no cached version is
-// available (Satori will fall back to its own network fetch).
+// Inline as a data URL using the prefetch cache. Returns null when the URL
+// isn't in the cache (failed/timed-out prefetch) — we deliberately do NOT
+// fall back to the remote URL, because Satori would then fetch it internally
+// with no timeout and could stall the whole render on a flaky CDN. A dropped
+// image just renders its placeholder.
 function inline(
   raw: string | null | undefined,
   size: "medium" | "small",
@@ -136,7 +138,7 @@ function inline(
 ): string | null {
   if (!raw) return null;
   const shrunk = shrinkAlbumCoverUrl(raw, size) ?? raw;
-  return cache.get(shrunk) ?? shrunk;
+  return cache.get(shrunk) ?? null;
 }
 
 function inlineItems(
@@ -211,10 +213,14 @@ export async function GET(req: Request) {
   const cache = await prefetchImages(allUrls);
 
   const displayName = profile.displayName ?? profile.username;
+  // Only ever hand Satori inlined data URLs (or nothing) — never a remote URL,
+  // which it would fetch internally without a timeout. See `inline()` above.
   const inlinedAvatar = profile.avatarUrl
-    ? cache.get(profile.avatarUrl) ?? profile.avatarUrl
+    ? cache.get(profile.avatarUrl) ?? null
     : null;
-  const inlinedCovers = wallShrunk.map((u) => cache.get(u) ?? u);
+  const inlinedCovers = wallShrunk
+    .map((u) => cache.get(u))
+    .filter((u): u is string => u !== undefined);
   const inlinedData =
     config.mode === "focus"
       ? inlineItems(data as FocusItem[], cache)
@@ -247,7 +253,10 @@ export async function GET(req: Request) {
     return new ImageResponse(element, {
       ...size,
       headers: {
-        "cache-control": "public, max-age=60, s-maxage=60",
+        // Browsers always revalidate (max-age=0) so a user re-sharing the
+        // same URL after their stats changed never gets a stale PNG; the
+        // CDN/edge still caches for 60s and serves stale while revalidating.
+        "cache-control": "max-age=0, s-maxage=60, stale-while-revalidate=60",
       },
     });
   } catch (err) {
