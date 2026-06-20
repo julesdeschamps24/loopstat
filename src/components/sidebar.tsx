@@ -12,7 +12,6 @@ import {
   Music2,
   Settings,
   Users,
-  UserSearch,
 } from "lucide-react";
 
 import type { BillingState } from "@/db/queries/billing";
@@ -24,7 +23,6 @@ const NAV_ITEMS = [
   { href: "/top/tracks", label: "Top titres", icon: Music2 },
   { href: "/top/artists", label: "Top artistes", icon: Users },
   { href: "/top/albums", label: "Top albums", icon: Album },
-  { href: "/find", label: "Trouver des amis", icon: UserSearch },
   { href: "/listening-clock", label: "Horloge d'écoute", icon: Clock },
   { href: "/import", label: "Importer", icon: Download },
   { href: "/settings", label: "Réglages", icon: Settings },
