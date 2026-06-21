@@ -93,9 +93,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           : null,
       });
     },
-    async jwt({ token, user, profile }) {
-      if (user?.id) {
-        // Credentials sign-in: `user` is the object returned by authorize().
+    async jwt({ token, user, account, profile }) {
+      if (account?.provider === "credentials" && user?.id) {
+        // Credentials sign-in: authorize() returns the DB user, so user.id is
+        // our uuid. (For Google, user.id is the Google `sub`, NOT our uuid —
+        // that path must resolve the uuid via profile.email below.)
         token.userId = user.id;
         token.displayName = user.name ?? null;
         token.avatarUrl = user.image ?? null;
