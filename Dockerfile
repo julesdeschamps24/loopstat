@@ -10,7 +10,7 @@ ARG PNPM_VERSION=10.33.2
 FROM node:${NODE_VERSION} AS deps
 ARG PNPM_VERSION
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+RUN npm install -g pnpm@${PNPM_VERSION}
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
@@ -18,7 +18,7 @@ RUN pnpm install --frozen-lockfile
 FROM node:${NODE_VERSION} AS builder
 ARG PNPM_VERSION
 WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
+RUN npm install -g pnpm@${PNPM_VERSION}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -33,7 +33,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
-RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate \
+RUN npm install -g pnpm@${PNPM_VERSION} \
  && addgroup -S nodejs && adduser -S nextjs -G nodejs \
  && apk add --no-cache wget
 
