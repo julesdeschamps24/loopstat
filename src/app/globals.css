@@ -155,3 +155,19 @@ body {
     display: none;
   }
 }
+
+@keyframes ls-float {
+  0%, 100% { transform: translateY(0) rotate(var(--ls-tilt, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--ls-tilt, 0deg)); }
+}
+.ls-float {
+  animation: ls-float var(--ls-dur, 7s) ease-in-out infinite;
+  animation-delay: var(--ls-delay, 0s);
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ls-float {
+    animation: none;
+    transform: rotate(var(--ls-tilt, 0deg));
+  }
+}
