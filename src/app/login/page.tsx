@@ -88,7 +88,7 @@ function SetupNeeded() {
             <br />
             Name : <code className="text-foreground">loopstat</code>
             <br />
-            <strong>Authorized redirect URIs</strong> — ajoute :
+            <strong>Authorized redirect URIs</strong>, ajoute :
             <pre className="mt-2 rounded-lg bg-accent px-3 py-2 text-xs overflow-x-auto">
               <code>http://127.0.0.1:3000/api/auth/callback/google</code>
             </pre>

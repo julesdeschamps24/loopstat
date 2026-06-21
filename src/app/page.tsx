@@ -39,7 +39,7 @@ export default function HomePage() {
             className="ls-rise max-w-md text-base sm:text-lg"
             style={{ color: "#a89ec8", lineHeight: 1.5, animationDelay: "0.12s" }}
           >
-            Comme ton Spotify Wrapped — mais disponible toute l&apos;année, et
+            Comme ton Spotify Wrapped, mais disponible toute l&apos;année et
             bien plus détaillé.
           </p>
 
@@ -53,7 +53,7 @@ export default function HomePage() {
             </li>
             <li className="flex items-start gap-2.5">
               <span aria-hidden="true" style={{ color: "#a78bfa" }}>✓</span>
-              <span>Ton historique complet — pas juste les 4 dernières semaines</span>
+              <span>Ton historique complet, pas juste les 4 dernières semaines</span>
             </li>
             <li className="flex items-start gap-2.5">
               <span aria-hidden="true" style={{ color: "#a78bfa" }}>✓</span>
