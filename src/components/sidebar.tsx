@@ -45,12 +45,14 @@ const PUBLIC_PATHS = new Set<string>([
  * Met l'item actif en gradient cyan→magenta (palette nébuleuse).
  */
 export function Sidebar({
+  authed,
   hasImported,
   username,
   isPublic,
   billingTier,
   premiumExpiresAt,
 }: {
+  authed: boolean;
   hasImported: boolean;
   username?: string;
   isPublic?: boolean;
@@ -59,9 +61,19 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  // Public /demo showcase: the navbar is shown, but track search hits an
-  // auth-gated API (401 when logged out), so hide it there.
-  const isDemo = pathname === "/demo";
+
+  // Logged-out visitor = demo mode. The viewing pages (dashboard, top lists,
+  // clock, detail pages) render the demo account, so the navbar stays fully
+  // functional. Only the auth-gated bits change: track search is hidden (its
+  // API 401s when logged out), and the personal/action routes point at the
+  // demo home / sign-up instead of bouncing to login.
+  const demoMode = !authed;
+  const resolveHref = (href: string): string => {
+    if (!demoMode) return href;
+    if (href === "/dashboard") return "/demo";
+    if (href === "/import" || href === "/settings") return "/inscription";
+    return href;
+  };
 
   const now = useMemo(() => new Date(), []);
   const trialDaysLeft =
@@ -87,13 +99,13 @@ export function Sidebar({
   return (
     <aside className="hidden md:flex md:w-55 md:shrink-0 md:flex-col md:gap-1 md:border-r md:border-white/6 md:bg-white/3 md:backdrop-blur-xl md:p-4 md:sticky md:top-0 md:h-screen">
       <Link
-        href="/dashboard"
+        href={resolveHref("/dashboard")}
         className="mb-4 px-2 py-3 font-brand font-bold text-4xl tracking-tight"
       >
         loopstat
       </Link>
 
-      {!isDemo && (
+      {!demoMode && (
         <div className="mb-4 px-1">
           <SearchBar />
         </div>
@@ -106,7 +118,7 @@ export function Sidebar({
           (item) => item.href !== "/import" || !hasImported,
         ).map(({ href, label, icon: Icon }) => {
           const active =
-            pathname === href ||
+            pathname === resolveHref(href) ||
             // Detail pages (/track/[id], /artist/[id]…) ne matchent aucun
             // item de nav ; on laisse "Top X" actif quand on est dans un
             // détail correspondant.
@@ -124,7 +136,7 @@ export function Sidebar({
           return (
             <Link
               key={href}
-              href={href}
+              href={resolveHref(href)}
               aria-current={active ? "page" : undefined}
               onClick={
                 isTopRoute

@@ -90,6 +90,7 @@ export default async function RootLayout({
                 logged-out visitor it therefore renders only on /demo (the
                 showcase), with the anonymous defaults computed above. */}
             <Sidebar
+              authed={!!userId}
               hasImported={hasImported}
               username={profile?.username ?? undefined}
               isPublic={profile?.isPublic ?? false}

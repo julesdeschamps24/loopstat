@@ -114,14 +114,19 @@ function ArtistHero({
   );
 }
 
+// Reads the session + per-user DB stats → always dynamic (also makes the
+// logged-out redirect a clean server 307 instead of a soft client redirect).
+export const dynamic = "force-dynamic";
+
 export default async function ArtistDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // Demo ids (demo:…) render the demo account for anyone; real ids still
+  // require a session (guarded after the demo branch).
   const session = await auth();
-  if (!session?.user?.id) redirect("/connexion");
-  const userId = session.user.id;
+  const userId = session?.user?.id ?? null;
 
   const { id: rawId } = await params;
   // Next.js 16 passes the param URL-encoded (e.g. "demo%3Asabrina-carpenter"),
@@ -212,6 +217,8 @@ export default async function ArtistDetailPage({
   }
 
   // ===== REAL MODE =====
+  // Past the demo branch it's a real artist id → requires a logged-in user.
+  if (!userId) redirect("/connexion");
   const [artist] = await db.select().from(artists).where(eq(artists.id, id)).limit(1);
   if (!artist) notFound();
 

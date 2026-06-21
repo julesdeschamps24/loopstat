@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { RankedRow } from "@/components/stats/ranked-list";
@@ -34,14 +33,13 @@ export default async function TopAlbumsPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  // Logged-out visitor → userId null → renders the demo account (no redirect).
   const session = await auth();
-  if (!session?.user?.id) redirect("/connexion");
-  const userId = session.user.id;
+  const userId = session?.user?.id ?? null;
 
-  const [hasImport, premium] = await Promise.all([
-    hasCompletedImport(userId),
-    isPremium(userId),
-  ]);
+  const [hasImport, premium] = userId
+    ? await Promise.all([hasCompletedImport(userId), isPremium(userId)])
+    : [false, false];
 
   const { period: rawPeriod } = await searchParams;
   const requested: StreamPeriod = isStreamPeriod(rawPeriod)
@@ -51,7 +49,7 @@ export default async function TopAlbumsPage({
   const locked = lockedPeriods(premium);
   const limit = topLimit(premium);
 
-  if (!hasImport) {
+  if (!userId || !hasImport) {
     const [albumsData] = await Promise.all([
       getEnrichedDemoTopAlbums(),
     ]);

@@ -73,10 +73,11 @@ export default async function DemoPage() {
           </Link>
         </div>
 
+        {/* interactive: the rows + "voir tout" now lead to the demo top/detail
+            pages, which render the demo account for logged-out visitors too. */}
         <DemoShowcase
           tracks={tracks.slice(0, 5)}
           artists={artists.slice(0, 5)}
-          interactive={false}
         />
 
         <div className="mt-16 flex flex-col items-center gap-4 rounded-2xl border bg-card p-8 text-center">

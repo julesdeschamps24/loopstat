@@ -30,19 +30,20 @@ export default async function AppLayout({
   const session = await auth();
   const userId = session?.user?.id;
 
-  // Pas connecté : les pages enfants redirigent vers /connexion elles-mêmes.
-  // On ne requête pas le mur dans ce cas.
+  // Connecté : top albums de l'utilisateur sur 1 an. Visiteur déconnecté
+  // (mode démo — les pages enfants rendent le compte démo plutôt que de
+  // rediriger) : on remplit le mur avec les favoris du catalog global.
   const wallCovers = userId
     ? await getPaddedWallCovers(
         userId,
         periodSince("1y", (await getUserLatestPlayedAt(userId)) ?? undefined),
         WALL_CELLS,
       )
-    : null;
+    : await getPaddedWallCovers(null, null, WALL_CELLS);
 
   return (
     <>
-      {wallCovers && <AlbumWall covers={wallCovers} />}
+      <AlbumWall covers={wallCovers} />
       {children}
     </>
   );

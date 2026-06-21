@@ -25,14 +25,19 @@ function formatPercent(ratio: number): string {
   return `${Math.round(ratio * 100)} %`;
 }
 
+// Reads the session + per-user DB stats → always dynamic (also makes the
+// logged-out redirect a clean server 307 instead of a soft client redirect).
+export const dynamic = "force-dynamic";
+
 export default async function TrackDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // Demo ids (demo:…) render the demo account for anyone, logged in or not;
+  // any real id still requires a session (guarded after the demo branch).
   const session = await auth();
-  if (!session?.user?.id) redirect("/connexion");
-  const userId = session.user.id;
+  const userId = session?.user?.id ?? null;
 
   const { id: rawId } = await params;
   // Next.js 16 passes the param URL-encoded (e.g. "demo%3Aespresso"), but our
@@ -136,6 +141,8 @@ export default async function TrackDetailPage({
   }
 
   // --- MODE RÉEL : DB only ---
+  // Past the demo branch it's a real track id → requires a logged-in user.
+  if (!userId) redirect("/connexion");
   const [track] = await db
     .select({ id: tracks.id, name: tracks.name, albumId: tracks.albumId })
     .from(tracks)

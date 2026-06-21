@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { Clock } from "lucide-react";
 
 import { auth } from "@/auth";
@@ -17,13 +16,13 @@ export const revalidate = 3600;
 const LOW_DATA_THRESHOLD = 20;
 
 export default async function ListeningClockPage() {
+  // Logged-out visitor → userId null → renders the demo account (no redirect).
   const session = await auth();
-  if (!session?.user?.id) redirect("/connexion");
-  const userId = session.user.id;
+  const userId = session?.user?.id ?? null;
 
-  const hasImport = await hasCompletedImport(userId);
+  const hasImport = userId ? await hasCompletedImport(userId) : false;
 
-  if (!hasImport) {
+  if (!userId || !hasImport) {
     const demoMax = Math.max(...DEMO_LISTENING_HOURS.map((c) => c.count), 1);
     return (
       <>
