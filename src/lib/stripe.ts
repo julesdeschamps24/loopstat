@@ -5,7 +5,14 @@ import { db } from "@/db/client";
 import { users } from "@/db/schema";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY;
-if (!stripeKey && process.env.NODE_ENV === "production") {
+// Fail fast at server runtime if the key is missing — but NOT during
+// `next build`, where NODE_ENV is "production" yet runtime env vars are
+// intentionally absent (same reason src/auth.ts uses fallbacks).
+if (
+  !stripeKey &&
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PHASE !== "phase-production-build"
+) {
   throw new Error("STRIPE_SECRET_KEY is required in production");
 }
 
