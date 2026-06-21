@@ -53,3 +53,6 @@ next-env.d.ts
 # server pid/logs). Durable design records live in docs/superpowers/specs/.
 /.superpowers/
 /.claire/
+
+# Prod DB backups (contain user data — never commit)
+/deploy/backups/
