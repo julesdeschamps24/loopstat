@@ -28,8 +28,18 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Réglages", icon: Settings },
 ] as const;
 
-// Pages publiques où la sidebar n'a aucun sens (on est avant le login).
-const PUBLIC_PATHS = new Set<string>(["/", "/login"]);
+// Pages publiques (avant/hors connexion) où la sidebar n'a aucun sens — la
+// landing et tout ce qu'elle référence doivent rester des pages autonomes.
+const PUBLIC_PATHS = new Set<string>([
+  "/",
+  "/login",
+  "/connexion",
+  "/inscription",
+  "/pricing",
+  "/terms",
+  "/privacy",
+  "/legal",
+]);
 
 /**
  * Sidebar verticale 220 px, fixée à gauche sur >= md, masquée sur mobile.
