@@ -1,8 +1,11 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
+import { verifyPassword } from "@/lib/auth/password";
+import { validateCredentials } from "@/lib/auth/validate";
 
 // Read at request time, not module-load. Next/Turbopack may otherwise inline
 // `process.env.X` at `next build` (where the var is intentionally absent in
@@ -58,11 +61,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "missing",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "missing",
     }),
+    Credentials({
+      credentials: { email: {}, password: {} },
+      authorize: async (creds) => {
+        const v = validateCredentials(
+          typeof creds?.email === "string" ? creds.email : "",
+          typeof creds?.password === "string" ? creds.password : "",
+        );
+        if (!v.ok) return null;
+        const u = await db.query.users.findFirst({ where: eq(users.email, v.email) });
+        if (!u?.passwordHash) return null;
+        const ok = await verifyPassword(creds.password as string, u.passwordHash);
+        if (!ok) return null;
+        return { id: u.id, email: u.email, name: u.displayName, image: u.avatarUrl };
+      },
+    }),
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    signIn: ({ account, profile }) =>
-      signInCallback({
+    signIn: ({ account, profile }) => {
+      // Credentials sign-in is already validated by the provider's authorize().
+      if (account?.provider === "credentials") return true;
+      return signInCallback({
         account: account ?? null,
         profile: profile
           ? {
@@ -71,9 +91,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               picture: profile.picture ?? undefined,
             }
           : null,
-      }),
-    async jwt({ token, profile }) {
-      if (profile?.email) {
+      });
+    },
+    async jwt({ token, user, profile }) {
+      if (user?.id) {
+        // Credentials sign-in: `user` is the object returned by authorize().
+        token.userId = user.id;
+        token.displayName = user.name ?? null;
+        token.avatarUrl = user.image ?? null;
+      } else if (profile?.email) {
         const u = await db.query.users.findFirst({
           where: eq(users.email, profile.email.toLowerCase()),
         });
@@ -91,7 +117,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // jamais une destination post-authentification valide : rediriger vers
       // /dashboard. Les autres routes same-origin sont préservées.
       const isNotADestination = (pathname: string) =>
-        pathname === "/" || pathname === "/login";
+        pathname === "/" ||
+        pathname === "/login" ||
+        pathname === "/connexion" ||
+        pathname === "/inscription";
 
       if (url.startsWith("/")) {
         return isNotADestination(url) ? `${baseUrl}/dashboard` : `${baseUrl}${url}`;
@@ -116,6 +145,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   pages: {
-    signIn: "/login",
+    signIn: "/connexion",
   },
 });

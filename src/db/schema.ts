@@ -22,6 +22,8 @@ export type ProfileSettings = {
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: text("email").notNull().unique(),
+  // bcrypt hash for email/password accounts. Null for OAuth-only (Google) users.
+  passwordHash: text("password_hash"),
   displayName: text("display_name"),
   avatarUrl: text("avatar_url"),
   country: text("country"),
