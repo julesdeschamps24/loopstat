@@ -81,7 +81,7 @@ export default function HomePage() {
           </div>
 
           <Link
-            href="/u/demo"
+            href="/demo"
             className="ls-rise inline-flex items-center gap-1.5 text-[15px] font-medium transition hover:underline"
             style={{ color: "#c4b5fd", animationDelay: "0.34s" }}
           >

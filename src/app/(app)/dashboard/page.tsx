@@ -27,14 +27,11 @@ import {
 import { getProfile } from "@/db/queries/users";
 import { getWallCovers } from "@/db/queries/wall-covers";
 import {
-  DEMO_TOTAL_PLAYS,
-  DEMO_TOTAL_HOURS_LISTENED,
-} from "@/lib/demo/data";
-import {
   getEnrichedDemoTopArtists,
   getEnrichedDemoTopTracks,
 } from "@/lib/demo/enrich";
 import { formatNumber } from "@/lib/utils";
+import { DemoShowcase } from "@/components/demo/demo-showcase";
 import { ImportBanner } from "@/components/import-banner";
 import { OwnProfileCard } from "@/components/profile/own-profile-card";
 
@@ -110,94 +107,7 @@ export default async function DashboardPage() {
           <div className="flex flex-col gap-12">
             <OwnProfileCard profile={profile} isPremium={premium} />
 
-            {/* Listening totals (demo) */}
-            <section>
-              <h2 className="mb-4 text-lg font-semibold">Écoutes</h2>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <StatCard label="7 jours" value={formatNumber(312)} />
-                <StatCard label="30 jours" value={formatNumber(1487)} />
-                <StatCard
-                  label="Total"
-                  value={formatNumber(DEMO_TOTAL_PLAYS)}
-                  sublabel={`${DEMO_TOTAL_HOURS_LISTENED} h d'écoute`}
-                />
-              </div>
-            </section>
-
-            {/* Top 5 titres (demo, non cliquables) */}
-            <section>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Top 5 titres</h2>
-                <Link
-                  href="/top/tracks"
-                  className="flex items-center gap-1 text-sm text-primary hover:underline"
-                >
-                  Voir tout
-                  <ChevronRight className="size-4" />
-                </Link>
-              </div>
-              <StaggerList className="flex flex-col gap-1">
-                {top5Tracks.map((track, index) => (
-                  <StaggerItem key={track.trackId}>
-                    <RankedRow
-                      rank={index + 1}
-                      title={track.name}
-                      href={`/track/${track.trackId}`}
-                      subtitle={track.artistNames.join(", ")}
-                      imageUrl={track.albumImageUrl ?? undefined}
-                    />
-                  </StaggerItem>
-                ))}
-              </StaggerList>
-            </section>
-
-            {/* Top 5 artistes (demo, non cliquables) */}
-            <section>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Top 5 artistes</h2>
-                <Link
-                  href="/top/artists"
-                  className="flex items-center gap-1 text-sm text-primary hover:underline"
-                >
-                  Voir tout
-                  <ChevronRight className="size-4" />
-                </Link>
-              </div>
-              <StaggerList className="flex flex-col gap-1">
-                {top5Artists.map((artist, index) => (
-                  <StaggerItem key={artist.artistId}>
-                    <RankedRow
-                      rank={index + 1}
-                      title={artist.name}
-                      href={`/artist/${artist.artistId}`}
-                      imageUrl={artist.imageUrl ?? undefined}
-                      avatarName={artist.name}
-                      avatarImageUrl={artist.imageUrl}
-                    />
-                  </StaggerItem>
-                ))}
-              </StaggerList>
-            </section>
-
-            {/* Navigation */}
-            <section>
-              <h2 className="mb-4 text-lg font-semibold">Explorer</h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {NAV_LINKS.map(({ href, label, icon: Icon }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className="flex items-center gap-3 rounded-2xl border bg-card p-4 transition hover:bg-accent"
-                  >
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
-                      <Icon className="size-5 text-muted-foreground" />
-                    </div>
-                    <span className="font-medium">{label}</span>
-                    <ChevronRight className="ml-auto size-4 text-muted-foreground" />
-                  </Link>
-                ))}
-              </div>
-            </section>
+            <DemoShowcase tracks={top5Tracks} artists={top5Artists} />
           </div>
         </main>
       </>
