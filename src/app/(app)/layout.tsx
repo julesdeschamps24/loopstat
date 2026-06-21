@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
  *
  * Fond = top albums de l'utilisateur sur 1 an (avec padding catalog si le
  * worker n'a pas encore tout enrichi). Les pages publiques (/, /u/[username],
- * /pricing, /login, légal) sont hors de ce groupe et gardent leur propre fond.
+ * /pricing, /connexion, légal) sont hors de ce groupe et gardent leur propre fond.
  */
 export default async function AppLayout({
   children,
@@ -30,7 +30,7 @@ export default async function AppLayout({
   const session = await auth();
   const userId = session?.user?.id;
 
-  // Pas connecté : les pages enfants redirigent vers /login elles-mêmes.
+  // Pas connecté : les pages enfants redirigent vers /connexion elles-mêmes.
   // On ne requête pas le mur dans ce cas.
   const wallCovers = userId
     ? await getPaddedWallCovers(

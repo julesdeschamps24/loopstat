@@ -13,7 +13,7 @@ export default async function ImportPage({
   const { from } = await searchParams;
   const isFromWelcome = from === "welcome";
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) redirect("/connexion");
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-2xl mx-auto w-full">

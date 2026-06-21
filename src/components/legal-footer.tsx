@@ -2,7 +2,7 @@ import Link from "next/link";
 
 /**
  * Petit pied de page avec les liens légaux obligatoires (RGPD + LCEN).
- * À placer sur les pages publiques (`/`, `/login`) et toute page accessible
+ * À placer sur les pages publiques (`/`, `/connexion`) et toute page accessible
  * sans auth. Les pages authentifiées exposent les mêmes liens en bas de
  * la sidebar.
  */

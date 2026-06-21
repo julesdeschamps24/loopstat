@@ -253,7 +253,7 @@ export default async function PublicProfilePage({
             Tes propres stats Spotify, gratuitement.
           </p>
           <Link
-            href="/login"
+            href="/connexion"
             className="rounded-full px-6 py-2.5 text-sm font-medium text-white transition"
             style={{
               background: "var(--ls-accent, #7c3aed)",

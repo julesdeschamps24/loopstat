@@ -205,7 +205,7 @@ export function ImportUpload() {
             className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-500"
           >
             Session expirée, reconnecte-toi.{" "}
-            <Link href="/login" className="font-medium underline">
+            <Link href="/connexion" className="font-medium underline">
               Se reconnecter
             </Link>
           </p>

@@ -20,7 +20,7 @@ export const revalidate = 3600;
 
 export default async function SettingsPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) redirect("/connexion");
 
   // Fetch email and displayName from DB since session.user.email is not reliably
   // propagated by the current JWT session callback

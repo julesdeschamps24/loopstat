@@ -29,7 +29,7 @@ export default async function SharePage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) redirect("/connexion");
 
   const profile = await getProfile(session.user.id);
   if (!profile?.username || !profile.isPublic) {

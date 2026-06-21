@@ -60,7 +60,7 @@ const NAV_LINKS = [
 
 export default async function DashboardPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) redirect("/connexion");
   const userId = session.user.id;
 
   const hasImport = await hasCompletedImport(userId);

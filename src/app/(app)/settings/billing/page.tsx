@@ -15,7 +15,7 @@ const FR_DATE = new Intl.DateTimeFormat("fr-FR", {
 
 export default async function BillingPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login?next=/settings/billing");
+  if (!session?.user?.id) redirect("/connexion?next=/settings/billing");
 
   const state = await getBillingState(session.user.id);
 

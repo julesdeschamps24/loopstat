@@ -32,7 +32,6 @@ const NAV_ITEMS = [
 // landing et tout ce qu'elle référence doivent rester des pages autonomes.
 const PUBLIC_PATHS = new Set<string>([
   "/",
-  "/login",
   "/connexion",
   "/inscription",
   "/pricing",
@@ -73,7 +72,7 @@ export function Sidebar({
         )
       : null;
 
-  // Pas de sidebar sur les pages publiques (landing + login + profils
+  // Pas de sidebar sur les pages publiques (landing + auth + profils
   // partagés) ni sur les routes d'erreur internes Next.
   if (
     PUBLIC_PATHS.has(pathname) ||

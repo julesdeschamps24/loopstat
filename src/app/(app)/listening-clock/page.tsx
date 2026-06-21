@@ -18,7 +18,7 @@ const LOW_DATA_THRESHOLD = 20;
 
 export default async function ListeningClockPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) redirect("/connexion");
   const userId = session.user.id;
 
   const hasImport = await hasCompletedImport(userId);

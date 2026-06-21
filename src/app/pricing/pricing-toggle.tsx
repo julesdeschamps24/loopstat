@@ -105,7 +105,7 @@ export function PricingToggle({
             </button>
           ) : (
             <Link
-              href="/login?next=/pricing"
+              href="/connexion?next=/pricing"
               className="block w-full rounded-full bg-[#7c3aed] px-5 py-3 text-center text-sm font-medium text-white"
             >
               Se connecter pour essayer →

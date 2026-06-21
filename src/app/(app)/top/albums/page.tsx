@@ -35,7 +35,7 @@ export default async function TopAlbumsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) redirect("/connexion");
   const userId = session.user.id;
 
   const [hasImport, premium] = await Promise.all([

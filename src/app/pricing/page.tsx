@@ -67,7 +67,7 @@ export default async function PricingPage() {
 
       {!session?.user?.id ? (
         <p className="mt-12 text-center text-sm text-muted-foreground">
-          <Link href="/login?next=/pricing" className="underline">
+          <Link href="/connexion?next=/pricing" className="underline">
             Se connecter
           </Link>{" "}
           pour démarrer l&apos;essai.

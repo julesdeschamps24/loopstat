@@ -130,7 +130,7 @@ export function ImportProgress({ importId }: { importId: string }) {
     return (
       <p className="flex items-center gap-2 text-sm text-red-500">
         Session expirée, reconnecte-toi.{" "}
-        <Link href="/login" className="font-medium underline">
+        <Link href="/connexion" className="font-medium underline">
           Se reconnecter
         </Link>
       </p>

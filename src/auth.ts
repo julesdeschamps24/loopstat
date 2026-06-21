@@ -7,15 +7,6 @@ import { users } from "@/db/schema";
 import { verifyPassword } from "@/lib/auth/password";
 import { validateCredentials } from "@/lib/auth/validate";
 
-// Read at request time, not module-load. Next/Turbopack may otherwise inline
-// `process.env.X` at `next build` (where the var is intentionally absent in
-// our Docker build stage) and bake the result into the compiled output.
-export function isAuthConfigured(): boolean {
-  return Boolean(
-    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
-  );
-}
-
 /**
  * SignIn callback isolé pour testabilité. Exporté séparément du handler
  * NextAuth pour permettre des tests unitaires avec db mockée.
@@ -115,12 +106,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async redirect({ url, baseUrl }) {
       // Auth.js v5 ne propage pas le callbackUrl du form POST → après login il
-      // retombe sur la page d'origine ("/" ou "/login"). Ces routes ne sont
+      // retombe sur la page d'origine ("/" ou "/connexion"). Ces routes ne sont
       // jamais une destination post-authentification valide : rediriger vers
       // /dashboard. Les autres routes same-origin sont préservées.
       const isNotADestination = (pathname: string) =>
         pathname === "/" ||
-        pathname === "/login" ||
         pathname === "/connexion" ||
         pathname === "/inscription";
 
