@@ -1,58 +1,23 @@
-"use client";
+import { type CSSProperties } from "react";
 
-import { useEffect, useRef, type CSSProperties } from "react";
-
-import { parallaxTranslate } from "@/lib/landing/parallax";
-import { LANDING_FLOATING_COVERS, LANDING_ROWS } from "./landing-data";
+import { LANDING_FLOATERS, LANDING_ROWS } from "./landing-data";
 
 const GLASS = "rgba(244,240,255,0.06)";
 const GLASS_BORDER = "1px solid rgba(244,240,255,0.13)";
 
+// Purely decorative, autonomous levitation only (no cursor interaction).
 export function FloatingCluster() {
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const coarse = window.matchMedia("(pointer: coarse)").matches;
-    if (reduce || coarse) return;
-
-    const items = Array.from(root.querySelectorAll<HTMLElement>("[data-factor]"));
-    let raf = 0;
-    const onMove = (e: PointerEvent) => {
-      const rect = root.getBoundingClientRect();
-      const nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-      const ny = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        for (const el of items) {
-          const { x, y } = parallaxTranslate(nx, ny, Number(el.dataset.factor));
-          el.style.transform = `translate(${x}px, ${y}px)`;
-        }
-      });
-    };
-    window.addEventListener("pointermove", onMove);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
   return (
-    <div ref={rootRef} className="relative h-full w-full" aria-hidden="true">
-      {/* Mini dashboard — parallax wrapper + inner float */}
-      <div
-        data-factor="10"
-        className="absolute"
-        style={{ right: "6%", top: "8%", width: 224 }}
-      >
+    <div className="relative h-full w-full" aria-hidden="true">
+      {/* Mini dashboard */}
+      <div className="absolute" style={{ right: "4%", top: "5%", width: 224 }}>
         <div
           className="ls-float"
           style={
             {
               "--ls-tilt": "-6deg",
-              "--ls-dur": "8s",
+              "--ls-dur": "6.5s",
+              "--ls-amp": "-7px",
               padding: "13px 15px",
               borderRadius: 14,
               background: "rgba(20,12,36,0.86)",
@@ -106,12 +71,7 @@ export function FloatingCluster() {
                   {row.title}
                 </span>
                 <span
-                  style={{
-                    display: "block",
-                    font: "11px system-ui",
-                    color: "#a89ec8",
-                    marginTop: 2,
-                  }}
+                  style={{ display: "block", font: "11px system-ui", color: "#a89ec8", marginTop: 2 }}
                 >
                   {row.artist}
                 </span>
@@ -122,13 +82,15 @@ export function FloatingCluster() {
       </div>
 
       {/* KPI chip */}
-      <div data-factor="22" className="absolute" style={{ left: "4%", top: "62%" }}>
+      <div className="absolute" style={{ left: "2%", top: "56%" }}>
         <div
           className="ls-float"
           style={
             {
-              "--ls-dur": "9s",
+              "--ls-tilt": "5deg",
+              "--ls-dur": "5.5s",
               "--ls-delay": "0.3s",
+              "--ls-amp": "-9px",
               padding: "8px 12px",
               borderRadius: 13,
               background: GLASS,
@@ -143,69 +105,30 @@ export function FloatingCluster() {
         </div>
       </div>
 
-      {/* Vinyl satellite (favicon motif) */}
-      <div data-factor="28" className="absolute hidden md:block" style={{ left: "10%", top: "12%" }}>
+      {/* Floating album covers + artist avatar */}
+      {LANDING_FLOATERS.map((f) => (
         <div
-          className="ls-float"
-          style={{ "--ls-dur": "7.2s", "--ls-delay": "0.8s" } as CSSProperties}
-        >
-          <span
-            style={{
-              display: "flex",
-              width: 44,
-              height: 44,
-              borderRadius: "50%",
-              background: "#fff",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <span
-              style={{
-                display: "flex",
-                width: 15,
-                height: 15,
-                borderRadius: "50%",
-                background: "#0a0712",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#a78bfa" }} />
-            </span>
-          </span>
-        </div>
-      </div>
-
-      {/* Floating album covers (extras hidden on mobile to stay above the fold) */}
-      {LANDING_FLOATING_COVERS.map((c, i) => (
-        <div
-          key={c.src}
-          data-factor={String(16 + i * 6)}
-          className={i === 0 ? "absolute" : "absolute hidden md:block"}
-          style={
-            [
-              { left: "62%", top: "70%" },
-              { left: "40%", top: "26%" },
-              { left: "78%", top: "40%" },
-            ][i]
-          }
+          key={f.src}
+          className={f.hideMobile ? "absolute hidden md:block" : "absolute"}
+          style={{ left: f.left, top: f.top }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={c.src}
+            src={f.src}
             alt=""
-            width={48}
-            height={48}
+            width={f.size}
+            height={f.size}
             className="ls-float"
             style={
               {
-                "--ls-tilt": c.tilt,
-                "--ls-dur": c.dur,
-                "--ls-delay": c.delay,
-                borderRadius: 9,
+                "--ls-tilt": f.tilt,
+                "--ls-amp": f.amp,
+                "--ls-dur": f.dur,
+                "--ls-delay": f.delay,
+                borderRadius: f.round ? "50%" : 10,
                 objectFit: "cover",
                 display: "block",
+                border: f.round ? "2px solid rgba(244,240,255,0.18)" : "none",
               } as CSSProperties
             }
           />

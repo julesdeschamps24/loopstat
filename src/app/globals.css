@@ -158,16 +158,35 @@ body {
 
 @keyframes ls-float {
   0%, 100% { transform: translateY(0) rotate(var(--ls-tilt, 0deg)); }
-  50% { transform: translateY(-10px) rotate(var(--ls-tilt, 0deg)); }
+  50% { transform: translateY(var(--ls-amp, -7px)) rotate(var(--ls-tilt, 0deg)); }
 }
 .ls-float {
-  animation: ls-float var(--ls-dur, 7s) ease-in-out infinite;
+  animation: ls-float var(--ls-dur, 5s) ease-in-out infinite;
   animation-delay: var(--ls-delay, 0s);
+  transform: rotate(var(--ls-tilt, 0deg));
   will-change: transform;
 }
 @media (prefers-reduced-motion: reduce) {
   .ls-float {
     animation: none;
     transform: rotate(var(--ls-tilt, 0deg));
+  }
+}
+
+/* Staggered entrance for the hero text (fade + rise on load). */
+@keyframes ls-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ls-rise {
+  opacity: 0;
+  animation: ls-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--ls-rise-delay, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ls-rise {
+    opacity: 1;
+    animation: none;
+    transform: none;
   }
 }
