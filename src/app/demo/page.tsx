@@ -38,28 +38,19 @@ export default async function DemoPage() {
     <>
       <AlbumWall covers={wallCovers} />
 
-      <header className="flex w-full items-center justify-between px-6 py-5 sm:px-8">
+      <header className="flex w-full items-center justify-end gap-2 px-6 py-5 sm:px-8">
         <Link
-          href="/"
-          className="text-lg font-bold tracking-tight"
-          style={{ letterSpacing: "-0.02em" }}
+          href="/connexion"
+          className="rounded-[10px] border border-white/15 px-4 py-2 text-sm font-medium transition hover:bg-white/5"
         >
-          loopstat<span className="text-[#7c3aed]">.</span>
+          Se connecter
         </Link>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/connexion"
-            className="rounded-[10px] border border-white/15 px-4 py-2 text-sm font-medium transition hover:bg-white/5"
-          >
-            Se connecter
-          </Link>
-          <Link
-            href="/inscription"
-            className="rounded-[10px] bg-[#7c3aed] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-          >
-            S&apos;inscrire
-          </Link>
-        </div>
+        <Link
+          href="/inscription"
+          className="rounded-[10px] bg-[#7c3aed] px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          S&apos;inscrire
+        </Link>
       </header>
 
       <main

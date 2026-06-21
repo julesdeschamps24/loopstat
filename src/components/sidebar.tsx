@@ -34,7 +34,6 @@ const PUBLIC_PATHS = new Set<string>([
   "/",
   "/connexion",
   "/inscription",
-  "/demo",
   "/pricing",
   "/terms",
   "/privacy",
@@ -60,6 +59,9 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  // Public /demo showcase: the navbar is shown, but track search hits an
+  // auth-gated API (401 when logged out), so hide it there.
+  const isDemo = pathname === "/demo";
 
   const now = useMemo(() => new Date(), []);
   const trialDaysLeft =
@@ -91,9 +93,11 @@ export function Sidebar({
         loopstat
       </Link>
 
-      <div className="mb-4 px-1">
-        <SearchBar />
-      </div>
+      {!isDemo && (
+        <div className="mb-4 px-1">
+          <SearchBar />
+        </div>
+      )}
 
       <nav className="flex flex-col gap-0.5">
         {NAV_ITEMS.filter(

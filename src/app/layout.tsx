@@ -86,23 +86,24 @@ export default async function RootLayout({
           Aller au contenu
         </a>
         <div className="flex min-h-screen">
-            {userId && (
-              <Sidebar
-                hasImported={hasImported}
-                username={profile?.username ?? undefined}
-                isPublic={profile?.isPublic ?? false}
-                billingTier={billingState.tier}
-                premiumExpiresAt={
-                  billingState.tier === "trial"
-                    ? billingState.trialEndsAt
-                    : billingState.tier === "active"
-                      ? billingState.renewsAt
-                      : billingState.tier === "past_due" || billingState.tier === "canceled"
-                        ? billingState.expiresAt
-                        : undefined
-                }
-              />
-            )}
+            {/* Always mounted; the Sidebar self-hides on public paths. For a
+                logged-out visitor it therefore renders only on /demo (the
+                showcase), with the anonymous defaults computed above. */}
+            <Sidebar
+              hasImported={hasImported}
+              username={profile?.username ?? undefined}
+              isPublic={profile?.isPublic ?? false}
+              billingTier={billingState.tier}
+              premiumExpiresAt={
+                billingState.tier === "trial"
+                  ? billingState.trialEndsAt
+                  : billingState.tier === "active"
+                    ? billingState.renewsAt
+                    : billingState.tier === "past_due" || billingState.tier === "canceled"
+                      ? billingState.expiresAt
+                      : undefined
+              }
+            />
             <div className="flex min-w-0 flex-1 flex-col">{children}</div>
           </div>
       </body>
