@@ -14,9 +14,9 @@ export default async function PricingPage() {
     session?.user?.id
       ? getBillingState(session.user.id)
       : Promise.resolve({ tier: "free" as const }),
-    // Authenticated → user's top albums, anonymous → falls through to the
-    // global catalog favourites (getWallCovers handles the empty user case).
-    getPaddedWallCovers(session?.user?.id ?? "anonymous", null, 40),
+    // Authenticated → user's top albums; anonymous → null skips the user query
+    // and the wall falls back to the global catalog favourites.
+    getPaddedWallCovers(session?.user?.id ?? null, null, 40),
   ]);
 
   const isPremium = state.tier !== "free";

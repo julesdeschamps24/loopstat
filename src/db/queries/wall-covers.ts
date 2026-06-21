@@ -26,7 +26,7 @@ export interface WallAlbum {
  * duplicating the padding loop across callsites.
  */
 export async function getPaddedWallCovers(
-  userId: string,
+  userId: string | null,
   since: Date | null,
   cells: number,
 ): Promise<WallAlbum[]> {
@@ -53,30 +53,35 @@ export async function getPaddedWallCovers(
  * a brand-new catalog with no enriched albums anywhere.
  */
 export async function getWallCovers(
-  userId: string,
+  userId: string | null,
   since: Date | null,
   limit: number,
 ): Promise<WallAlbum[]> {
-  const userTopWhere = and(
-    eq(streams.userId, userId),
-    since ? gte(streams.playedAt, since) : undefined,
-    isNotNull(albums.imageUrl),
-    QUALIFYING_PLAY,
-  );
-
-  const userTop = await db
-    .select({
-      albumId: albums.id,
-      name: albums.name,
-      imageUrl: albums.imageUrl,
-    })
-    .from(streams)
-    .innerJoin(tracks, eq(tracks.id, streams.trackId))
-    .innerJoin(albums, eq(albums.id, tracks.albumId))
-    .where(userTopWhere)
-    .groupBy(albums.id, albums.name, albums.imageUrl)
-    .orderBy(desc(sql`count(*)`))
-    .limit(limit);
+  // Anonymous (no userId, e.g. logged-out /pricing visitor): skip the
+  // user-scoped query — the wall is filled entirely from the global catalog
+  // favourites below. (Passing a non-uuid placeholder here crashes Postgres.)
+  const userTop = userId
+    ? await db
+        .select({
+          albumId: albums.id,
+          name: albums.name,
+          imageUrl: albums.imageUrl,
+        })
+        .from(streams)
+        .innerJoin(tracks, eq(tracks.id, streams.trackId))
+        .innerJoin(albums, eq(albums.id, tracks.albumId))
+        .where(
+          and(
+            eq(streams.userId, userId),
+            since ? gte(streams.playedAt, since) : undefined,
+            isNotNull(albums.imageUrl),
+            QUALIFYING_PLAY,
+          ),
+        )
+        .groupBy(albums.id, albums.name, albums.imageUrl)
+        .orderBy(desc(sql`count(*)`))
+        .limit(limit)
+    : [];
 
   if (userTop.length >= limit) {
     return userTop.map((r) => ({ name: r.name, imageUrl: r.imageUrl }));
