@@ -57,6 +57,10 @@ services:
     command: ["sh", "-c", "pnpm drizzle-kit migrate && pnpm start"]
     ports:
       - "127.0.0.1:3001:3000"
+    # Les fichiers d'import sont écrits par l'app et lus par le worker :
+    # volume partagé obligatoire (conteneurs = filesystems séparés).
+    volumes:
+      - import_tmp:/app/.import-tmp
 
   worker:
     image: loopstat:latest
@@ -71,7 +75,10 @@ services:
       DATABASE_URL: postgres://loopstat:${POSTGRES_PASSWORD}@postgres:5432/loopstat
       REDIS_URL: redis://redis:6379
     command: ["pnpm", "tsx", "worker/index.ts"]
+    volumes:
+      - import_tmp:/app/.import-tmp
 
 volumes:
   postgres_data:
   redis_data:
+  import_tmp:

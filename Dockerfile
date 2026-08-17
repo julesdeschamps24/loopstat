@@ -50,6 +50,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 COPY --from=builder --chown=nextjs:nodejs /app/worker ./worker
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 
+# Dossier temporaire des imports (uploadé par l'app, lu par le worker via un
+# volume partagé). Doit exister dans l'image avec le bon owner : un named
+# volume vide monté ici hérite de cette ownership au premier démarrage.
+RUN mkdir -p /app/.import-tmp && chown nextjs:nodejs /app/.import-tmp
+
 USER nextjs
 EXPOSE 3000
 
