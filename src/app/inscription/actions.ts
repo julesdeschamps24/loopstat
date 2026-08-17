@@ -9,7 +9,7 @@ import { hashPassword } from "@/lib/auth/password";
 import { validateCredentials } from "@/lib/auth/validate";
 import { checkRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 
-export type SignUpState = { error: string } | null;
+export type SignUpState = { error: string } | { ok: true } | null;
 
 // 5 créations de compte / heure par IP — large pour un humain, bloquant
 // pour un script.
@@ -46,7 +46,11 @@ export async function signUpAction(
     return { error: "Un compte existe déjà avec cet email. Connecte-toi." };
   }
 
-  // signIn throws a NEXT_REDIRECT on success — must NOT be caught.
-  await signIn("credentials", { email: v.email, password, redirectTo: "/dashboard" });
-  return null;
+  // redirect: false + navigation complète côté client : les redirects
+  // server-side (Auth.js OU redirect() Next) après signIn perdent la course
+  // avec le set-cookie de session → le RSC de /dashboard bounce sur
+  // /connexion. Le client fait un window.location.assign("/dashboard")
+  // (full page load = cookie garanti présent).
+  await signIn("credentials", { email: v.email, password, redirect: false });
+  return { ok: true };
 }

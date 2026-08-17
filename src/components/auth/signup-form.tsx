@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { GoogleSignInButton } from "@/components/landing/google-sign-in-button";
@@ -24,6 +24,12 @@ export function SignupForm() {
     signUpAction,
     null,
   );
+
+  // Full page load (pas router.push) : garantit que le cookie de session posé
+  // par l'action est envoyé au serveur — cf. commentaire dans actions.ts.
+  useEffect(() => {
+    if (state && "ok" in state) window.location.assign("/dashboard");
+  }, [state]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -58,7 +64,7 @@ export function SignupForm() {
         />
       </div>
 
-      {state?.error && (
+      {state && "error" in state && (
         <p role="alert" className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
           {state.error}
         </p>

@@ -8,10 +8,12 @@ import { verifyPassword } from "@/lib/auth/password";
 import { validateCredentials } from "@/lib/auth/validate";
 import { checkRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 
-// Brute-force guard : 10 tentatives de login / 10 min par IP, et 5 / 10 min
-// par couple IP+email (évite qu'une IP teste 10 mots de passe sur un même
-// compte). In-memory : suffisant, l'app tourne en un seul process.
-const LOGIN_WINDOW_MS = 10 * 60 * 1000;
+// Brute-force guard : 10 tentatives de login / 30 s par IP, et 5 / 30 s par
+// couple IP+email. Fenêtre courte = déblocage rapide pour un humain qui se
+// trompe ; ça throttle quand même un script à ~10 essais/30 s (le coût
+// bcrypt côté serveur ralentit le reste). In-memory : suffisant, l'app
+// tourne en un seul process.
+const LOGIN_WINDOW_MS = 30 * 1000;
 const LOGIN_MAX_PER_IP = 10;
 const LOGIN_MAX_PER_IP_EMAIL = 5;
 
