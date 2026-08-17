@@ -3,13 +3,9 @@ import { db } from "@/db/client";
 import { albums, albumArtists, artists } from "@/db/schema";
 import { log } from "@/lib/log";
 import { enrichAlbumImageByDeezer, enrichArtistImageByDeezer } from "@/lib/deezer/catalog";
+import { DEEZER_DELAY_MS, sleep, withQuotaRetry } from "./deezerPacing";
 
 const ULTRA_PRIORITY_LIMIT = 20;
-const DEEZER_DELAY_MS = 50;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
 
 export interface EnrichCatalogPriorityResult {
   albumsEnriched: number;
@@ -121,11 +117,15 @@ export async function enrichCatalogPriority({
     if (!row) continue;
     if (albumsProcessed > 0) await sleep(DEEZER_DELAY_MS);
     try {
-      await enrichAlbumImageByDeezer({
-        albumId: row.albumId,
-        artistName: row.artistName,
-        albumName: row.albumName,
-      });
+      await withQuotaRetry(
+        () =>
+          enrichAlbumImageByDeezer({
+            albumId: row.albumId,
+            artistName: row.artistName,
+            albumName: row.albumName,
+          }),
+        wlog,
+      );
       albumsEnriched++;
     } catch (err) {
       wlog.error(
@@ -158,7 +158,10 @@ export async function enrichCatalogPriority({
     if (!row) continue;
     if (artistsProcessed > 0 || albumMap.size > 0) await sleep(DEEZER_DELAY_MS);
     try {
-      await enrichArtistImageByDeezer({ artistId: row.artistId, name: row.name });
+      await withQuotaRetry(
+        () => enrichArtistImageByDeezer({ artistId: row.artistId, name: row.name }),
+        wlog,
+      );
       artistsEnriched++;
     } catch (err) {
       wlog.error(

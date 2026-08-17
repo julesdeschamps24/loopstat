@@ -2,46 +2,11 @@ import { eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { albums, albumArtists, artists } from "@/db/schema";
 import { log } from "@/lib/log";
-import { DeezerError } from "@/lib/deezer/client";
 import { enrichAlbumImageByDeezer, enrichArtistImageByDeezer } from "@/lib/deezer/catalog";
 import { enrichCatalogQueue } from "../queue";
+import { DEEZER_DELAY_MS, sleep, withQuotaRetry } from "./deezerPacing";
 
 const CHUNK_SIZE = 100;
-// Un album = jusqu'à 2 appels Deezer (search + détails). Quota Deezer :
-// 50 req / 5 s. 250 ms entre albums ≈ 8 req/s max, marge incluse.
-// (50 ms tenait le quota instantané mais pas la charge soutenue : Deezer
-// 403 après quelques centaines d'albums — vécu sur le premier import prod.)
-const DEEZER_DELAY_MS = 250;
-// Sur 403/429 : pause puis reprise sur place, plutôt que de faire échouer
-// le job entier (3 attempts BullMQ = sweep mort au 3e blocage).
-const QUOTA_PAUSE_MS = 65_000;
-const MAX_QUOTA_RETRIES = 5;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-async function withQuotaRetry<T>(
-  fn: () => Promise<T>,
-  wlog: ReturnType<typeof log.child>,
-): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      const status = err instanceof DeezerError ? err.status : null;
-      if ((status === 403 || status === 429) && attempt < MAX_QUOTA_RETRIES) {
-        wlog.warn(
-          { status, attempt, pauseMs: QUOTA_PAUSE_MS },
-          "quota Deezer atteint — pause puis reprise",
-        );
-        await sleep(QUOTA_PAUSE_MS);
-        continue;
-      }
-      throw err;
-    }
-  }
-}
 
 export interface EnrichCatalogResult {
   albumsEnriched: number;
