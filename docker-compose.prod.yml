@@ -52,6 +52,9 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID is required}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET is required}
+      # Error tracking — optionnel, Sentry inactif si vide.
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
     # Migrate the schema, then start the Next server. drizzle-kit reads
     # DATABASE_URL from the environment (no .env.local needed here).
     command: ["sh", "-c", "pnpm drizzle-kit migrate && pnpm start"]

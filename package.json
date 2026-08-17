@@ -19,6 +19,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.70.0",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.76.2",
     "clsx": "^2.1.1",
@@ -48,5 +49,12 @@
     "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.1.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "brace-expansion@>=3.0.0": ">=5.0.9",
+      "esbuild@>=0.27.3 <0.28.1": ">=0.28.1",
+      "@babel/core": ">=7.29.6"
+    }
   }
 }

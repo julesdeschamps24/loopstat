@@ -44,6 +44,20 @@ export function checkRateLimit(
   return { ok: false, retryAfterMs: windowMs - (now - bucket.windowStart) };
 }
 
+/**
+ * Client IP from proxy headers (Caddy sets X-Forwarded-For with the real
+ * client IP). Falls back to "unknown" — the rate limit then agrège tous les
+ * clients sans IP dans un seul bucket, ce qui reste protecteur.
+ */
+export function clientIpFromHeaders(h: Headers): string {
+  const xff = h.get("x-forwarded-for");
+  if (xff) {
+    const first = xff.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return h.get("x-real-ip") ?? "unknown";
+}
+
 export function rateLimitResponse(retryAfterMs: number): Response {
   return Response.json(
     { error: "rate_limited" },

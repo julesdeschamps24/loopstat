@@ -2,6 +2,12 @@ import { readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { Worker, type Job } from "bullmq";
 import { and, eq, lt, or } from "drizzle-orm";
+import { validateWorkerEnv } from "@/lib/env";
+
+// Fail fast : crash au boot si DATABASE_URL/REDIS_URL manquent ou sont
+// invalides, plutôt qu'une erreur cryptique au premier job.
+validateWorkerEnv();
+
 import { db } from "@/db/client";
 import { imports } from "@/db/schema";
 import { log } from "@/lib/log";

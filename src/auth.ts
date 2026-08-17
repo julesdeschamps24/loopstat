@@ -6,6 +6,14 @@ import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { verifyPassword } from "@/lib/auth/password";
 import { validateCredentials } from "@/lib/auth/validate";
+import { checkRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
+
+// Brute-force guard : 10 tentatives de login / 10 min par IP, et 5 / 10 min
+// par couple IP+email (évite qu'une IP teste 10 mots de passe sur un même
+// compte). In-memory : suffisant, l'app tourne en un seul process.
+const LOGIN_WINDOW_MS = 10 * 60 * 1000;
+const LOGIN_MAX_PER_IP = 10;
+const LOGIN_MAX_PER_IP_EMAIL = 5;
 
 /**
  * SignIn callback isolé pour testabilité. Exporté séparément du handler
@@ -54,12 +62,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
     Credentials({
       credentials: { email: {}, password: {} },
-      authorize: async (creds) => {
+      authorize: async (creds, request) => {
         const v = validateCredentials(
           typeof creds?.email === "string" ? creds.email : "",
           typeof creds?.password === "string" ? creds.password : "",
         );
         if (!v.ok) return null;
+
+        const ip = clientIpFromHeaders(request.headers);
+        const byIp = checkRateLimit(`login:${ip}`, LOGIN_MAX_PER_IP, LOGIN_WINDOW_MS);
+        const byIpEmail = checkRateLimit(
+          `login:${ip}:${v.email}`,
+          LOGIN_MAX_PER_IP_EMAIL,
+          LOGIN_WINDOW_MS,
+        );
+        if (!byIp.ok || !byIpEmail.ok) return null;
         const u = await db.query.users.findFirst({ where: eq(users.email, v.email) });
         if (!u?.passwordHash) return null;
         const ok = await verifyPassword(creds.password as string, u.passwordHash);
