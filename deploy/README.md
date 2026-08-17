@@ -1,19 +1,19 @@
 # Déploiement loopstat → VPS Hetzner
 
-> Cible : `loopstat.tech` derrière Caddy sur le VPS `204.168.178.52` (Ubuntu).
+> Cible : `loopstat.fr` derrière Caddy sur le VPS `204.168.178.52` (Ubuntu).
 > Stack : Next.js 16 + BullMQ worker + Postgres 16 + Redis 7, le tout dans Docker.
 
 ## Prérequis (à faire avant le déploiement)
 
 1. **DNS** : ajoute un enregistrement A à ton registrar
    ```
-   loopstat.tech.   A   204.168.178.52
+   loopstat.fr.   A   204.168.178.52
    ```
-   Vérifie la propagation : `dig +short loopstat.tech A` doit renvoyer `204.168.178.52`.
+   Vérifie la propagation : `dig +short loopstat.fr A` doit renvoyer `204.168.178.52`.
 2. **Google Cloud Console** ([console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)) :
    ouvre ton projet OAuth, ajoute le redirect URI prod aux **Authorized redirect URIs** :
    ```
-   https://loopstat.tech/api/auth/callback/google
+   https://loopstat.fr/api/auth/callback/google
    ```
    (Garde celui de dev `http://127.0.0.1:3000/api/auth/callback/google` à côté.)
    Si l'app est encore en "Testing" status, ajoute aussi ton email dans **Test users**.
@@ -80,13 +80,13 @@ Caddy obtient le cert Let's Encrypt automatiquement (besoin que le DNS soit
 déjà propagé). Vérifie :
 
 ```sh
-curl -sI https://loopstat.tech | head -3
+curl -sI https://loopstat.fr | head -3
 # HTTP/2 307 — redirect vers /login = prod opérationnelle
 ```
 
 ### 6. Tester le flow OAuth complet
 
-Ouvre `https://loopstat.tech/login` dans un navigateur, clique « Se connecter
+Ouvre `https://loopstat.fr/login` dans un navigateur, clique « Se connecter
 avec Google », autorise. Tu dois atterrir sur `/dashboard`.
 
 ### 7. (Premier déploiement uniquement) Seeder le catalog démo

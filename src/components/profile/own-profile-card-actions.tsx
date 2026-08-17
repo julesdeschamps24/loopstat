@@ -7,7 +7,7 @@ import { useIsClient } from "@/lib/use-is-client";
 export function CopyProfileLinkButton({ username }: { username: string }) {
   const isClient = useIsClient();
   const [copied, setCopied] = useState(false);
-  const origin = isClient ? window.location.origin : "https://loopstat.tech";
+  const origin = isClient ? window.location.origin : "https://loopstat.fr";
   const url = `${origin}/u/${username}`;
 
   async function copy() {

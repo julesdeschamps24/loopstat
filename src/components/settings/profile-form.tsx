@@ -35,7 +35,7 @@ export function ProfileForm({ username, initialIsPublic }: Props) {
         </div>
         <p className="text-xs text-muted-foreground">
           Dérivé de ton compte Spotify. Aperçu de l&apos;URL publique :{" "}
-          <span className="font-mono">loopstat.tech/u/{displayUsername}</span>
+          <span className="font-mono">loopstat.fr/u/{displayUsername}</span>
         </p>
       </div>
 
@@ -52,7 +52,7 @@ export function ProfileForm({ username, initialIsPublic }: Props) {
           <span className="text-sm font-medium">Rendre mon profil public</span>
           <span className="text-xs text-muted-foreground">
             N&apos;importe qui pourra voir tes top tracks, artistes et albums
-            sur <span className="font-mono">loopstat.tech/u/{displayUsername}</span>.
+            sur <span className="font-mono">loopstat.fr/u/{displayUsername}</span>.
             Tu peux désactiver à tout moment.
           </span>
         </span>

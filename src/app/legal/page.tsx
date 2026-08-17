@@ -35,7 +35,7 @@ export default function LegalPage() {
           <p>
             Le site <strong>loopstat</strong> (
             <Link href="/" className="text-primary hover:underline">
-              loopstat.tech
+              loopstat.fr
             </Link>
             ) est édité à titre personnel par&nbsp;:
           </p>

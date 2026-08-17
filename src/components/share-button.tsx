@@ -16,7 +16,7 @@ export function ShareButton({ username, context }: Props) {
   const [copied, setCopied] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const origin = isClient ? window.location.origin : "https://loopstat.tech";
+  const origin = isClient ? window.location.origin : "https://loopstat.fr";
   const canNativeShare = isClient && "share" in navigator;
 
   useEffect(() => {

@@ -3,8 +3,19 @@
 #
 # Caddy auto-provisions a Let's Encrypt cert thanks to the global `email`
 # already set at the top of the existing Caddyfile.
+#
+# loopstat.fr is the primary domain. www.loopstat.fr and the legacy
+# loopstat.tech both 301-redirect to it.
 
-loopstat.tech {
+loopstat.fr {
   reverse_proxy localhost:3001
   encode gzip zstd
+}
+
+www.loopstat.fr {
+  redir https://loopstat.fr{uri} permanent
+}
+
+loopstat.tech {
+  redir https://loopstat.fr{uri} permanent
 }
