@@ -24,6 +24,7 @@ import {
   DEMO_TOP_ALBUMS,
   DEMO_TOP_ARTISTS,
   DEMO_TOP_TRACKS,
+  DEMO_WALL_ALBUMS,
 } from "../src/lib/demo/data";
 import { synthesizeAlbumId, synthesizeArtistId } from "../src/lib/ids/synthesize";
 import { enrichAlbumImageByDeezer, enrichArtistImageByDeezer } from "../src/lib/deezer/catalog";
@@ -39,6 +40,7 @@ async function main() {
   for (const a of DEMO_TOP_ARTISTS) artistNamesSet.add(a.name);
   for (const a of DEMO_TOP_ALBUMS) for (const n of a.artistNames) artistNamesSet.add(n);
   for (const t of DEMO_TOP_TRACKS) for (const n of t.artistNames) artistNamesSet.add(n);
+  for (const a of DEMO_WALL_ALBUMS) artistNamesSet.add(a.artistName);
 
   const artistRows = Array.from(artistNamesSet).map((name) => ({
     id: synthesizeArtistId(name),
@@ -50,16 +52,21 @@ async function main() {
   console.log(`Inserted ${artistRows.length} artist rows (idempotent)`);
 
   // 2) Insert minimal album rows + album_artists junctions.
-  const albumRows = DEMO_TOP_ALBUMS.map((a) => ({
-    id: synthesizeAlbumId(a.artistNames[0], a.name),
+  //    Demo tops + wall-only albums (fond <AlbumWall>) — même pipeline.
+  const allAlbums: { artistName: string; name: string }[] = [
+    ...DEMO_TOP_ALBUMS.map((a) => ({ artistName: a.artistNames[0], name: a.name })),
+    ...DEMO_WALL_ALBUMS,
+  ];
+  const albumRows = allAlbums.map((a) => ({
+    id: synthesizeAlbumId(a.artistName, a.name),
     name: a.name,
   }));
   if (albumRows.length > 0) {
     await db.insert(albums).values(albumRows).onConflictDoNothing();
   }
-  const albumArtistRows = DEMO_TOP_ALBUMS.map((a) => ({
-    albumId: synthesizeAlbumId(a.artistNames[0], a.name),
-    artistId: synthesizeArtistId(a.artistNames[0]),
+  const albumArtistRows = allAlbums.map((a) => ({
+    albumId: synthesizeAlbumId(a.artistName, a.name),
+    artistId: synthesizeArtistId(a.artistName),
   }));
   if (albumArtistRows.length > 0) {
     await db.insert(albumArtists).values(albumArtistRows).onConflictDoNothing();
@@ -94,23 +101,23 @@ async function main() {
   // 4) Enrich each album via Deezer (skip ones already enriched).
   console.log("\n=== Enriching albums via Deezer ===");
   let i = 0;
-  for (const a of DEMO_TOP_ALBUMS) {
+  for (const a of allAlbums) {
     if (i > 0) await sleep(RATE_MS);
-    const albumId = synthesizeAlbumId(a.artistNames[0], a.name);
+    const albumId = synthesizeAlbumId(a.artistName, a.name);
     const [row] = await db.select({ deezerId: albums.deezerId }).from(albums).where(eq(albums.id, albumId)).limit(1);
     if (row?.deezerId != null) {
-      console.log(`  [${++i}/${DEMO_TOP_ALBUMS.length}] ${a.artistNames[0]} — ${a.name}: already enriched`);
+      console.log(`  [${++i}/${allAlbums.length}] ${a.artistName} — ${a.name}: already enriched`);
       continue;
     }
     try {
       await enrichAlbumImageByDeezer({
         albumId,
-        artistName: a.artistNames[0],
+        artistName: a.artistName,
         albumName: a.name,
       });
-      console.log(`  [${++i}/${DEMO_TOP_ALBUMS.length}] ${a.artistNames[0]} — ${a.name}: enriched`);
+      console.log(`  [${++i}/${allAlbums.length}] ${a.artistName} — ${a.name}: enriched`);
     } catch (err) {
-      console.error(`  [${++i}/${DEMO_TOP_ALBUMS.length}] ${a.artistNames[0]} — ${a.name}: FAILED`, (err as Error).message);
+      console.error(`  [${++i}/${allAlbums.length}] ${a.artistName} — ${a.name}: FAILED`, (err as Error).message);
     }
   }
 

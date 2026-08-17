@@ -99,6 +99,64 @@ export const DEMO_TOP_ALBUMS: {
 DEMO_TOP_ALBUMS.sort((a, b) => b.plays - a.plays);
 
 /**
+ * Albums additionnels pour remplir le mur de fond (<AlbumWall>) tant que le
+ * catalog n'est pas alimenté par les imports des vrais users. Le mur demande
+ * jusqu'à 60 cellules ; les DEMO_TOP_ALBUMS n'en couvrent que 15. Seedés par
+ * scripts/seed-demo-catalog.ts (covers récupérées via Deezer), jamais
+ * affichés dans les tops — uniquement le fond.
+ */
+export const DEMO_WALL_ALBUMS: { artistName: string; name: string }[] = [
+  { artistName: "The Weeknd", name: "After Hours" },
+  { artistName: "The Weeknd", name: "Starboy" },
+  { artistName: "Frank Ocean", name: "Blonde" },
+  { artistName: "Daft Punk", name: "Random Access Memories" },
+  { artistName: "Daft Punk", name: "Discovery" },
+  { artistName: "Kendrick Lamar", name: "DAMN." },
+  { artistName: "Kendrick Lamar", name: "good kid, m.A.A.d city" },
+  { artistName: "Tyler, The Creator", name: "IGOR" },
+  { artistName: "Tyler, The Creator", name: "Flower Boy" },
+  { artistName: "SZA", name: "SOS" },
+  { artistName: "Doja Cat", name: "Planet Her" },
+  { artistName: "Bad Bunny", name: "Un Verano Sin Ti" },
+  { artistName: "Rosalía", name: "MOTOMAMI" },
+  { artistName: "Harry Styles", name: "Harry's House" },
+  { artistName: "Olivia Rodrigo", name: "SOUR" },
+  { artistName: "Olivia Rodrigo", name: "GUTS" },
+  { artistName: "Adele", name: "21" },
+  { artistName: "Ed Sheeran", name: "Divide" },
+  { artistName: "Dua Lipa", name: "Future Nostalgia" },
+  { artistName: "Billie Eilish", name: "When We All Fall Asleep, Where Do We Go?" },
+  { artistName: "Travis Scott", name: "ASTROWORLD" },
+  { artistName: "Travis Scott", name: "UTOPIA" },
+  { artistName: "Drake", name: "Take Care" },
+  { artistName: "Mac Miller", name: "Circles" },
+  { artistName: "Tame Impala", name: "Currents" },
+  { artistName: "Arctic Monkeys", name: "AM" },
+  { artistName: "Gorillaz", name: "Demon Days" },
+  { artistName: "Coldplay", name: "Parachutes" },
+  { artistName: "Fleetwood Mac", name: "Rumours" },
+  { artistName: "Michael Jackson", name: "Thriller" },
+  { artistName: "Pink Floyd", name: "The Dark Side of the Moon" },
+  { artistName: "Nirvana", name: "Nevermind" },
+  { artistName: "Radiohead", name: "OK Computer" },
+  { artistName: "Kanye West", name: "Graduation" },
+  { artistName: "Beyoncé", name: "RENAISSANCE" },
+  { artistName: "Rihanna", name: "ANTI" },
+  { artistName: "Ariana Grande", name: "thank u, next" },
+  { artistName: "Lana Del Rey", name: "Born To Die" },
+  { artistName: "Lorde", name: "Melodrama" },
+  { artistName: "The Beatles", name: "Abbey Road" },
+  { artistName: "Amy Winehouse", name: "Back To Black" },
+  { artistName: "Stromae", name: "Racine carrée" },
+  { artistName: "Angèle", name: "Brol" },
+  { artistName: "Orelsan", name: "Civilisation" },
+  { artistName: "PNL", name: "Deux frères" },
+  { artistName: "Nekfeu", name: "Feu" },
+  { artistName: "Damso", name: "QALF" },
+  { artistName: "Aya Nakamura", name: "NAKAMURA" },
+];
+
+/**
  * Distribution plausible des écoutes par heure (24 entries, hour 0..23).
  * Pattern : creux nuit profonde (3-6h), build-up matin, peak soir (18-22h),
  * descente nuit. Total ~3000 plays (cohérent avec DEMO_TOTAL_PLAYS).
