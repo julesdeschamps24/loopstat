@@ -73,14 +73,21 @@ export async function enrichCatalogPriority({
   const ultraStart = Date.now();
   const ultraResults = await Promise.allSettled([
     ...ultraAlbumRows.map((row) =>
-      enrichAlbumImageByDeezer({
-        albumId: row.albumId,
-        artistName: row.artistName,
-        albumName: row.albumName,
-      }),
+      withQuotaRetry(
+        () =>
+          enrichAlbumImageByDeezer({
+            albumId: row.albumId,
+            artistName: row.artistName,
+            albumName: row.albumName,
+          }),
+        wlog,
+      ),
     ),
     ...ultraArtistRows.map((row) =>
-      enrichArtistImageByDeezer({ artistId: row.artistId, name: row.name }),
+      withQuotaRetry(
+        () => enrichArtistImageByDeezer({ artistId: row.artistId, name: row.name }),
+        wlog,
+      ),
     ),
   ]);
   const ultraSuccess = ultraResults.filter((r) => r.status === "fulfilled").length;
