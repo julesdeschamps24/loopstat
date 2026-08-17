@@ -255,7 +255,16 @@ export async function importHistory(
     // enqueue failure must not fail it — enrichment can be retried later.
     // Use jobId to dedup concurrent enqueues: if an enrich job is already
     // queued or in-flight, this add() returns the existing job ref.
+    // ATTENTION : un job completed/failed résiduel porte le même jobId et
+    // rend le add() silencieusement no-op — il faut le purger d'abord
+    // (c'est exactement ce qui a laissé 6k albums sans cover après le
+    // premier import prod).
     try {
+      const stale = await enrichCatalogQueue.getJob("enrich-catalog-global");
+      if (stale) {
+        const state = await stale.getState();
+        if (state === "completed" || state === "failed") await stale.remove();
+      }
       await enrichCatalogQueue.add("enrich-catalog", { userId }, { jobId: "enrich-catalog-global" });
     } catch (enqueueErr) {
       wlog.error(

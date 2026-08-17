@@ -5,11 +5,20 @@
 # Docker network. The app is bound to 127.0.0.1:3001 (Caddy reverse-proxies
 # loopstat.fr → localhost:3001).
 
+# Rotation des logs json-file : sans elle un conteneur qui vit des mois
+# accumule des logs sans limite. Appliqué à la recréation des conteneurs.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: loopstat_postgres_prod
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_USER: loopstat
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
@@ -26,6 +35,7 @@ services:
     image: redis:7-alpine
     container_name: loopstat_redis_prod
     restart: unless-stopped
+    logging: *default-logging
     volumes:
       - redis_data:/data
     healthcheck:
@@ -41,6 +51,7 @@ services:
     image: loopstat:latest
     container_name: loopstat_app
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -69,6 +80,7 @@ services:
     image: loopstat:latest
     container_name: loopstat_worker
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       app: { condition: service_started }
       postgres: { condition: service_healthy }

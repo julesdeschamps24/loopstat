@@ -46,8 +46,11 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
   const existing = await enrichCatalogQueue.getJob("enrich-catalog-global");
   if (existing) {
     const state = await existing.getState();
-    if (state === "failed") {
-      slog.info({ state }, "removing stale failed job");
+    // Un job completed/failed est un RESIDU (gardé 24 h par removeOnComplete),
+    // pas un job en cours : il bloquait tout ré-enqueue via le même jobId.
+    // Seuls waiting/active/delayed signifient "déjà pris en charge".
+    if (state === "completed" || state === "failed") {
+      slog.info({ state }, "removing stale finished job");
       await existing.remove();
     } else {
       slog.info({ state }, "enrich already pending — no re-enqueue");
