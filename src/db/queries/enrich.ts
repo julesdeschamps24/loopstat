@@ -85,13 +85,17 @@ import { periodSince, type StreamPeriod } from "@/lib/stats/period";
 /**
  * Tiered limits per time window for the priority enrich pass. 1w is the
  * default period shown on /top/* — gets the largest slice. Older windows
- * get smaller slices since they're consulted less often.
+ * get smaller slices since they're consulted less often. "all" ferme la
+ * marche avec le top 100 complet : c'est la vue "Tout" des pages /top/*
+ * (et la vue par défaut des profils partagés) — sans ce tier, ses entrées
+ * de milieu de liste attendaient le sweep global.
  */
 const WINDOW_LIMITS: { window: StreamPeriod; limit: number }[] = [
-  { window: "1w", limit: 50 },
-  { window: "4w", limit: 30 },
-  { window: "6m", limit: 20 },
-  { window: "1y", limit: 20 },
+  { window: "1w", limit: 100 },
+  { window: "4w", limit: 50 },
+  { window: "6m", limit: 30 },
+  { window: "1y", limit: 30 },
+  { window: "all", limit: 100 },
 ];
 
 /**
