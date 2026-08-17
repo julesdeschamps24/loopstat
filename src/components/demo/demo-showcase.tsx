@@ -30,8 +30,8 @@ const NAV_LINKS = [
 ] as const;
 
 /**
- * The "compte démo" stats showcase — listening totals, top 5 titres, top 5
- * artistes and the explore grid — built entirely from the demo fixtures.
+ * The "compte démo" stats showcase - listening totals, top 5 titres, top 5
+ * artistes and the explore grid - built entirely from the demo fixtures.
  *
  * Shared between the in-app dashboard demo (logged-in user without an import)
  * and the public `/demo` landing example, so both show the exact same UI.

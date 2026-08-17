@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make public profiles discoverable from inside the app — both the owner's own (dashboard card, sidebar handle, settings link, self-visit banner) and other users' (new `/find` page with debounced username/displayName search).
+**Goal:** Make public profiles discoverable from inside the app - both the owner's own (dashboard card, sidebar handle, settings link, self-visit banner) and other users' (new `/find` page with debounced username/displayName search).
 
 **Architecture:** New server action `searchUsersAction` wraps a DB helper `searchPublicProfiles` that ILIKEs `username` OR `display_name` on `is_public=true` rows (with SQL wildcard escaping). Client component `<FindEditor>` debounces input 250ms, fires the action on >= 2 chars, renders result cards. Owner-side polish: a new `<OwnProfileCard>` server component on `/dashboard`, a `@handle` link in the sidebar footer (props sourced from root layout), a "Voir mon profil public →" link in settings, and a "tu visites ton propre profil" banner on `/u/<username>` when the visitor is the owner.
 
@@ -16,12 +16,12 @@
 
 ## Critical context for the engineer
 
-1. **Project conventions**: Next.js 16, host `http://127.0.0.1:3000` (NEVER localhost — Spotify OAuth quirk). User runs `pnpm dev` themselves on port 3000; do NOT start a second dev server. `pnpm typecheck && pnpm lint && pnpm test` must stay clean.
+1. **Project conventions**: Next.js 16, host `http://127.0.0.1:3000` (NEVER localhost - Spotify OAuth quirk). User runs `pnpm dev` themselves on port 3000; do NOT start a second dev server. `pnpm typecheck && pnpm lint && pnpm test` must stay clean.
 
 2. **Existing helpers to reuse, do NOT reimplement**:
    - `auth()` from `@/auth` returns `Session | null`. Session has `session.user.id` (uuid) and `session.user.name`.
    - `getProfile(userId)` in `src/db/queries/users.ts` returns `ProfileRow | null` with `{ username, isPublic, displayName, spotifyId }`. Already wrapped in `React.cache`.
-   - `getPublicProfileByUsername(username)` returns `PublicProfile | null` — null on either "not found" or "is_public=false". Already cached.
+   - `getPublicProfileByUsername(username)` returns `PublicProfile | null` - null on either "not found" or "is_public=false". Already cached.
    - `hasCompletedImport(userId)` in `src/db/queries/imports.ts` is the existing pattern for layout-level user data, wrapped in `React.cache`.
    - `cn`, `glassCard` from `@/lib/utils`.
 
@@ -72,7 +72,7 @@
 - Modify: `src/db/queries/users.ts`
 - Create: `src/db/queries/users.test.ts`
 
-Adds `escapeLikePattern`, `PublicProfileSummary`, and `searchPublicProfiles`. Test only the pure escape helper — the DB query is validated via smoke test in Task 3.
+Adds `escapeLikePattern`, `PublicProfileSummary`, and `searchPublicProfiles`. Test only the pure escape helper - the DB query is validated via smoke test in Task 3.
 
 - [ ] **Step 1: Create the test file**
 
@@ -356,7 +356,7 @@ export function FindEditor() {
   // Search debounce is genuine external sync via setTimeout (the effect
   // sets up a real subscription; setState happens when the timer fires).
   // The early-return synchronous resets and the leading isLoading=true
-  // are control state for the same subscription — disable the rule for
+  // are control state for the same subscription - disable the rule for
   // the whole hook rather than peppering each line.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
@@ -469,7 +469,7 @@ export default async function FindPage() {
 Run: `pnpm typecheck && pnpm lint && pnpm test`
 Expected: clean. If lint complains on `useEffect` setState pattern, add a 1-line `// eslint-disable-next-line react-hooks/set-state-in-effect` with comment: "search debounce is genuine external sync via setTimeout".
 
-- [ ] **Step 5: Smoke test — unauth redirect**
+- [ ] **Step 5: Smoke test - unauth redirect**
 
 Run:
 
@@ -499,7 +499,7 @@ EOF
 
 ---
 
-## Task 4: Sidebar — nav item "Trouver des amis"
+## Task 4: Sidebar - nav item "Trouver des amis"
 
 **Files:**
 - Modify: `src/components/sidebar.tsx`
@@ -648,7 +648,7 @@ Find the legal links block (the `<div>` with "Mentions légales / Confidentialit
     title={
       isPublic
         ? "Ouvre ton profil public"
-        : "Profil privé — clique pour activer"
+        : "Profil privé - clique pour activer"
     }
   >
     @{username}
@@ -719,7 +719,7 @@ export function CopyProfileLinkButton({ username }: { username: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* clipboard unavailable on non-HTTPS — fail silently */
+      /* clipboard unavailable on non-HTTPS - fail silently */
     }
   }
 
@@ -891,7 +891,7 @@ EOF
 
 ---
 
-## Task 8: Settings — "Voir mon profil public →" link
+## Task 8: Settings - "Voir mon profil public →" link
 
 **Files:**
 - Modify: `src/components/settings/profile-form.tsx`
@@ -915,7 +915,7 @@ Edit `src/components/settings/profile-form.tsx`. Locate the `<label>` that wraps
 ) : null}
 ```
 
-(`displayUsername` is the existing variable in this component that reflects the current username — the one the user is about to commit.)
+(`displayUsername` is the existing variable in this component that reflects the current username - the one the user is about to commit.)
 
 - [ ] **Step 2: Typecheck + lint**
 
@@ -974,7 +974,7 @@ In the JSX, find the opening of the `<main>` block. Right at the very top of the
     className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#7c3aed]/30 bg-[#7c3aed]/10 px-4 py-3 text-sm"
   >
     <span>
-      👤 Tu visites ton propre profil — c&apos;est ce que voient les
+      👤 Tu visites ton propre profil - c&apos;est ce que voient les
       autres.
     </span>
     <Link
@@ -1080,7 +1080,7 @@ Branch is ready for merge once all checks above pass.
 
 ## Out-of-scope (do NOT add)
 
-Reminder: the following are explicitly deferred — do not sneak them in.
+Reminder: the following are explicitly deferred - do not sneak them in.
 
 - Taste-based discovery algorithm (issue #21).
 - OG image custom from /share config (issue #15).
@@ -1088,5 +1088,5 @@ Reminder: the following are explicitly deferred — do not sneak them in.
 - Pagination of search results.
 - Server-side cache of search results.
 - Public API endpoint for search (server action only).
-- Full-text search (trigram, FTS) — overkill at MVP user counts.
-- Index on `display_name` — add later if production telemetry shows ILIKE on display_name as a hotspot.
+- Full-text search (trigram, FTS) - overkill at MVP user counts.
+- Index on `display_name` - add later if production telemetry shows ILIKE on display_name as a hotspot.

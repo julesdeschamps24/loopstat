@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
  * A skeleton row matching RankedRow layout exactly.
  *
  * Renders pulsing placeholders for rank, artwork, title, subtitle, and optional metric.
- * Uses pure Tailwind animate-pulse — no animation libraries.
+ * Uses pure Tailwind animate-pulse - no animation libraries.
  */
 export function SkeletonRow({ showMetric = true }: { showMetric?: boolean }) {
   return (

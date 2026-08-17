@@ -1,8 +1,8 @@
-# Onboarding JSON-first avec mode démo — design spec
+# Onboarding JSON-first avec mode démo - design spec
 
 **Date** : 2026-05-19
 **Auteur** : Jules + Claude (brainstorming session)
-**Sous-projet** : B (Onboarding) — deuxième d'une série de 5 sous-projets pour le pivot complet "drop Spotify Web API". Dépend de sub-projet A (auth Google) terminé fonctionnellement.
+**Sous-projet** : B (Onboarding) - deuxième d'une série de 5 sous-projets pour le pivot complet "drop Spotify Web API". Dépend de sub-projet A (auth Google) terminé fonctionnellement.
 
 ## Contexte et motivation
 
@@ -36,7 +36,7 @@ L'utilisateur existant (Jules, 153k streams importés) bypasse intégralement ce
 | Périmètre pages démo | 5 pages stats (dashboard + 3 top + listening-clock) | Dashboard seul ; toutes les pages avec redirect bloquant |
 | UX CTA | Modal de bienvenue + sticky banner (skip non bloquant) | Banner seul ; modal bloquant ; hero card sans modal |
 | Renommage `/import` URL | Garde `/import` (juste copy adapté) | Rename `/onboarding` (casse les liens existants) |
-| Tracks demo cliquables | **Non** — visuellement non cliquables + tooltip "Importe pour explorer" | Lien désactivé silencieux ; redirect /import |
+| Tracks demo cliquables | **Non** - visuellement non cliquables + tooltip "Importe pour explorer" | Lien désactivé silencieux ; redirect /import |
 | Persistance "skip modal" | localStorage flag cross-tab | Cookie ; DB column |
 
 ## Spec visuelle
@@ -54,7 +54,7 @@ Contenu :
 
   Cette démo te montre à quoi ressemble loopstat avec
   des données fictives. Importe ton historique Spotify
-  pour voir TES vraies stats — tops, listening clock,
+  pour voir TES vraies stats - tops, listening clock,
   partage de profils, et plus.
 
   [Skip et explorer la démo]  [Importer maintenant →]
@@ -64,7 +64,7 @@ Contenu :
 Click sur "Skip" → ferme modal, set localStorage flag, mode démo continue.
 Click sur "Importer maintenant" → redirect `/import?from=welcome`.
 
-Pas de close button (X) — choix conscient pour forcer la décision explicite Skip/Import. Esc ferme = équivalent Skip.
+Pas de close button (X) - choix conscient pour forcer la décision explicite Skip/Import. Esc ferme = équivalent Skip.
 
 ### `<DemoModeBanner />`
 
@@ -73,7 +73,7 @@ Sticky top, sur les 5 pages stats quand `hasCompletedImport=false`. Z-index au-d
 ```
 [Sticky bar, full width, fond accent violet pâle, padding 12px]
 
-  👋 Données fictives — Importe ton historique pour voir TES stats →
+  👋 Données fictives - Importe ton historique pour voir TES stats →
                                                          (lien)
 ```
 
@@ -206,27 +206,27 @@ Sinon, garde le sous-titre actuel.
 
 ### Créer
 
-- `src/lib/demo/data.ts` — fixtures (track/artist/album/hours)
-- `src/components/onboarding/welcome-modal.tsx` — Client Component, gère localStorage flag
-- `src/components/onboarding/demo-mode-banner.tsx` — sticky banner Link vers `/import?from=welcome`
-- `src/components/onboarding/use-welcome-modal.ts` — hook `useWelcomeModalState()` (lit + set localStorage)
+- `src/lib/demo/data.ts` - fixtures (track/artist/album/hours)
+- `src/components/onboarding/welcome-modal.tsx` - Client Component, gère localStorage flag
+- `src/components/onboarding/demo-mode-banner.tsx` - sticky banner Link vers `/import?from=welcome`
+- `src/components/onboarding/use-welcome-modal.ts` - hook `useWelcomeModalState()` (lit + set localStorage)
 
 ### Modifier (5 pages stats)
 
-- `src/app/dashboard/page.tsx` — branchement demo + WelcomeModal
-- `src/app/top/tracks/page.tsx`, `top/artists/page.tsx`, `top/albums/page.tsx` — branchement demo + DemoModeBanner
-- `src/app/listening-clock/page.tsx` — branchement demo + DemoModeBanner
+- `src/app/dashboard/page.tsx` - branchement demo + WelcomeModal
+- `src/app/top/tracks/page.tsx`, `top/artists/page.tsx`, `top/albums/page.tsx` - branchement demo + DemoModeBanner
+- `src/app/listening-clock/page.tsx` - branchement demo + DemoModeBanner
 
 ### Modifier (route /import)
 
-- `src/app/import/page.tsx` — lit `searchParams.from`, adapte sous-titre
+- `src/app/import/page.tsx` - lit `searchParams.from`, adapte sous-titre
 
 ## Stratégie de test
 
 ### Tests unitaires
 
-- `src/components/onboarding/welcome-modal.test.tsx` — non écrit (pas d'infra RTL/jsdom dans le repo). Skip.
-- `src/lib/demo/data.test.ts` — assertions de structure : DEMO_TOP_TRACKS a 50 entries, plays décroissants, etc. **Si quelqu'un modifie les fixtures, casse pas la shape.**
+- `src/components/onboarding/welcome-modal.test.tsx` - non écrit (pas d'infra RTL/jsdom dans le repo). Skip.
+- `src/lib/demo/data.test.ts` - assertions de structure : DEMO_TOP_TRACKS a 50 entries, plays décroissants, etc. **Si quelqu'un modifie les fixtures, casse pas la shape.**
 
 ### Vérification manuelle
 
@@ -257,6 +257,6 @@ Test cleanup :
 - A/B testing du copy (one-shot pour MVP)
 - Animation transitions (juste fade-in basic via Tailwind)
 - Persistance cross-device du "skip" (localStorage = per-browser)
-- Profile public démo (`/u/demo`) — c'était une autre discussion antérieure, hors scope ici
+- Profile public démo (`/u/demo`) - c'était une autre discussion antérieure, hors scope ici
 - Skeleton loading sur le banner/modal (pas critique, ce sont des composants statiques)
-- Personnalisation de la demo (ex. "Mode démo rap" vs "Mode démo pop") — single fixture pour MVP
+- Personnalisation de la demo (ex. "Mode démo rap" vs "Mode démo pop") - single fixture pour MVP

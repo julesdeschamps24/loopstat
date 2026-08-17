@@ -1,4 +1,4 @@
-// Palette nébuleuse violet — cohérent avec le design system loopstat.
+// Palette nébuleuse violet - cohérent avec le design system loopstat.
 const PALETTE: [string, string][] = [
   ["#7c3aed", "#ec4899"],
   ["#a855f7", "#581c87"],

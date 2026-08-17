@@ -1,4 +1,4 @@
-# Album wall — fond du dashboard loopstat
+# Album wall - fond du dashboard loopstat
 
 > Statut : brainstorming validé · prêt pour writing-plans
 > Date : 2026-05-15
@@ -10,7 +10,7 @@ violet profond (`#070710` + dégradé radial mauve), glass cards plats,
 Instrument Serif italique sur les KPI, gradient cyan→magenta sur les CTA.
 
 L'élément qui ne colle pas : **les cubes Three.js** ajoutés en arrière-plan
-(`src/components/nebula-background.tsx`). L'utilisateur les a rejetés —
+(`src/components/nebula-background.tsx`). L'utilisateur les a rejetés -
 la géométrie cubique n'évoque rien de musical et le rendu 3D fight avec
 le reste de l'app qui est résolument plat / éditorial.
 
@@ -43,7 +43,7 @@ inclinée, traitée en luminosity blend avec un overlay cyan/magenta.
 
 - Fichier nouveau : `src/components/album-wall.tsx`
 - Server component pur (pas de `'use client'`, pas de hook, statique)
-- Signature : `<AlbumWall covers={(string | null)[]} />` — array de 40
+- Signature : `<AlbumWall covers={(string | null)[]} />` - array de 40
   (desktop) ou 24 (mobile, géré côté CSS / responsive grid) URLs de
   pochettes. `null` = cellule sans couverture → gradient procédural.
 - Rendu :
@@ -54,7 +54,7 @@ inclinée, traitée en luminosity blend avec un overlay cyan/magenta.
   - Enfant 2 : overlay teinte cyan/magenta en `mix-blend-mode: overlay`
 - Toutes les pochettes utilisent `<img loading="lazy">` sans `onError`
   pour rester server component pur. Si une couverture rate (rare, le
-  CDN Spotify est très stable), la cellule reste vide — acceptable
+  CDN Spotify est très stable), la cellule reste vide - acceptable
   pour un fond opacity 0.42 derrière le contenu. Pas de fallback
   dynamique, on accepte la dégradation gracieuse.
 
@@ -150,7 +150,7 @@ Dans `src/app/dashboard/page.tsx` :
 ## Helpers à réutiliser
 
 - `fetchTopTracks(userId, period)` depuis
-  `src/lib/spotify/top.ts` — déjà utilisé par `/dashboard` pour le top-5.
+  `src/lib/spotify/top.ts` - déjà utilisé par `/dashboard` pour le top-5.
   On rajoute juste un appel avec `"1y"` dans le `Promise.all`.
 - Pattern du `body::before` violet et du composant gated sur dark :
   s'inspirer de `src/components/nebula-background.tsx` (à supprimer
@@ -160,12 +160,12 @@ Dans `src/app/dashboard/page.tsx` :
 ## Critical files
 
 - **NEW** `src/components/album-wall.tsx`
-- **MODIFIED** `src/app/dashboard/page.tsx` — ajout `fetchTopTracks 1y`
+- **MODIFIED** `src/app/dashboard/page.tsx` - ajout `fetchTopTracks 1y`
   dans `Promise.all`, derivation des covers, render `<AlbumWall />`
-- **MODIFIED** `src/app/layout.tsx` — retrait `<NebulaBackground />`
-- **MODIFIED** `src/app/globals.css` — ajout des classes `.ls-album-wall`
+- **MODIFIED** `src/app/layout.tsx` - retrait `<NebulaBackground />`
+- **MODIFIED** `src/app/globals.css` - ajout des classes `.ls-album-wall`
 - **DELETED** `src/components/nebula-background.tsx`
-- **MODIFIED** `package.json` + `pnpm-lock.yaml` — retrait `three`,
+- **MODIFIED** `package.json` + `pnpm-lock.yaml` - retrait `three`,
   `@types/three`
 
 ## Vérification end-to-end
@@ -207,11 +207,11 @@ Dans `src/app/dashboard/page.tsx` :
 
 ## Hors-scope
 
-- Animation du mur (drift, shuffle, fade) — décidé statique.
+- Animation du mur (drift, shuffle, fade) - décidé statique.
 - Sur les pages autres que dashboard.
 - Sur les pages logged-out (`/`, `/login`).
 - Génération d'art procédural plus complexe pour les fallback (juste
   un gradient simple suffit).
-- Variation par période (différent mur pour différent `period=`) — un
+- Variation par période (différent mur pour différent `period=`) - un
   seul mur figé sur 1y, suffisant pour la signature visuelle.
 - Custom hooks ou wrappers React au-delà du strict nécessaire.

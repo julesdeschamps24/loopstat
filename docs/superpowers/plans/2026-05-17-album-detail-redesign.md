@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Refondre `src/app/album/[id]/page.tsx` selon la spec [2026-05-17-album-detail-redesign-design.md](../specs/2026-05-17-album-detail-redesign-design.md) — 8 sections (hero, top track card, tracklist avec barres, sparkline mensuelle, period breakdown, hours heatmap, qualité, autres albums de l'artiste).
+**Goal:** Refondre `src/app/album/[id]/page.tsx` selon la spec [2026-05-17-album-detail-redesign-design.md](../specs/2026-05-17-album-detail-redesign-design.md) - 8 sections (hero, top track card, tracklist avec barres, sparkline mensuelle, period breakdown, hours heatmap, qualité, autres albums de l'artiste).
 
 **Architecture:** 6 nouvelles queries SQL parallèles aux `getTrack*` existantes + extension de `getAlbumPlayStats`. Extraction de 2 composants visuels (`HourHeatmap`, `PeriodBreakdownGrid`) depuis `/track/[id]` pour mutualisation. 3 nouveaux composants page-spécifiques sous `src/components/album/`. Helper de formatage de date extrait dans `src/lib/format/date.ts`.
 
@@ -204,7 +204,7 @@ export function HourHeatmap({ data }: { data: HourHeatmapData }) {
           <div
             key={hour}
             className="flex flex-col items-center gap-1"
-            title={`${hour}h — ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
+            title={`${hour}h - ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
           >
             <div className="flex h-16 w-full items-end">
               <div
@@ -241,7 +241,7 @@ const maxHour = Math.max(...hours.map((h) => h.count), 1);
 // Après : (supprimer la ligne, le composant calcule en interne)
 ```
 
-(c) Remplace tout le bloc JSX de la section "Heure préférée" (lignes ~153-184 dans le fichier actuel) — depuis `<div className="mt-4 grid grid-cols-12 gap-1 sm:grid-cols-24">` jusqu'au `</div>` de fermeture de ce grid — par :
+(c) Remplace tout le bloc JSX de la section "Heure préférée" (lignes ~153-184 dans le fichier actuel) - depuis `<div className="mt-4 grid grid-cols-12 gap-1 sm:grid-cols-24">` jusqu'au `</div>` de fermeture de ce grid - par :
 
 ```tsx
             <HourHeatmap data={hours} />
@@ -334,12 +334,12 @@ export function PeriodBreakdownGrid({
 import { PeriodBreakdownGrid } from "@/components/stats/period-breakdown-grid";
 ```
 
-(b) Supprime l'import devenu inutile (sera réimporté par le composant) — vérifier après que `STREAM_PERIODS` n'est plus utilisé directement dans page.tsx. Si seul `PeriodBreakdownGrid` l'utilise, retirer `STREAM_PERIODS` de l'import sur la ligne :
+(b) Supprime l'import devenu inutile (sera réimporté par le composant) - vérifier après que `STREAM_PERIODS` n'est plus utilisé directement dans page.tsx. Si seul `PeriodBreakdownGrid` l'utilise, retirer `STREAM_PERIODS` de l'import sur la ligne :
 ```tsx
 import { STREAM_PERIODS } from "@/lib/stats/period";
 ```
 
-(c) Remplace tout le bloc JSX de la section "Par période" (lignes ~128-142 actuelles) — depuis `<div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">` jusqu'à son `</div>` de fermeture — par :
+(c) Remplace tout le bloc JSX de la section "Par période" (lignes ~128-142 actuelles) - depuis `<div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">` jusqu'à son `</div>` de fermeture - par :
 
 ```tsx
             <PeriodBreakdownGrid data={breakdown} />
@@ -383,7 +383,7 @@ EOF
 **Files:**
 - Modify: `src/db/queries/stats.ts` (function `getAlbumPlayStats` lines 188-205)
 - Modify: `src/db/queries/stats.ts` (add `getAlbumTrackPlays`)
-- Modify: `src/app/album/[id]/page.tsx` (pour ne pas casser le type-check avec l'ancien shape — il sera réécrit en Task 10 mais doit type-checker entre-temps)
+- Modify: `src/app/album/[id]/page.tsx` (pour ne pas casser le type-check avec l'ancien shape - il sera réécrit en Task 10 mais doit type-checker entre-temps)
 
 - [ ] **Step 1 : Étendre `getAlbumPlayStats`**
 
@@ -465,7 +465,7 @@ export async function getAlbumTrackPlays(
 
 - [ ] **Step 3 : Patch temporaire de `/album/[id]/page.tsx`**
 
-Le shape de `getAlbumPlayStats` a changé. La page courante consomme `stats.count`. Le reste du nouveau shape sera utilisé en Task 10 — pour l'instant, vérifier que le type-check passe (rien à modifier si le code n'utilise que `stats.count`).
+Le shape de `getAlbumPlayStats` a changé. La page courante consomme `stats.count`. Le reste du nouveau shape sera utilisé en Task 10 - pour l'instant, vérifier que le type-check passe (rien à modifier si le code n'utilise que `stats.count`).
 
 - [ ] **Step 4 : Vérifier type-check + tests**
 
@@ -504,7 +504,7 @@ EOF
 
 - [ ] **Step 1 : Ajouter les 4 queries**
 
-Dans `src/db/queries/stats.ts`, ajoute en fin de fichier (avant la dernière `}` ou fonction existante — à un emplacement cohérent, par ex après `getAlbumTrackPlays`) :
+Dans `src/db/queries/stats.ts`, ajoute en fin de fichier (avant la dernière `}` ou fonction existante - à un emplacement cohérent, par ex après `getAlbumTrackPlays`) :
 
 ```ts
 /**
@@ -727,7 +727,7 @@ Le helper `ne` (not-equal) vient de `drizzle-orm`. Si l'import du fichier n'incl
 import { and, asc, desc, eq, gte, inArray, ne, sql } from "drizzle-orm";
 ```
 
-(Adapter selon le contenu actuel de l'import — ajouter `ne` à la liste si absent.)
+(Adapter selon le contenu actuel de l'import - ajouter `ne` à la liste si absent.)
 
 - [ ] **Step 3 : Vérifier type-check + tests**
 
@@ -1091,7 +1091,7 @@ import {
 } from "@/db/queries/stats";
 import { cn, formatMs, formatNumber, glassCard } from "@/lib/utils";
 
-// Spotify metadata is stable — re-fetch at most once an hour.
+// Spotify metadata is stable - re-fetch at most once an hour.
 export const revalidate = 3600;
 
 function formatPercent(ratio: number): string {
@@ -1224,7 +1224,7 @@ export default async function AlbumDetailPage({
         <section className={cn(glassCard, "p-6")}>
           <h2 className="text-lg font-semibold">Tracklist</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Plays par titre — la barre montre la part au sein de l&apos;album.
+            Plays par titre - la barre montre la part au sein de l&apos;album.
           </p>
           <div className="mt-4">
             <AlbumTracklist tracks={trackPlays} />
@@ -1340,9 +1340,9 @@ Ouvre `http://127.0.0.1:3000/album/4hiArqU343m8BUT0lymyLO` (Ipséité). Vérifie
 - [ ] Qualité d'écoute (durée moy + skip rate)
 - [ ] Carousel "Autres albums de Damso" en bas
 
-- [ ] **Step 6 : Vérif edge case — album avec 0 plays**
+- [ ] **Step 6 : Vérif edge case - album avec 0 plays**
 
-Trouve l'ID d'un album avec 0 plays (via la query SQL — un album peu écouté), ou utilise un ID arbitraire d'album Spotify. Vérifie :
+Trouve l'ID d'un album avec 0 plays (via la query SQL - un album peu écouté), ou utilise un ID arbitraire d'album Spotify. Vérifie :
 
 - [ ] Hero : "Pas encore d'écoute enregistrée"
 - [ ] Pas de top track card
@@ -1352,7 +1352,7 @@ Trouve l'ID d'un album avec 0 plays (via la query SQL — un album peu écouté)
 
 - [ ] **Step 7 : Vérif /track/[id] non-régression**
 
-Ouvre `http://127.0.0.1:3000/track/<un track id>`. La page doit s'afficher exactement comme avant (mêmes sections, mêmes layouts) — les composants HourHeatmap et PeriodBreakdownGrid sont maintenant extraits mais rendent identique.
+Ouvre `http://127.0.0.1:3000/track/<un track id>`. La page doit s'afficher exactement comme avant (mêmes sections, mêmes layouts) - les composants HourHeatmap et PeriodBreakdownGrid sont maintenant extraits mais rendent identique.
 
 - [ ] **Step 8 : Vérif mobile (375×812)**
 
@@ -1426,7 +1426,7 @@ git push
 - ✅ Non-régression /track : vérifiée Task 10 step 7
 
 **Cohérence des types :**
-- `AlbumTrack` (Task 7) match le retour de `getAlbumTrackPlays` (Task 4) — mêmes champs trackId, name, trackNumber, plays. ✅
+- `AlbumTrack` (Task 7) match le retour de `getAlbumTrackPlays` (Task 4) - mêmes champs trackId, name, trackNumber, plays. ✅
 - `OtherArtistAlbum` (Task 9) match `getOtherAlbumsByArtist` (Task 6). ✅
 - `HourHeatmapData` (Task 2) match `getAlbumListeningHours` retour. ✅
 - `Record<StreamPeriod, number>` cohérent entre Task 5 et Task 3. ✅

@@ -90,7 +90,7 @@ const QUALIFYING_PLAY = sql`(${streams.msPlayed} >= 30000 OR ${streams.msPlayed}
 /**
  * Top-N album IDs ranked by play count for `userId`. Used by the priority
  * enrich job to schedule visible-first cover fetches. No join with `albums`
- * table here — the worker only needs the IDs to filter its sweep.
+ * table here - the worker only needs the IDs to filter its sweep.
  */
 export async function getTopAlbumIdsForUser(
   userId: string,
@@ -145,7 +145,7 @@ git commit -m "feat(enrich): add getTopAlbumIdsForUser + getTopArtistIdsForUser"
 
 ---
 
-## Task 2: New BullMQ queues — hot + single
+## Task 2: New BullMQ queues - hot + single
 
 **Files:**
 - Modify: `worker/queue.ts`
@@ -392,7 +392,7 @@ export async function enrichCatalogPriority({
         { err, msg: (err as Error)?.message, albumId: row.albumId },
         "priority album enrich failed",
       );
-      // Don't throw — partial progress is fine for the priority pass.
+      // Don't throw - partial progress is fine for the priority pass.
     }
   }
 
@@ -662,7 +662,7 @@ export interface EnrichCatalogSingleArgs {
 /**
  * Enrich a single album or artist. Called from the on-demand `/api/enrich-
  * single` endpoint when a page handler detects a NULL image_url. Best-effort
- * — errors are logged, not rethrown (the queue's job retry handles transient
+ * - errors are logged, not rethrown (the queue's job retry handles transient
  * failures, but we don't want one bad item to spin forever).
  */
 export async function enrichCatalogSingle({
@@ -962,7 +962,7 @@ const THROTTLE_TTL_SECONDS = 600;
  * when a row's image_url is null. Honours the same Redis NX guard as the
  * /api/enrich-single endpoint to avoid thundering-herd on hot items.
  *
- * Errors are swallowed — this is best-effort, the render must not block.
+ * Errors are swallowed - this is best-effort, the render must not block.
  */
 export async function triggerSingleEnrich(
   type: "album" | "artist",
@@ -983,7 +983,7 @@ export async function triggerSingleEnrich(
       { jobId: `enrich-single:${type}:${id}` },
     );
   } catch {
-    // ignore — caller must not block on this
+    // ignore - caller must not block on this
   }
 }
 ```
@@ -994,7 +994,7 @@ In the REAL-mode branch (not demo), after fetching the album row, before the ret
 
 ```ts
 if (album && album.imageUrl === null) {
-  // Fire-and-forget — don't await, don't block render.
+  // Fire-and-forget - don't await, don't block render.
   void triggerSingleEnrich("album", album.id);
 }
 ```
@@ -1007,7 +1007,7 @@ if (artist && artist.imageUrl === null) {
 }
 ```
 
-And for `/track/[id]/page.tsx` — the track's album image is what gets the placeholder. Trigger on the album's id, not the track's :
+And for `/track/[id]/page.tsx` - the track's album image is what gets the placeholder. Trigger on the album's id, not the track's :
 
 ```ts
 if (album && album.imageUrl === null) {

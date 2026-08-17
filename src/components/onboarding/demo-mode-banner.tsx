@@ -16,7 +16,7 @@ export function DemoModeBanner() {
         backdropFilter: "blur(8px)",
       }}
     >
-      <span>👋 Données fictives —</span>
+      <span>👋 Données fictives -</span>
       <Link
         href="/import?from=welcome"
         className="font-semibold underline underline-offset-2 hover:opacity-80"

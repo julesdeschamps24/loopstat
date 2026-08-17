@@ -31,13 +31,13 @@ export interface DeezerArtistMatch {
 /**
  * Search Deezer artist by name. Returns the top result (Deezer ranks by
  * popularity). Falls back to null if no match or response shape unexpected.
- * Deezer's `picture_medium` is 250×250 px — fine for our list/hero usage.
+ * Deezer's `picture_medium` is 250×250 px - fine for our list/hero usage.
  *
  * Note : Deezer's open API returns a generic /artist/<id>/image placeholder
  * even for artists without a real photo. We treat picture_medium present as
- * "has photo" — Deezer's heuristic is that real photos use a different CDN
+ * "has photo" - Deezer's heuristic is that real photos use a different CDN
  * subdomain (`cdn-images.dzcdn.net`) vs the placeholder (`e-cdns-images...`).
- * We accept both — false positives are visually acceptable, the URL still
+ * We accept both - false positives are visually acceptable, the URL still
  * resolves to *something*.
  */
 export async function searchArtistByName({
@@ -60,7 +60,7 @@ export async function searchArtistByName({
 
 /**
  * Search Deezer for an album by (artist + title). Used by the ultra-priority
- * tier to fetch covers in parallel — bypasses the MBz → CAA sequential chain.
+ * tier to fetch covers in parallel - bypasses the MBz → CAA sequential chain.
  * Returns the top result (Deezer ranks by popularity).
  */
 export async function searchAlbumByName({

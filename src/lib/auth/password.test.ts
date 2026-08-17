@@ -13,7 +13,7 @@ describe("password hashing", () => {
     expect(await verifyPassword("wrong password", hash)).toBe(false);
   });
 
-  it("salts — the same input hashes differently each time", async () => {
+  it("salts - the same input hashes differently each time", async () => {
     const a = await hashPassword("same-input");
     const b = await hashPassword("same-input");
     expect(a).not.toBe(b);

@@ -22,7 +22,7 @@
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `src/db/queries/stats.test.ts` (create if absent — follow `vitest` patterns in the codebase, env `node`) :
+Append to `src/db/queries/stats.test.ts` (create if absent - follow `vitest` patterns in the codebase, env `node`) :
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -150,7 +150,7 @@ describe("getUserTopAlbumsByArtist", () => {
 pnpm test src/db/queries/stats.test.ts -t getUserTopAlbumsByArtist
 ```
 
-Expected: FAIL — function doesn't exist.
+Expected: FAIL - function doesn't exist.
 
 - [ ] **Step 3: Add the implementation**
 
@@ -202,7 +202,7 @@ export async function getUserTopAlbumsByArtist(
 }
 ```
 
-Ensure `albums` and `albumArtists` are imported from `@/db/schema` at the top of `stats.ts` (likely already there — check). If not present, add them. Also confirm `desc` is imported from `drizzle-orm` (already is in most cases).
+Ensure `albums` and `albumArtists` are imported from `@/db/schema` at the top of `stats.ts` (likely already there - check). If not present, add them. Also confirm `desc` is imported from `drizzle-orm` (already is in most cases).
 
 - [ ] **Step 4: Verify**
 
@@ -260,7 +260,7 @@ describe("getArtistMonthlyPlays", () => {
 pnpm test src/db/queries/stats.test.ts -t getArtistMonthlyPlays
 ```
 
-Expected: FAIL — function doesn't exist.
+Expected: FAIL - function doesn't exist.
 
 - [ ] **Step 3: Add the implementation**
 
@@ -363,7 +363,7 @@ describe("getCoListenedArtists", () => {
 pnpm test src/db/queries/stats.test.ts -t getCoListenedArtists
 ```
 
-Expected: FAIL — function doesn't exist.
+Expected: FAIL - function doesn't exist.
 
 - [ ] **Step 3: Add the implementation**
 
@@ -423,7 +423,7 @@ export async function getCoListenedArtists(
 }
 ```
 
-Note: drizzle's `db.execute<T>(sql\`...\`)` returns rows directly (postgres-js). The exact return shape may need verification against existing `db.execute` usage patterns in the codebase — see `pruneOverlappingApiStreams`-like patterns. If `db.execute` returns `{ rows: T[] }`, adjust to `rows.rows.map(...)`.
+Note: drizzle's `db.execute<T>(sql\`...\`)` returns rows directly (postgres-js). The exact return shape may need verification against existing `db.execute` usage patterns in the codebase - see `pruneOverlappingApiStreams`-like patterns. If `db.execute` returns `{ rows: T[] }`, adjust to `rows.rows.map(...)`.
 
 - [ ] **Step 4: Verify**
 
@@ -567,7 +567,7 @@ describe("getDemoArtist (rich page fields)", () => {
 pnpm test src/lib/demo/data.test.ts -t "rich page fields"
 ```
 
-Expected: FAIL — `topAlbums`, `monthly`, `related`, `totalPercent` properties don't exist.
+Expected: FAIL - `topAlbums`, `monthly`, `related`, `totalPercent` properties don't exist.
 
 - [ ] **Step 3: Find the current `getDemoArtist`**
 
@@ -670,7 +670,7 @@ git commit -m "feat(demo): getDemoArtist returns rich page fields (albums, month
 
 ---
 
-## Task 7: Refactor `/artist/[id]/page.tsx` — hero + 5 sections
+## Task 7: Refactor `/artist/[id]/page.tsx` - hero + 5 sections
 
 **Files:**
 - Modify: `src/app/artist/[id]/page.tsx` (entire file rewrite)
@@ -953,7 +953,7 @@ export default async function ArtistDetailPage({
 
 Notes:
 - If the codebase wraps the page with an `<AlbumWall>` background (per recent UI work), preserve it. The current file has `<AlbumWall covers={wallCovers} />` before the `<main>`. If so, keep that wrapper and the `getPaddedWallCovers` call, just refactor the inner `<main>` block.
-- `formatRelativeDate` is in `src/lib/format/date.ts` — verify it's exported and takes a Date. If absent, use a simple formatter inline (e.g. `Intl.RelativeTimeFormat`).
+- `formatRelativeDate` is in `src/lib/format/date.ts` - verify it's exported and takes a Date. If absent, use a simple formatter inline (e.g. `Intl.RelativeTimeFormat`).
 
 - [ ] **Step 3: Verify**
 
@@ -1026,5 +1026,5 @@ git push origin main
 - ✅ **No placeholders** : every code block is complete, every command shown with expected output.
 - ✅ **Type consistency** :
   - `getCoListenedArtists` returns `{ artistId, name, imageUrl, coCount }` consistently across Task 4, 5, 6, 7
-  - `getUserTopAlbumsByArtist` returns `{ albumId, name, imageUrl, playCount }` — passed to `<OtherArtistAlbums>` after a `.map` (since the component expects `plays`, not `playCount`)
+  - `getUserTopAlbumsByArtist` returns `{ albumId, name, imageUrl, playCount }` - passed to `<OtherArtistAlbums>` after a `.map` (since the component expects `plays`, not `playCount`)
   - `getArtistPlayStats` extended return shape used in both demo (synthesized) and real (from query) branches

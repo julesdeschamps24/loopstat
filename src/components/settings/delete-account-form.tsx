@@ -45,7 +45,7 @@ export function DeleteAccountForm() {
       // Session cookie cleared server-side; bounce to the landing page.
       window.location.replace("/");
     } catch (err) {
-      // Silently ignore AbortError — the component is unmounted
+      // Silently ignore AbortError - the component is unmounted
       if (err instanceof Error && err.name === "AbortError") {
         return;
       }

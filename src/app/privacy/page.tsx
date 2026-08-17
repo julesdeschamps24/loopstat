@@ -3,7 +3,7 @@ import Link from "next/link";
 export const dynamic = "force-static";
 
 export const metadata = {
-  title: "Politique de confidentialité — loopstat",
+  title: "Politique de confidentialité - loopstat",
   description: "Données collectées par loopstat, base légale, durée de conservation, tes droits RGPD.",
 };
 
@@ -124,7 +124,7 @@ export default function PrivacyPage() {
             <Link href="/settings" className="text-primary hover:underline">
               Réglages
             </Link>{" "}
-            — la suppression est effective immédiatement et inclut tous tes
+            - la suppression est effective immédiatement et inclut tous tes
             streams, jetons et métadonnées personnelles. Le catalogue
             partagé (titres, artistes, albums) reste anonyme et peut être
             conservé.
@@ -141,11 +141,11 @@ export default function PrivacyPage() {
           <p className="mt-2">Sous-traitants&nbsp;:</p>
           <ul className="mt-1 list-disc list-inside text-muted-foreground space-y-1">
             <li>
-              <strong>Spotify AB</strong> (Suède, UE) — fournisseur des
+              <strong>Spotify AB</strong> (Suède, UE) - fournisseur des
               données d&apos;écoute via OAuth et API publique
             </li>
             <li>
-              <strong>Hetzner Online GmbH</strong> (Allemagne, UE) —
+              <strong>Hetzner Online GmbH</strong> (Allemagne, UE) -
               hébergement du serveur et des bases de données
             </li>
           </ul>
@@ -159,11 +159,11 @@ export default function PrivacyPage() {
           </p>
           <ul className="mt-1 list-disc list-inside text-muted-foreground space-y-1">
             <li>
-              Cookie de session d&apos;authentification (NextAuth) — maintient
+              Cookie de session d&apos;authentification (NextAuth) - maintient
               ta connexion entre les pages
             </li>
             <li>
-              Préférence de thème (clair/sombre) — stockée en local
+              Préférence de thème (clair/sombre) - stockée en local
             </li>
           </ul>
           <p className="mt-2 text-muted-foreground">
@@ -177,22 +177,22 @@ export default function PrivacyPage() {
           <p>Conformément au RGPD, tu disposes des droits suivants&nbsp;:</p>
           <ul className="mt-1 list-disc list-inside text-muted-foreground space-y-1">
             <li>
-              <strong>Droit d&apos;accès</strong> — tu peux consulter toutes
+              <strong>Droit d&apos;accès</strong> - tu peux consulter toutes
               tes données depuis le dashboard et les pages détail
             </li>
             <li>
-              <strong>Droit de rectification</strong> — les données viennent
+              <strong>Droit de rectification</strong> - les données viennent
               de Spotify, à corriger directement sur ton compte Spotify
             </li>
             <li>
-              <strong>Droit à l&apos;effacement</strong> — un clic depuis{" "}
+              <strong>Droit à l&apos;effacement</strong> - un clic depuis{" "}
               <Link href="/settings" className="text-primary hover:underline">
                 Réglages
               </Link>{" "}
               supprime ton compte et toutes tes données
             </li>
             <li>
-              <strong>Droit à la portabilité</strong> — ton historique brut
+              <strong>Droit à la portabilité</strong> - ton historique brut
               reste téléchargeable directement depuis Spotify (
               <a
                 href="https://www.spotify.com/account/privacy"
@@ -205,7 +205,7 @@ export default function PrivacyPage() {
               )
             </li>
             <li>
-              <strong>Droit d&apos;opposition / de limitation</strong> — par
+              <strong>Droit d&apos;opposition / de limitation</strong> - par
               email à{" "}
               <a
                 href="mailto:julesdeschamps24@gmail.com"

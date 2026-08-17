@@ -3,7 +3,7 @@ interface Props {
 }
 
 /**
- * Inline help icon that reveals a tooltip on hover/focus. CSS-only — no JS,
+ * Inline help icon that reveals a tooltip on hover/focus. CSS-only - no JS,
  * works fine as a server component. The tooltip floats above the icon with
  * a small arrow, capped at ~260px wide so it stays compact.
  */

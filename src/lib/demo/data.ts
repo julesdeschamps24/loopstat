@@ -1,7 +1,7 @@
 /**
  * Fixtures démo affichées aux users qui n'ont pas encore importé leur
  * historique Spotify. Top tracks/artists/albums basés sur les hits mondiaux
- * Spotify 2024. Les IDs sont préfixés "demo:" — ne sont pas des Spotify
+ * Spotify 2024. Les IDs sont préfixés "demo:" - ne sont pas des Spotify
  * IDs valides ; les pages détail (/track/[id], etc.) ne sont pas atteintes
  * en mode démo (composants <RankedRow> rendent sans href donc non cliquables).
  */
@@ -103,7 +103,7 @@ DEMO_TOP_ALBUMS.sort((a, b) => b.plays - a.plays);
  * catalog n'est pas alimenté par les imports des vrais users. Le mur demande
  * jusqu'à 60 cellules ; les DEMO_TOP_ALBUMS n'en couvrent que 15. Seedés par
  * scripts/seed-demo-catalog.ts (covers récupérées via Deezer), jamais
- * affichés dans les tops — uniquement le fond.
+ * affichés dans les tops - uniquement le fond.
  */
 export const DEMO_WALL_ALBUMS: { artistName: string; name: string }[] = [
   { artistName: "The Weeknd", name: "After Hours" },
@@ -199,7 +199,7 @@ export const DEMO_TOTAL_HOURS_LISTENED = 423;
 // =================================================================
 
 /**
- * Returns true if the given ID starts with "demo:" — used by detail pages
+ * Returns true if the given ID starts with "demo:" - used by detail pages
  * to detect when to render demo data instead of querying the real DB.
  */
 export function isDemoId(id: string): boolean {
@@ -380,7 +380,7 @@ export function getDemoArtist(id: string): {
 
   const dates = synthesizeFirstLastDates(seed);
   const monthly = synthesizeMonthlyPlays(artist.plays);
-  // Raw float — display layer formats to 2 decimals (e.g. "20,98%").
+  // Raw float - display layer formats to 2 decimals (e.g. "20,98%").
   const totalPercent = (artist.plays / DEMO_TOTAL_PLAYS) * 100;
 
   return {

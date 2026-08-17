@@ -13,7 +13,7 @@ export type Floater = {
   hideMobile?: boolean;
 };
 
-// Mini-dashboard "Top titres" rows (demo top-3) — covers baked in public/landing/.
+// Mini-dashboard "Top titres" rows (demo top-3) - covers baked in public/landing/.
 export const LANDING_ROWS: LandingRow[] = [
   { rank: 1, src: "/landing/cover-espresso.jpg", title: "Espresso", artist: "Sabrina Carpenter" },
   { rank: 2, src: "/landing/cover-birds.jpg", title: "BIRDS OF A FEATHER", artist: "Billie Eilish" },

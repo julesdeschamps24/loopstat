@@ -25,7 +25,7 @@
   --card: 18 12 30;
   --card-foreground: 244 240 255;
   --border: 38 32 62;
-  --primary: 30 215 96; /* Spotify green — reste pour les CTA Spotify */
+  --primary: 30 215 96; /* Spotify green - reste pour les CTA Spotify */
   --primary-foreground: 10 10 10;
   --accent: 28 22 46;
 }
@@ -77,7 +77,7 @@ body {
   border-radius: 0.375rem;
 }
 
-/* Respect prefers-reduced-motion globally — Tailwind v4 does not wrap
+/* Respect prefers-reduced-motion globally - Tailwind v4 does not wrap
    animate-* utilities in this media query by default. Stops the pulse on
    loading skeletons (and any other CSS animation) for users who've opted out.
    Framer Motion primitives use useReducedMotion() directly. */

@@ -7,7 +7,7 @@ import { log } from "@/lib/log";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 // Mutates server state (deletes the user + cascades) and depends on the
-// session cookie — never cache.
+// session cookie - never cache.
 export const dynamic = "force-dynamic";
 
 export async function DELETE(): Promise<Response> {
@@ -45,7 +45,7 @@ export async function DELETE(): Promise<Response> {
     await signOut({ redirect: false });
   } catch (err) {
     wlog.error({ err }, "signOut after delete failed");
-    // The row is already gone — surface success anyway; the stale cookie
+    // The row is already gone - surface success anyway; the stale cookie
     // will resolve to an unauthenticated session on the next request.
   }
 

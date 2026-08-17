@@ -46,7 +46,7 @@ const bricolageGrotesque = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "loopstat — your Spotify, in numbers",
+  title: "loopstat - your Spotify, in numbers",
   description: "Stats Spotify détaillées, gratuites et sans pub.",
   appleWebApp: {
     capable: true,

@@ -1,4 +1,4 @@
-# Découvrabilité de l'import — bannière dashboard + lien sidebar
+# Découvrabilité de l'import - bannière dashboard + lien sidebar
 
 **Date** : 2026-05-16
 **Auteur** : Jules + Claude (brainstorming)
@@ -8,8 +8,8 @@
 
 L'utilisateur arrive sur `/dashboard` après login et voit ses stats des 30
 derniers jours uniquement (limite API Spotify). La fonctionnalité d'import
-de l'Extended Streaming History — qui débloque le vrai historique
-lifetime — existe sur `/import` mais le seul moyen d'y arriver est un
+de l'Extended Streaming History - qui débloque le vrai historique
+lifetime - existe sur `/import` mais le seul moyen d'y arriver est un
 item de nav "Importer" parmi 7 autres dans la sidebar. **Aucun appel à
 l'action** ne pousse vers cette page.
 

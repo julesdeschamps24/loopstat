@@ -6,7 +6,7 @@
 #   2. Compress + timestamp.
 #   3. Keep the last 7 daily backups locally on the VPS.
 #   4. Optionally rsync the latest to an off-VPS destination
-#      (RSYNC_DEST env var) — recommended for disaster recovery.
+#      (RSYNC_DEST env var) - recommended for disaster recovery.
 #
 # Install (on the VPS, as root):
 #   1. scp this file to /opt/loopstat/deploy/backup-postgres.sh
@@ -53,7 +53,7 @@ if [[ -n "${RSYNC_DEST:-}" ]]; then
   if rsync -az "${BACKUP_FILE}" "${RSYNC_DEST}"; then
     echo "[OK] copied off-VPS to ${RSYNC_DEST}"
   else
-    echo "[WARN] rsync to ${RSYNC_DEST} failed — backup still on VPS"
+    echo "[WARN] rsync to ${RSYNC_DEST} failed - backup still on VPS"
   fi
 fi
 

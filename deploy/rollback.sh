@@ -66,9 +66,9 @@ echo "[3/3] Smoke test..."
 sleep 5
 HTTP_CODE="$(curl -s -o /dev/null -w '%{http_code}' https://loopstat.tech/api/health || echo "fail")"
 if [[ "${HTTP_CODE}" == "200" ]]; then
-  echo "[OK] /api/health returned 200 — rollback successful"
+  echo "[OK] /api/health returned 200 - rollback successful"
 else
-  echo "[WARN] /api/health returned ${HTTP_CODE} — check logs:"
+  echo "[WARN] /api/health returned ${HTTP_CODE} - check logs:"
   echo "  ssh ${VPS} 'docker logs --tail=50 loopstat_app'"
   exit 1
 fi

@@ -9,7 +9,7 @@ interface Props {
 
 /**
  * Avatar for an artist. Shows the real photo when `imageUrl` is provided,
- * otherwise a neutral User icon centered in a muted circle — same visual
+ * otherwise a neutral User icon centered in a muted circle - same visual
  * treatment as the music-note placeholder used for tracks/albums without
  * cover (see RankedRow).
  */
@@ -28,7 +28,7 @@ export function ArtistAvatar({ name, imageUrl, size = 48, className = "" }: Prop
     );
   }
 
-  // Icon scales with the container — same 42% ratio as the Music icon
+  // Icon scales with the container - same 42% ratio as the Music icon
   // inside the track placeholder (size-5 inside size-12).
   const iconSize = Math.round(size * 0.42);
 

@@ -1,4 +1,4 @@
-# ADR 0001 — loopstat devient entièrement gratuit, retrait de Stripe
+# ADR 0001 - loopstat devient entièrement gratuit, retrait de Stripe
 
 Date : 2026-08-17
 Statut : accepté

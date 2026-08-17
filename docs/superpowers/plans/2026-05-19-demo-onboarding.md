@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js 16 App Router (RSC + Client Components), React 19, Tailwind v4, vitest (env `node`), localStorage côté client.
 
-**Note testing :** TDD strict sur les invariants des fixtures (`data.test.ts`). UI components (modal, banner) : pas de test unitaire (pas d'infra RTL/jsdom dans le repo) — vérification visuelle manuelle. Pour les pages refactorées : type-check + vérification manuelle (wiping l'import row pour simuler new user, puis restauration).
+**Note testing :** TDD strict sur les invariants des fixtures (`data.test.ts`). UI components (modal, banner) : pas de test unitaire (pas d'infra RTL/jsdom dans le repo) - vérification visuelle manuelle. Pour les pages refactorées : type-check + vérification manuelle (wiping l'import row pour simuler new user, puis restauration).
 
 ---
 
@@ -18,7 +18,7 @@
 |---|---|---|
 | `src/lib/demo/data.ts` | Create | Fixtures : 30 tracks 2024, 15 artists, 15 albums, 24 listening hours, totals |
 | `src/lib/demo/data.test.ts` | Create | Tests d'invariants (counts, ordre, hour distribution) |
-| `src/components/onboarding/use-welcome-modal.ts` | Create | Hook client `useWelcomeModalState()` — localStorage flag |
+| `src/components/onboarding/use-welcome-modal.ts` | Create | Hook client `useWelcomeModalState()` - localStorage flag |
 | `src/components/onboarding/demo-mode-banner.tsx` | Create | Sticky bar avec lien `/import?from=welcome` |
 | `src/components/onboarding/welcome-modal.tsx` | Create | Modal centrale avec Skip/Importer maintenant |
 | `src/app/dashboard/page.tsx` | Modify | Branchement demoMode + WelcomeModal + DemoModeBanner + fixtures |
@@ -129,7 +129,7 @@ Crée `src/lib/demo/data.ts` :
 /**
  * Fixtures démo affichées aux users qui n'ont pas encore importé leur
  * historique Spotify. Top tracks/artists/albums basés sur les hits mondiaux
- * Spotify 2024. Les IDs sont préfixés "demo:" — ne sont pas des Spotify
+ * Spotify 2024. Les IDs sont préfixés "demo:" - ne sont pas des Spotify
  * IDs valides ; les pages détail (/track/[id], etc.) ne sont pas atteintes
  * en mode démo (composants <RankedRow> rendent sans href donc non cliquables).
  */
@@ -402,7 +402,7 @@ export function DemoModeBanner() {
         backdropFilter: "blur(8px)",
       }}
     >
-      <span>👋 Données fictives —</span>
+      <span>👋 Données fictives -</span>
       <Link
         href="/import?from=welcome"
         className="font-semibold underline underline-offset-2 hover:opacity-80"
@@ -495,7 +495,7 @@ export function WelcomeModal() {
         <p className="text-sm" style={{ color: "#a89ec8" }}>
           Cette démo te montre à quoi ressemble loopstat avec des données
           fictives. Importe ton historique Spotify pour voir TES vraies
-          stats — tops, listening clock, partage de profils, et plus.
+          stats - tops, listening clock, partage de profils, et plus.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
@@ -904,7 +904,7 @@ export default async function DashboardPage() {
 ```
 
 Key changes vs avant :
-- Drop ancien import inutile (`Sparkles`, `Download`, `fetchTopArtists` callbacks ...) — vérifier que tsc n'en signale pas
+- Drop ancien import inutile (`Sparkles`, `Download`, `fetchTopArtists` callbacks ...) - vérifier que tsc n'en signale pas
 - Drop la section `isFreshUser` (remplacée par WelcomeModal + DemoModeBanner)
 - Drop l'utilitaire `formatMs` import si plus utilisé (le sublabel utilise une expression inline maintenant)
 
@@ -977,7 +977,7 @@ if (!hasImport) {
           <h1 className="text-2xl font-semibold">Top titres</h1>
         </header>
         <p className="mb-8 text-sm text-muted-foreground">
-          Ces données sont fictives — importe ton historique pour voir les tiennes.
+          Ces données sont fictives - importe ton historique pour voir les tiennes.
         </p>
         <StaggerList className="flex flex-col gap-1">
           {DEMO_TOP_TRACKS.map((track, index) => (
@@ -1060,7 +1060,7 @@ if (!hasImport) {
           <h1 className="text-2xl font-semibold">Top artistes</h1>
         </header>
         <p className="mb-8 text-sm text-muted-foreground">
-          Ces données sont fictives — importe ton historique pour voir les tiennes.
+          Ces données sont fictives - importe ton historique pour voir les tiennes.
         </p>
         <StaggerList className="flex flex-col gap-1">
           {DEMO_TOP_ARTISTS.map((artist, index) => (
@@ -1139,7 +1139,7 @@ if (!hasImport) {
           <h1 className="text-2xl font-semibold">Top albums</h1>
         </header>
         <p className="mb-8 text-sm text-muted-foreground">
-          Ces données sont fictives — importe ton historique pour voir les tiennes.
+          Ces données sont fictives - importe ton historique pour voir les tiennes.
         </p>
         <StaggerList className="flex flex-col gap-1">
           {DEMO_TOP_ALBUMS.map((album, index) => (
@@ -1219,14 +1219,14 @@ if (!hasImport) {
         <header className="mb-8">
           <h1 className="text-2xl font-semibold">Horloge d&apos;écoute</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Ces données sont fictives — importe ton historique pour voir les tiennes.
+            Ces données sont fictives - importe ton historique pour voir les tiennes.
           </p>
         </header>
         {/* Réutiliser ici le composant qui rend la heatmap dans la page actuelle.
             Probable : <ListeningClockChart data={DEMO_LISTENING_HOURS} /> ou
             un <HourHeatmap /> selon le nom dans le fichier actuel.
             Si tu n'es pas sûr, vérifie le JSX réel de la page avant de
-            substituer — utilise EXACTEMENT le même composant + même prop name
+            substituer - utilise EXACTEMENT le même composant + même prop name
             que dans le mode réel. */}
       </main>
     </>
@@ -1377,7 +1377,7 @@ Puis recharge `/dashboard`.
 
 Navigue successivement :
 
-- [ ] `/dashboard` : sticky banner lavande "Données fictives", top 5 tracks/artists fictifs (non cliquables visuellement — pas d'effet hover de Link), totals (12 847 plays, etc.)
+- [ ] `/dashboard` : sticky banner lavande "Données fictives", top 5 tracks/artists fictifs (non cliquables visuellement - pas d'effet hover de Link), totals (12 847 plays, etc.)
 - [ ] `/top/tracks` : sticky banner + 30 entries fictives (Espresso, BIRDS OF A FEATHER, …), non cliquables, métric "X écoutes"
 - [ ] `/top/artists` : sticky banner + 15 artists fictifs (Sabrina Carpenter en #1, …)
 - [ ] `/top/albums` : sticky banner + 15 albums fictifs
@@ -1470,6 +1470,6 @@ git push
 - `DEMO_LISTENING_HOURS[i]` (hour/count) match `<HourHeatmap />` shape Task 9 ✓
 - `useWelcomeModalState()` return shape (isOpen/close) match Task 4 usage ✓
 
-**Pas de placeholder :** Aucun "TBD" ou "implement later". Toutes les 30+15+15+24 entries de fixtures sont concrètes. Le seul "lire et adapter" est en Task 9 step 2 (composant heatmap dont le nom dépend de la branche actuelle) — note explicite à l'implémenteur de lire le fichier d'abord.
+**Pas de placeholder :** Aucun "TBD" ou "implement later". Toutes les 30+15+15+24 entries de fixtures sont concrètes. Le seul "lire et adapter" est en Task 9 step 2 (composant heatmap dont le nom dépend de la branche actuelle) - note explicite à l'implémenteur de lire le fichier d'abord.
 
 **Scope :** 12 tasks, dont 1 manuel (Task 11) et 1 push (Task 12). Tient en une session d'exécution ~2-3h. Décomposition propre (fixtures → 3 composants → 5 pages → /import → vérif → push).

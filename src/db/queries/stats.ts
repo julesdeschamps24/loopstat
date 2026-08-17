@@ -23,15 +23,15 @@ const QUALIFYING_PLAY = or(
 
 /**
  * The user's most recent play timestamp, cached per request. Used as the
- * reference "now" for period windows on user-owned pages — since the data
+ * reference "now" for period windows on user-owned pages - since the data
  * is a static JSON import that may end days/weeks before today, anchoring
  * "last 7 days" to MAX(played_at) keeps the windows meaningful.
  *
- * Returns null if the user has no plays — callers should fall back to
+ * Returns null if the user has no plays - callers should fall back to
  * `Date.now()` so the UI doesn't break for fresh accounts.
  */
 export const getUserLatestPlayedAt = cache(async (userId: string): Promise<Date | null> => {
-  // postgres-js returns timestamp columns as strings, not Date objects —
+  // postgres-js returns timestamp columns as strings, not Date objects -
   // the Drizzle `sql<Date>` type hint lies at runtime. Coerce explicitly.
   const [row] = await db
     .select({ max: sql<string | null>`max(${streams.playedAt})` })
@@ -211,7 +211,7 @@ export async function getArtistPlayStats(
         QUALIFYING_PLAY,
       );
 
-  // postgres-js returns timestamp aggregates as ISO strings, not Date —
+  // postgres-js returns timestamp aggregates as ISO strings, not Date -
   // the `sql<Date>` annotation lies at runtime. Type as string + coerce.
   const [row] = await db
     .select({
@@ -510,7 +510,7 @@ export async function getTopArtistsFromStreams(
  * Top albums agrégés depuis la table streams locale. JOIN streams → tracks
  * → albums pour récupérer l'album_id, puis COUNT par album. Skip les
  * streams dont le track n'a pas d'album_id (track non encore enrichi par
- * le worker — leur album sera comptabilisé quand l'enrich aura tourné).
+ * le worker - leur album sera comptabilisé quand l'enrich aura tourné).
  */
 export async function getTopAlbumsFromStreams(
   userId: string,
@@ -626,7 +626,7 @@ export async function getTrackBreakdownByWindow(
 /**
  * Monthly play counts for a single track, ordered chronologically. Used
  * for the sparkline on the track detail page. Months with zero plays are
- * NOT returned — caller can gap-fill if a dense series is needed.
+ * NOT returned - caller can gap-fill if a dense series is needed.
  */
 export async function getTrackMonthlyPlays(
   userId: string,
@@ -805,7 +805,7 @@ export async function searchTracks(
  * array so callers can render every bucket without gap-filling.
  *
  * NOTE: groups on `EXTRACT(HOUR FROM played_at)` using the DB/server
- * timezone — there is no per-user timezone in MVP scope.
+ * timezone - there is no per-user timezone in MVP scope.
  */
 export async function getListeningClock(
   userId: string,

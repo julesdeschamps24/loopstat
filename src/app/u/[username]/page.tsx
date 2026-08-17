@@ -21,7 +21,7 @@ import { periodSince } from "@/lib/stats/period";
 import { triggerVisibleEnrich } from "@/lib/enrich/trigger";
 import { formatNumber } from "@/lib/utils";
 
-// Profils publics : pas d'auth, mais on dépend de la base — toujours dynamique.
+// Profils publics : pas d'auth, mais on dépend de la base - toujours dynamique.
 export const dynamic = "force-dynamic";
 
 const TOP_LIMIT = 10;
@@ -37,7 +37,7 @@ export async function generateMetadata({
   const { username } = await params;
   const profile = await getPublicProfileByUsername(username);
   if (!profile) {
-    return { title: "Profil introuvable — loopstat" };
+    return { title: "Profil introuvable - loopstat" };
   }
 
   const name = profile.displayName ?? profile.username;
@@ -77,7 +77,7 @@ export default async function PublicProfilePage({
   const isOwnProfile = session?.user?.id === profile.id;
 
   // `getPublicProfileByUsername` returns the short summary used by the rest
-  // of the page — we need a fresh DB hit for the appearance settings.
+  // of the page - we need a fresh DB hit for the appearance settings.
   const settingsRow = await db.query.users.findFirst({
     where: eq(users.id, profile.id),
     columns: { profileSettings: true },
@@ -154,7 +154,7 @@ export default async function PublicProfilePage({
             className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm"
           >
             <span>
-              👤 Tu visites ton propre profil — c’est ce que voient les autres.
+              👤 Tu visites ton propre profil - c’est ce que voient les autres.
             </span>
             <Link
               href="/settings"
@@ -290,7 +290,7 @@ function Section({
 function EmptyHint() {
   return (
     <p className="rounded-xl border bg-card/40 p-3 text-xs text-muted-foreground">
-      —
+      -
     </p>
   );
 }

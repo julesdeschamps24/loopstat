@@ -47,7 +47,7 @@ export default async function AlbumDetailPage({
 
   const { id: rawId } = await params;
   // Next.js 16 passes the param URL-encoded (e.g. "demo%3Ashort-n-sweet"),
-  // but our demo fixtures use a literal ":" prefix — decode so lookups match.
+  // but our demo fixtures use a literal ":" prefix - decode so lookups match.
   const id = decodeURIComponent(rawId);
 
   if (isDemoId(id)) {
@@ -117,7 +117,7 @@ export default async function AlbumDetailPage({
           <section className={cn(glassCard, "p-6")}>
             <h2 className="text-lg font-semibold">Tracklist</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Plays par titre — la barre montre la part au sein de l&apos;album.
+              Plays par titre - la barre montre la part au sein de l&apos;album.
             </p>
             <div className="mt-4">
               <AlbumTracklist tracks={tracks} />
@@ -213,7 +213,7 @@ export default async function AlbumDetailPage({
   const artistNames = albumArtistRows.map((r) => r.name).join(", ");
 
   if (albumRow.imageUrl === null) {
-    // Try inline Deezer enrich with a tight timeout — cover loads on first
+    // Try inline Deezer enrich with a tight timeout - cover loads on first
     // visit instead of after a refresh. Falls back to background queue if
     // Deezer is slow.
     try {
@@ -235,7 +235,7 @@ export default async function AlbumDetailPage({
         .limit(1);
       if (refreshed?.imageUrl) albumRow.imageUrl = refreshed.imageUrl;
     } catch {
-      // Inline failed (timeout or Deezer error) — enqueue background fallback
+      // Inline failed (timeout or Deezer error) - enqueue background fallback
       void triggerSingleEnrich("album", albumRow.id);
     }
   }
@@ -257,7 +257,7 @@ export default async function AlbumDetailPage({
   const hasPlays = stats.count > 0;
 
   // Build tracklist from DB track plays (ordered by name in the query).
-  // trackNumber is null in the new schema — use index as fallback display order.
+  // trackNumber is null in the new schema - use index as fallback display order.
   const orderedTracks: AlbumTrack[] = trackPlays.map((t, idx) => ({
     trackId: t.trackId,
     name: t.name,
@@ -353,7 +353,7 @@ export default async function AlbumDetailPage({
         <section className={cn(glassCard, "p-6")}>
           <h2 className="text-lg font-semibold">Tracklist</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Plays par titre — la barre montre la part au sein de l&apos;album.
+            Plays par titre - la barre montre la part au sein de l&apos;album.
           </p>
           <div className="mt-4">
             <AlbumTracklist tracks={orderedTracks} />

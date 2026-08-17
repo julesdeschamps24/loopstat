@@ -1,8 +1,8 @@
-# Pivot identité : Spotify OAuth → Google Sign In — design spec
+# Pivot identité : Spotify OAuth → Google Sign In - design spec
 
 **Date** : 2026-05-18
 **Auteur** : Jules + Claude (brainstorming session)
-**Sous-projet** : A (Identity layer) — premier d'une série de 5 sous-projets pour le pivot complet "drop Spotify Web API"
+**Sous-projet** : A (Identity layer) - premier d'une série de 5 sous-projets pour le pivot complet "drop Spotify Web API"
 
 ## Contexte et motivation
 
@@ -38,7 +38,7 @@ utilisateur existantes (ré-identification par email).
 | Sujet | Décision | Alternative écartée |
 |---|---|---|
 | Auth provider | Google uniquement | Google + Apple ; Google + email magic link ; email magic link only |
-| Library | NextAuth v5 (existant) | Auth0, Clerk, Supabase Auth — pas worth la migration |
+| Library | NextAuth v5 (existant) | Auth0, Clerk, Supabase Auth - pas worth la migration |
 | User identification post-login | par `email` (NOT NULL UNIQUE) | par Google `sub` ID |
 | Existing user re-identification | match `email` (lower-cased) | Drop puis recréer (risque de perte data) |
 | `spotify_id` column | **kept (nullable)** dans ce sous-projet, dropped en E | drop immédiatement (risque rollback) |
@@ -50,7 +50,7 @@ utilisateur existantes (ré-identification par email).
 
 ```sql
 -- migration: pivot_auth_google
--- 1. Backfill any users without email (devraient être absents — single user)
+-- 1. Backfill any users without email (devraient être absents - single user)
 -- (manual check needed before running)
 
 -- 2. Email becomes NOT NULL UNIQUE
@@ -147,7 +147,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async redirect({ url, baseUrl }) {
-      // (unchanged — same logic, just doesn't reference Spotify)
+      // (unchanged - same logic, just doesn't reference Spotify)
       const isNotADestination = (pathname: string) =>
         pathname === "/" || pathname === "/login";
       if (url.startsWith("/")) {
@@ -215,7 +215,7 @@ import { useState } from "react";
 function GoogleIcon() {
   // SVG officiel "G" multi-couleurs récupéré depuis
   // https://developers.google.com/identity/branding-guidelines
-  // (le plan d'implémentation fournit le SVG complet — ~600 caractères
+  // (le plan d'implémentation fournit le SVG complet - ~600 caractères
   // de path data pour les 4 segments coloriés)
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
@@ -264,11 +264,11 @@ Documenté dans `docs/google-auth-setup.md` (nouveau fichier) :
    GOOGLE_CLIENT_SECRET=...
    ```
 7. Configurer le consent screen (External, Testing) avec scopes minimaux
-   (`openid`, `email`, `profile`) — pas besoin de verification Google tant
-   qu'on est en mode Testing (max 100 testeurs whitelistés gratuits — déjà
+   (`openid`, `email`, `profile`) - pas besoin de verification Google tant
+   qu'on est en mode Testing (max 100 testeurs whitelistés gratuits - déjà
    plus large que Spotify dev mode)
 8. Quand prêt pour prod : passer en mode "In Production" (Google review ~
-   1-4 sem, conditions OAuth Verification — moins strictes que Spotify)
+   1-4 sem, conditions OAuth Verification - moins strictes que Spotify)
 
 ## Migration utilisateur existant
 
@@ -325,11 +325,11 @@ doit retourner `0` (sinon la migration `email SET NOT NULL` échouera).
 - Onboarding JSON-first (sub-projet B)
 - Suppression `spotify_tokens` table (sub-projet D)
 - Suppression `users.spotify_id` column (sub-projet E)
-- Migration des comptes Premium / `stripe_customer_id` (rien à faire — les FK
+- Migration des comptes Premium / `stripe_customer_id` (rien à faire - les FK
   pointent toutes vers `users.id` UUID qui ne change pas)
-- Multi-provider (ex. Google + Apple plus tard) — peut être ajouté
+- Multi-provider (ex. Google + Apple plus tard) - peut être ajouté
   ultérieurement, NextAuth supporte trivialement
-- Email magic link comme fallback — choix conscient d'écarter pour simplicité
-- "Sign in with Apple" — Apple Developer Account à $99/an, pas worth pour MVP
+- Email magic link comme fallback - choix conscient d'écarter pour simplicité
+- "Sign in with Apple" - Apple Developer Account à $99/an, pas worth pour MVP
 - Renommage de variables d'env ou de fichiers `src/lib/spotify/*` (gardés
   intacts ici, nettoyés en D)

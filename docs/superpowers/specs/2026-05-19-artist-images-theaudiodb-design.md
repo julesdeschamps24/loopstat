@@ -1,11 +1,11 @@
-# Sub-projet F — photos d'artistes via TheAudioDB
+# Sub-projet F - photos d'artistes via TheAudioDB
 
 > Date : 2026-05-19
 > Statut : design validé, plan à écrire
 
 ## Contexte
 
-Le pivot Spotify → MusicBrainz (sub-projet C+D+E) ne récupère pas les photos d'artistes — MusicBrainz n'en hébergeait pas. La UI affiche actuellement un cercle gradient + initiale via le composant [ArtistAvatar](src/components/ui/artist-avatar.tsx). On intègre TheAudioDB pour combler ce trou.
+Le pivot Spotify → MusicBrainz (sub-projet C+D+E) ne récupère pas les photos d'artistes - MusicBrainz n'en hébergeait pas. La UI affiche actuellement un cercle gradient + initiale via le composant [ArtistAvatar](src/components/ui/artist-avatar.tsx). On intègre TheAudioDB pour combler ce trou.
 
 ## Objectifs
 
@@ -16,11 +16,11 @@ Le pivot Spotify → MusicBrainz (sub-projet C+D+E) ne récupère pas les photos
 
 ## Non-objectifs
 
-- Pas de `strArtistFanart` ou `strArtistLogo` (HD background, logos PNG) — YAGNI pour le MVP.
+- Pas de `strArtistFanart` ou `strArtistLogo` (HD background, logos PNG) - YAGNI pour le MVP.
 - Pas de fallback Wikipedia/Wikidata pour les artistes non trouvés sur TheAudioDB (envisageable plus tard).
-- Pas de remplacement direct de `ArtistAvatar` par `<img>` — `ArtistAvatar` gère le fallback.
+- Pas de remplacement direct de `ArtistAvatar` par `<img>` - `ArtistAvatar` gère le fallback.
 
-## Schéma DB — migration `0007_add_artists_tadb_id.sql`
+## Schéma DB - migration `0007_add_artists_tadb_id.sql`
 
 ```sql
 ALTER TABLE artists ADD COLUMN tadb_id integer;
@@ -32,7 +32,7 @@ CREATE INDEX artists_tadb_id_idx ON artists(tadb_id);
 - `0` : sentinelle "tenté, pas trouvé" (skip retry).
 - entier positif : ID TheAudioDB, image fetchée et stockée dans `artists.image_url`.
 
-Pas de wipe — les rows existantes ont `tadb_id = NULL`, le worker self-heal les balaie automatiquement.
+Pas de wipe - les rows existantes ont `tadb_id = NULL`, le worker self-heal les balaie automatiquement.
 
 ## Module `src/lib/theaudiodb/`
 
@@ -55,7 +55,7 @@ const API_BASE = `https://www.theaudiodb.com/api/v1/json/${API_KEY}`;
 export async function tadbFetch<T>(path: string): Promise<T> { ... }
 ```
 
-Pas de header `Retry-After` côté TheAudioDB — c'est le worker qui pace à 1.1s entre calls.
+Pas de header `Retry-After` côté TheAudioDB - c'est le worker qui pace à 1.1s entre calls.
 
 ### `search.ts`
 
@@ -91,7 +91,7 @@ export async function enrichArtistImageByName({ artistId, name }): Promise<void>
 
 ## Extension du worker `enrichCatalog`
 
-Modifier [worker/jobs/enrichCatalog.ts](worker/jobs/enrichCatalog.ts) — après la passe MBz artists, ajouter une 3e passe TheAudioDB.
+Modifier [worker/jobs/enrichCatalog.ts](worker/jobs/enrichCatalog.ts) - après la passe MBz artists, ajouter une 3e passe TheAudioDB.
 
 ```ts
 // 3. TheAudioDB image sweep
@@ -163,9 +163,9 @@ export function ArtistAvatar({ name, imageUrl, size = 48, className = "" }: Prop
 ```
 
 **Callsites mis à jour** :
-- [src/components/stats/ranked-list.tsx](src/components/stats/ranked-list.tsx) — prop `avatarName` reste, plus nouvelle prop `avatarImageUrl?: string | null` qu'on transmet à `ArtistAvatar`.
-- [src/app/top/artists/page.tsx](src/app/top/artists/page.tsx) — passe `avatarImageUrl={artist.imageUrl}` dans `RankedRow`.
-- [src/app/artist/[id]/page.tsx](src/app/artist/[id]/page.tsx) — hero devient `<ArtistAvatar name={artist.name} imageUrl={artist.imageUrl} size={192} />`.
+- [src/components/stats/ranked-list.tsx](src/components/stats/ranked-list.tsx) - prop `avatarName` reste, plus nouvelle prop `avatarImageUrl?: string | null` qu'on transmet à `ArtistAvatar`.
+- [src/app/top/artists/page.tsx](src/app/top/artists/page.tsx) - passe `avatarImageUrl={artist.imageUrl}` dans `RankedRow`.
+- [src/app/artist/[id]/page.tsx](src/app/artist/[id]/page.tsx) - hero devient `<ArtistAvatar name={artist.name} imageUrl={artist.imageUrl} size={192} />`.
 
 Pas de config Next.js Image (on n'utilise pas l'optimizer pour les covers, cohérent avec les album covers Cover Art Archive).
 
@@ -173,7 +173,7 @@ Pas de config Next.js Image (on n'utilise pas l'optimizer pour les covers, cohé
 
 Ajout dans `.env.example` :
 ```
-# TheAudioDB API key — '2' = dev key public (rate limit conservateur).
+# TheAudioDB API key - '2' = dev key public (rate limit conservateur).
 # Pour la prod : sign-up gratuit sur https://www.theaudiodb.com/api_guide.php
 TADB_API_KEY=2
 ```
@@ -187,15 +187,15 @@ Sans cette var, le module utilise `"2"` par défaut (dev seulement).
 | TheAudioDB 503 / network | Throw `TheAudioDBError` → BullMQ retry (backoff 5/10/20s) |
 | Artiste non trouvé (`artists: null` ou `[]`) | `tadb_id = 0` (sentinelle), `image_url` reste NULL → gradient en UI |
 | Match mais pas d'image (`strArtistThumb = ""`) | `tadb_id` stocké (entier), `image_url = NULL` → gradient en UI |
-| URL CDN broken au render | Browser affiche broken-image icon. Acceptable MVP — pas de `onError` JS fallback (nécessiterait `"use client"`, pas justifié) |
+| URL CDN broken au render | Browser affiche broken-image icon. Acceptable MVP - pas de `onError` JS fallback (nécessiterait `"use client"`, pas justifié) |
 | Mismatch fuzzy sur name search (artiste avec un homonyme) | On accepte. TheAudioDB ordonne par popularité, faux positifs rares sur top artistes |
 
 ## Tests (TDD strict)
 
-- `src/lib/theaudiodb/client.test.ts` — `tadbFetch` envoie vers l'URL avec la clef + parsing erreur.
-- `src/lib/theaudiodb/search.test.ts` — `lookupArtistByMbid` retourne `null` si `artists: null`, parse `idArtist`/`strArtistThumb` correctement, encode le nom dans `searchArtistByName`.
-- `src/lib/theaudiodb/catalog.test.ts` — sentinelle sur null, update db.
-- `worker/jobs/enrichCatalog.test.ts` (existant) — étendre pour vérifier que la 3e passe est appelée.
+- `src/lib/theaudiodb/client.test.ts` - `tadbFetch` envoie vers l'URL avec la clef + parsing erreur.
+- `src/lib/theaudiodb/search.test.ts` - `lookupArtistByMbid` retourne `null` si `artists: null`, parse `idArtist`/`strArtistThumb` correctement, encode le nom dans `searchArtistByName`.
+- `src/lib/theaudiodb/catalog.test.ts` - sentinelle sur null, update db.
+- `worker/jobs/enrichCatalog.test.ts` (existant) - étendre pour vérifier que la 3e passe est appelée.
 
 ## Tests manuels
 
@@ -215,7 +215,7 @@ Si match rate < 50% → revoir la stratégie (Wikipedia fallback en sub-projet f
 
 ## Dépendances externes
 
-- **TheAudioDB API** — gratuit, dev key `2` (public), prod key gratuit sur sign-up. Endpoint `https://www.theaudiodb.com/api/v1/json/<key>/`.
+- **TheAudioDB API** - gratuit, dev key `2` (public), prod key gratuit sur sign-up. Endpoint `https://www.theaudiodb.com/api/v1/json/<key>/`.
 
 Pas de package npm ajouté (fetch natif).
 

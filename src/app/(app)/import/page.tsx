@@ -46,7 +46,7 @@ export default async function ImportPage({
           <h2 className="font-semibold mb-2">Pourquoi un import ?</h2>
           <p className="text-sm text-muted-foreground">
             Spotify n&apos;expose <strong className="text-foreground">aucun</strong>{" "}
-            endpoint public pour récupérer tes playcounts lifetime — c&apos;est
+            endpoint public pour récupérer tes playcounts lifetime - c&apos;est
             volontaire de leur part. Le seul moyen légitime est de demander
             ton « Extended Streaming History » via RGPD, gratuit, puis de
             l&apos;uploader ici. Compte{" "}
@@ -86,7 +86,7 @@ export default async function ImportPage({
                 Coche uniquement « Historique de streaming étendu »
               </strong>{" "}
               (préparation : 30 jours). Les deux autres cases (« Données de
-              compte » et « Journal technique ») ne servent pas à loopstat —
+              compte » et « Journal technique ») ne servent pas à loopstat -
               décoche-les pour ne pas rallonger l&apos;attente.
             </p>
             <ImageZoom
@@ -110,7 +110,7 @@ export default async function ImportPage({
               <strong className="text-foreground">
                 Spotify t&apos;envoie immédiatement un mail de confirmation
               </strong>{" "}
-              — tu dois cliquer dessus, sinon la demande n&apos;est jamais
+              - tu dois cliquer dessus, sinon la demande n&apos;est jamais
               traitée. Ouvre ta boîte mail et clique{" "}
               <strong className="text-foreground">« Confirmer »</strong>{" "}
               dans le mail intitulé <em>« Confirme ta demande de données »</em>.
@@ -133,7 +133,7 @@ export default async function ImportPage({
               <strong className="text-foreground">
                 Seuls ceux-ci sont utiles
               </strong>{" "}
-              — les <code>Video_*.json</code> et le PDF sont automatiquement
+              - les <code>Video_*.json</code> et le PDF sont automatiquement
               filtrés. Tu peux tout sélectionner d&apos;un coup, loopstat ne
               garde que les Audio.
             </p>
@@ -154,7 +154,7 @@ export default async function ImportPage({
             <strong className="text-foreground">Note</strong> : en attendant,
             le polling toutes les 30 min remplit déjà ton historique
             <em> vers le futur</em>. Plus tu utilises Spotify, plus loopstat
-            accumule de données — pas besoin d&apos;y revenir.
+            accumule de données - pas besoin d&apos;y revenir.
           </p>
         </div>
       </section>

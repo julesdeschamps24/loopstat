@@ -84,10 +84,10 @@ import { periodSince, type StreamPeriod } from "@/lib/stats/period";
 
 /**
  * Tiered limits per time window for the priority enrich pass. 1w is the
- * default period shown on /top/* — gets the largest slice. Older windows
+ * default period shown on /top/* - gets the largest slice. Older windows
  * get smaller slices since they're consulted less often. "all" ferme la
  * marche avec le top 100 complet : c'est la vue "Tout" des pages /top/*
- * (et la vue par défaut des profils partagés) — sans ce tier, ses entrées
+ * (et la vue par défaut des profils partagés) - sans ce tier, ses entrées
  * de milieu de liste attendaient le sweep global.
  */
 const WINDOW_LIMITS: { window: StreamPeriod; limit: number }[] = [
@@ -103,7 +103,7 @@ const WINDOW_LIMITS: { window: StreamPeriod; limit: number }[] = [
  * window (1w, 4w, 6m, 1y) fetch the top-N by play count; concatenate with
  * dedup so an item only appears in the earliest window it qualifies for.
  *
- * `refDate` is the "now" used to compute `since` boundaries — typically the
+ * `refDate` is the "now" used to compute `since` boundaries - typically the
  * user's MAX(played_at), since the dataset is a static snapshot.
  */
 export async function getOrderedTopAlbumIdsForUser(

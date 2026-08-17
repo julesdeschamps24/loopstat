@@ -106,7 +106,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, account, profile }) {
       if (account?.provider === "credentials" && user?.id) {
         // Credentials sign-in: authorize() returns the DB user, so user.id is
-        // our uuid. (For Google, user.id is the Google `sub`, NOT our uuid —
+        // our uuid. (For Google, user.id is the Google `sub`, NOT our uuid -
         // that path must resolve the uuid via profile.email below.)
         token.userId = user.id;
         token.displayName = user.name ?? null;
@@ -142,7 +142,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return isNotADestination(parsed.pathname) ? `${baseUrl}/dashboard` : url;
         }
       } catch {
-        // not a valid absolute URL — fall through
+        // not a valid absolute URL - fall through
       }
       return `${baseUrl}/dashboard`;
     },

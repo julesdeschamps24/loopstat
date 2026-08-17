@@ -1,4 +1,4 @@
-# Refonte de /artist/[id] — page artiste enrichie
+# Refonte de /artist/[id] - page artiste enrichie
 
 > Date : 2026-05-25
 > Statut : design validé, plan à écrire
@@ -16,8 +16,8 @@ La page `/artist/[id]` actuelle est minimale (145 lignes) : hero compact (avatar
 
 ## Non-objectifs
 
-- Pas de sections "Par période", "Heure préférée", "Qualité d'écoute" — déjà sur /album, on évite la redondance.
-- Pas de page admin / discographie complète externe — on reste sur les écoutes du user.
+- Pas de sections "Par période", "Heure préférée", "Qualité d'écoute" - déjà sur /album, on évite la redondance.
+- Pas de page admin / discographie complète externe - on reste sur les écoutes du user.
 - Pas d'animations complexes (juste hover bg sur related artists).
 
 ## Layout global
@@ -26,15 +26,15 @@ La page `/artist/[id]` actuelle est minimale (145 lignes) : hero compact (avatar
 
 **Ordre des sections** :
 
-1. **Hero editorial split** — full width
-2. **Top tracks** — RankedList, limite 20 (bumpé depuis 10)
-3. **Top albums de l'artiste** — carousel horizontal (`<OtherArtistAlbums>`)
-4. **Évolution mensuelle** — sparkline 18 mois (`<SparklineMonthly>`)
-5. **Artistes connexes** — grid 2/5 cols (`<RelatedArtists>` nouveau)
+1. **Hero editorial split** - full width
+2. **Top tracks** - RankedList, limite 20 (bumpé depuis 10)
+3. **Top albums de l'artiste** - carousel horizontal (`<OtherArtistAlbums>`)
+4. **Évolution mensuelle** - sparkline 18 mois (`<SparklineMonthly>`)
+5. **Artistes connexes** - grid 2/5 cols (`<RelatedArtists>` nouveau)
 
 Rationale : proximité (top tracks immédiat) → exploration (albums) → trends (sparkline) → discovery (related).
 
-## Hero design — "editorial split"
+## Hero design - "editorial split"
 
 Grid 3 colonnes : `144px | 1fr | auto`, padding 24px, background `rgba(124,58,237,0.06)`, border `1px solid rgba(124,58,237,0.2)`, border-radius 20px.
 
@@ -48,7 +48,7 @@ Grid 3 colonnes : `144px | 1fr | auto`, padding 24px, background `rgba(124,58,23
   - `Découvert <strong>{formatRelativeDate(firstPlayedAt)}</strong>`
   - `Dernière écoute <strong>{formatRelativeDate(lastPlayedAt)}</strong>`
 
-**Colonne droite — le big number** :
+**Colonne droite - le big number** :
 - `Math.round(count / totalPlays × 100)` (ou `"< 1"` si < 0.5%)
 - Affiché en serif italique 64px, gradient text `linear-gradient(135deg, #c4b5fd, #ec4899)` (Webkit background-clip text)
 - Label uppercase sous le chiffre : `"de ton temps"`
@@ -145,7 +145,7 @@ const [stats, topTracks, topAlbums, monthly, related, totals] = await Promise.al
 
 ### Réutilisés tels quels
 
-- [ArtistAvatar](src/components/ui/artist-avatar.tsx) — avec `imageUrl` + fallback
+- [ArtistAvatar](src/components/ui/artist-avatar.tsx) - avec `imageUrl` + fallback
 - [RankedList / RankedRow](src/components/stats/ranked-list.tsx)
 - [SparklineMonthly](src/components/stats/sparkline-monthly.tsx)
 - [OtherArtistAlbums](src/components/album/other-artist-albums.tsx)
@@ -202,7 +202,7 @@ export function RelatedArtists({ artists }: Props) {
 - `firstPlayedAt`/`lastPlayedAt` : `synthesizeFirstLastDates(seed)` (existant)
 - `totalPercent` : `Math.round(stats.count / DEMO_TOTAL_PLAYS × 100)`
 
-Le rendu de la page côté démo passe par les mêmes composants — pas de divergence d'UI.
+Le rendu de la page côté démo passe par les mêmes composants - pas de divergence d'UI.
 
 ## Edge cases
 
@@ -221,11 +221,11 @@ Le rendu de la page côté démo passe par les mêmes composants — pas de dive
 
 ### Unitaires (vitest)
 
-- `src/db/queries/stats.test.ts` (étendre) — 3 nouveaux tests :
+- `src/db/queries/stats.test.ts` (étendre) - 3 nouveaux tests :
   - `getUserTopAlbumsByArtist` retourne les albums ordered by playCount
   - `getArtistMonthlyPlays` agrège correctement par mois
   - `getCoListenedArtists` exclut le focal artist + ordonne par coCount
-- `src/lib/demo/data.test.ts` (étendre) — `getDemoArtist` retourne tous les nouveaux champs
+- `src/lib/demo/data.test.ts` (étendre) - `getDemoArtist` retourne tous les nouveaux champs
 
 ### Manuels
 

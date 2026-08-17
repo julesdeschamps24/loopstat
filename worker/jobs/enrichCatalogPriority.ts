@@ -16,7 +16,7 @@ export interface EnrichCatalogPriorityResult {
  * Priority enrich pass for a specific user's top items. Two phases :
  *
  * 1. Ultra-priority (parallel) : first 20 albums + 20 artists hit Deezer
- *    concurrently via Promise.allSettled — typically completes in <2s for 40
+ *    concurrently via Promise.allSettled - typically completes in <2s for 40
  *    items. The user sees real covers on their dashboard almost immediately.
  *
  * 2. Window-ordered sweep : the rest of `albumIds` and `artistIds` processed

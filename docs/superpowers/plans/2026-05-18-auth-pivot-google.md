@@ -46,7 +46,7 @@
 docker exec loopstat_postgres psql -U loopstat -d loopstat -c "SELECT count(*) AS users_without_email FROM users WHERE email IS NULL;"
 ```
 
-Attendu : `0`. Si > 0, la migration `email SET NOT NULL` échouera. **Si ≠ 0, STOP** et reporter au controller — il faut soit backfiller les emails manquants, soit revoir le spec.
+Attendu : `0`. Si > 0, la migration `email SET NOT NULL` échouera. **Si ≠ 0, STOP** et reporter au controller - il faut soit backfiller les emails manquants, soit revoir le spec.
 
 - [ ] **Step 2 : Modifier `src/db/schema.ts`**
 
@@ -110,7 +110,7 @@ Préparation du pivot identité (Spotify OAuth → Google Sign In) selon
 docs/superpowers/specs/2026-05-18-auth-pivot-google-design.md.
 
 email devient l'identifiant canonique des users (matched au login Google).
-spotify_id reste en place mais nullable — sera droppé en sous-projet E
+spotify_id reste en place mais nullable - sera droppé en sous-projet E
 après vérification que toutes les features marchent post-pivot.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
@@ -147,7 +147,7 @@ vi.mock("@/db/client", () => ({
 }));
 
 // Recreate the signIn callback shape so we can test it in isolation. The
-// real callback in src/auth.ts has the exact same logic — this test file
+// real callback in src/auth.ts has the exact same logic - this test file
 // duplicates only the *behavior under test* (not the NextAuth handler shell).
 async function signInCallback(args: {
   account: { provider: string } | null;
@@ -323,7 +323,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return isNotADestination(parsed.pathname) ? `${baseUrl}/dashboard` : url;
         }
       } catch {
-        // not a valid absolute URL — fall through
+        // not a valid absolute URL - fall through
       }
       return `${baseUrl}/dashboard`;
     },
@@ -357,7 +357,7 @@ pnpm tsc --noEmit
 pnpm vitest run
 ```
 
-Attendu : tsc OK (peut signaler des refs à `isSpotifyConfigured` ou à `session.user.spotifyId` qui sont dans d'autres fichiers — sera fixé Tasks 3, 5, 6). À ce stade c'est **OK que tsc échoue** sur ces refs spécifiques (on fix dans les tâches suivantes). Si tsc échoue sur autre chose, escalate.
+Attendu : tsc OK (peut signaler des refs à `isSpotifyConfigured` ou à `session.user.spotifyId` qui sont dans d'autres fichiers - sera fixé Tasks 3, 5, 6). À ce stade c'est **OK que tsc échoue** sur ces refs spécifiques (on fix dans les tâches suivantes). Si tsc échoue sur autre chose, escalate.
 
 **Note pour l'implémenteur** : si tsc échoue sur `isSpotifyConfigured`, `session.user.spotifyId`, ou les fichiers spotify-*, c'est attendu. Continue vers Task 3.
 
@@ -422,7 +422,7 @@ declare module "next-auth/jwt" {
 pnpm tsc --noEmit
 ```
 
-Attendu : il restera des erreurs sur `app-header.tsx` (utilise `session.user.spotifyId`) — fixé Task 6. Et probablement sur login/page.tsx + landing/page.tsx + SpotifyLoginButton — fixé Tasks 4-7. Continue.
+Attendu : il restera des erreurs sur `app-header.tsx` (utilise `session.user.spotifyId`) - fixé Task 6. Et probablement sur login/page.tsx + landing/page.tsx + SpotifyLoginButton - fixé Tasks 4-7. Continue.
 
 - [ ] **Step 3 : Commit**
 
@@ -509,7 +509,7 @@ export function GoogleSignInButton() {
 pnpm tsc --noEmit
 ```
 
-Erreurs résiduelles (app-header, landing, login) toujours attendues — fix dans Tasks 5-7.
+Erreurs résiduelles (app-header, landing, login) toujours attendues - fix dans Tasks 5-7.
 
 - [ ] **Step 3 : Commit**
 
@@ -554,7 +554,7 @@ import { GoogleSignInButton } from "@/components/landing/google-sign-in-button";
 pnpm tsc --noEmit
 ```
 
-Erreurs résiduelles dans login/page.tsx + app-header — fixé Tasks 6-7. Continue.
+Erreurs résiduelles dans login/page.tsx + app-header - fixé Tasks 6-7. Continue.
 
 - [ ] **Step 3 : Commit**
 
@@ -670,7 +670,7 @@ function SetupNeeded() {
             <br />
             Name : <code className="text-foreground">loopstat</code>
             <br />
-            <strong>Authorized redirect URIs</strong> — ajoute :
+            <strong>Authorized redirect URIs</strong> - ajoute :
             <pre className="mt-2 rounded-lg bg-accent px-3 py-2 text-xs overflow-x-auto">
               <code>http://127.0.0.1:3000/api/auth/callback/google</code>
             </pre>
@@ -831,7 +831,7 @@ Suppression des fichiers Spotify-auth devenus inutiles après le pivot Google :
 app-header.tsx : fallback session.user.spotifyId → session.user.email.
 
 Les fichiers src/lib/spotify/* restants (client, catalog, types, top, image-url)
-sont gardés intacts ici — utilisés par le worker poll-recent, /api/now-playing,
+sont gardés intacts ici - utilisés par le worker poll-recent, /api/now-playing,
 et pages /album|artist|track. Seront droppés en sub-projet D.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
@@ -903,7 +903,7 @@ cat /Users/poney53/Documents/Projets/loopstat/.env.example
 Remplacer les sections `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` par :
 
 ```
-# Google OAuth — https://console.cloud.google.com/apis/credentials
+# Google OAuth - https://console.cloud.google.com/apis/credentials
 # Voir docs/google-auth-setup.md pour la procédure
 # Redirect URI to register: http://127.0.0.1:3000/api/auth/callback/google
 GOOGLE_CLIENT_ID=
@@ -999,7 +999,7 @@ Doit montrer :
 - [ ] **Step 10 : Commit final (si nécessaire)**
 
 S'il y a eu des ajustements pendant la vérif (ex. correction du SVG path,
-ajustement de copy), commit. Sinon, rien à faire — la branche est prête.
+ajustement de copy), commit. Sinon, rien à faire - la branche est prête.
 
 ---
 

@@ -71,7 +71,7 @@ export function clampNForFormat(format: ShareFormat, n: number): number {
 
 // Schema tolérant : applique les defaults sur chaque champ invalide
 // plutôt que de throw. La page /share et la route API n'ont jamais à
-// gérer d'exception ici — l'URL est toujours acceptée.
+// gérer d'exception ici - l'URL est toujours acceptée.
 const fieldSchema = z.object({
   mode: z.enum(SHARE_MODES).catch(SHARE_CARD_DEFAULTS.mode),
   type: z.enum(SHARE_TYPES).catch(SHARE_CARD_DEFAULTS.type),

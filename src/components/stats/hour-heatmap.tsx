@@ -18,7 +18,7 @@ export function HourHeatmap({ data }: { data: HourHeatmapData }) {
           <div
             key={hour}
             className="flex flex-col items-center gap-1"
-            title={`${hour}h — ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
+            title={`${hour}h - ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
           >
             <div className="flex h-16 w-full items-end">
               <div

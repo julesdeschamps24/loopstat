@@ -6,7 +6,7 @@ import Link from "next/link";
 export const dynamic = "force-static";
 
 export const metadata = {
-  title: "Mentions légales — loopstat",
+  title: "Mentions légales - loopstat",
   description: "Mentions légales de loopstat (LCEN).",
 };
 

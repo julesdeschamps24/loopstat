@@ -1,4 +1,4 @@
-# Window-priority enrichment — design
+# Window-priority enrichment - design
 
 > Date : 2026-05-27
 > Statut : design validé, plan à écrire
@@ -37,7 +37,7 @@ Implementation : pendant la construction de la liste ordonnée, un `Set<string>`
 
 ## Module `src/db/queries/enrich.ts`
 
-**Nouvelles fonctions** (les anciennes `getTopAlbumIdsForUser`, `getTopArtistIdsForUser`, `getTopTrackAlbumIdsForUser` sont gardées telles quelles — utilisées en interne via le nouveau code).
+**Nouvelles fonctions** (les anciennes `getTopAlbumIdsForUser`, `getTopArtistIdsForUser`, `getTopTrackAlbumIdsForUser` sont gardées telles quelles - utilisées en interne via le nouveau code).
 
 ```ts
 const WINDOW_LIMITS: { window: StreamPeriod; limit: number }[] = [
@@ -69,9 +69,9 @@ export async function getOrderedTopTrackAlbumIdsForUser(
 ```
 
 **Étendre les 3 helpers existants** pour accepter un paramètre `since: Date | null = null` :
-- `getTopAlbumIdsForUser(userId, limit, since)` — filtre `streams.played_at >= since` quand non-null
-- `getTopArtistIdsForUser(userId, limit, since)` — idem
-- `getTopTrackAlbumIdsForUser(userId, limit, since)` — idem
+- `getTopAlbumIdsForUser(userId, limit, since)` - filtre `streams.played_at >= since` quand non-null
+- `getTopArtistIdsForUser(userId, limit, since)` - idem
+- `getTopTrackAlbumIdsForUser(userId, limit, since)` - idem
 
 Backward-compatible (default `null` = lifetime, comportement actuel inchangé).
 
@@ -110,7 +110,7 @@ try {
 }
 ```
 
-## Worker `enrichCatalogPriority.ts` — préservation d'ordre
+## Worker `enrichCatalogPriority.ts` - préservation d'ordre
 
 Le `SELECT ... WHERE inArray(albums.id, albumIds)` ne garantit pas l'ordre. Solution : SELECT pour récupérer les metadata, puis itérer la liste `albumIds` originale + Map lookup.
 
@@ -123,7 +123,7 @@ const albumMap = new Map(unenrichedAlbumRows.map((a) => [a.albumId, a]));
 
 for (const id of albumIds) {
   const row = albumMap.get(id);
-  if (!row) continue; // skipped — already enriched OR album doesn't have a name
+  if (!row) continue; // skipped - already enriched OR album doesn't have a name
   if (i > 0) await sleep(RATE_DELAY_MS);
   await withMbzRetry(() => enrichAlbumByNames({...row}), wlog);
   albumsEnriched++;
@@ -146,7 +146,7 @@ Pareil pour artistIds (MBz pass + Deezer image pass).
 
 ### Unitaires (vitest)
 
-- `src/db/queries/enrich.test.ts` — ajouter 3 tests :
+- `src/db/queries/enrich.test.ts` - ajouter 3 tests :
   - `getOrderedTopAlbumIdsForUser("nonexistent", new Date())` retourne `[]`
   - Shape `string[]`
   - Dedup : aucun ID répété (test idempotent sur user fictif sans écoute, retour vide ; le dedup non-vide nécessite fixtures DB, optionnel)

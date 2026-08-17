@@ -1,4 +1,4 @@
-# Scénarios de test — états utilisateur
+# Scénarios de test - états utilisateur
 
 Un seul compte loopstat suffit pour couvrir tous les états. On jongle entre :
 - **DB directe** (psql / Drizzle Studio) pour l'import et le profil
@@ -31,7 +31,7 @@ SELECT id, spotify_id, username FROM users;
 
 ## Scénarios de base (à tester systématiquement)
 
-### S1 — User fresh (rien fait)
+### S1 - User fresh (rien fait)
 **État** : connecté, pas d'import, free, profil privé
 **Comment l'obtenir** :
 ```sql
@@ -47,16 +47,16 @@ WHERE id = '<id>';
 - Pages stats vides ou état "no data"
 - `/u/<spotifyId>` renvoie 404
 
-### S2 — Import en cours
+### S2 - Import en cours
 **État** : import lancé, encore en `processing`
-**Comment l'obtenir** : démarrer un import puis pause le worker (`docker stop loopstat-worker-1`) avant qu'il finisse — OU forcer en DB :
+**Comment l'obtenir** : démarrer un import puis pause le worker (`docker stop loopstat-worker-1`) avant qu'il finisse - OU forcer en DB :
 ```sql
 INSERT INTO imports (user_id, status, files_count, started_at)
 VALUES ('<id>', 'processing', 3, now());
 ```
 **À vérifier** : bandeau "Import en cours", spinner, pas de stats encore
 
-### S3 — Import échoué
+### S3 - Import échoué
 ```sql
 UPDATE imports SET status = 'failed',
   error_message = 'Test: invalid JSON in file 2',
@@ -65,7 +65,7 @@ WHERE user_id = '<id>' AND status = 'processing';
 ```
 **À vérifier** : message d'erreur affiché, possibilité de re-uploader
 
-### S4 — Import OK, free, profil privé
+### S4 - Import OK, free, profil privé
 **État** : stats visibles, watermark sur share card, perso bloquée
 **Comment l'obtenir** : faire un vrai import (le worker pose `status='completed'` + `rows_imported`)
 **À vérifier** :
@@ -73,7 +73,7 @@ WHERE user_id = '<id>' AND status = 'processing';
 - `/settings` → options d'apparence disponibles
 - Share card contient le watermark "loopstat"
 
-### S5 — Profil public sans perso
+### S5 - Profil public sans perso
 ```sql
 UPDATE users SET is_public = true WHERE id = '<id>';
 -- déclenche aussi la persistance du username au prochain accès UI

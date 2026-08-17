@@ -1,4 +1,4 @@
-# Public Profile Discoverability — Design Spec
+# Public Profile Discoverability - Design Spec
 
 **Date** : 2026-05-17
 **Branche d'implémentation cible** : nouvelle branche `feat/profile-discoverability` (depuis `main` après merge de Phase A)
@@ -7,7 +7,7 @@
 
 Phase A viral livrée (merge `9afc0e1`) : profils publics opt-in `/u/[username]`, OG card auto, ShareButton + éditeur custom `/share`. **Mais** :
 
-1. **Côté propriétaire** : un user ne sait pas qu'il a un profil public ni où le trouver. Le toggle existe dans `/settings` mais aucun rappel ailleurs dans l'app — le user importe ses streams, voit ses tops sur `/dashboard`, et oublie complètement la dimension publique.
+1. **Côté propriétaire** : un user ne sait pas qu'il a un profil public ni où le trouver. Le toggle existe dans `/settings` mais aucun rappel ailleurs dans l'app - le user importe ses streams, voit ses tops sur `/dashboard`, et oublie complètement la dimension publique.
 2. **Côté visiteur** : aucun moyen de trouver le profil d'un autre user depuis l'app. La seule façon = connaître le pseudo et taper l'URL dans le navigateur. Pas de search interne.
 
 Sans découvrabilité, la viralité s'auto-bloque : peu de profils activés → peu de cartes partagées → peu de visiteurs → peu de signups. Ce spec couvre les deux côtés.
@@ -27,22 +27,22 @@ Sans découvrabilité, la viralité s'auto-bloque : peu de profils activés → 
 6. Item nav sidebar **"Trouver des amis"** vers `/find`
 7. Search backend : ILIKE sur `username` OU `display_name`, filtré `is_public=true`, debounce client 250ms
 
-### Hors MVP — GH issue future
+### Hors MVP - GH issue future
 
 - **Algo de découverte taste-based** : suggérer des inconnus avec des goûts proches (artistes communs, périodes d'écoute similaires, etc.). Demande un système de scoring + une vue "Explorer" séparée de la search par pseudo.
 - Concept follow/friend, notifications, feed.
 - Filtres avancés (genre, ancienneté de compte, etc.).
-- Cartes résultats enrichies (mini top tracks/artists par profil) — au MVP juste avatar + nom + handle.
+- Cartes résultats enrichies (mini top tracks/artists par profil) - au MVP juste avatar + nom + handle.
 
 ### Décisions verrouillées
 
-- **Pas de cache** pour `searchPublicProfiles` — la query est rapide (index unique sur `username`, ILIKE sur petite table tant que le user count est bas). Re-évaluer post-1k users.
-- **Pas de pagination** côté MVP — limite serveur à 20 résultats, suffisant tant que `is_public=true` users < 1k.
-- **Pas d'API JSON publique** pour la search — server action seulement (auth-only, type-safe, pas de surface attaque).
+- **Pas de cache** pour `searchPublicProfiles` - la query est rapide (index unique sur `username`, ILIKE sur petite table tant que le user count est bas). Re-évaluer post-1k users.
+- **Pas de pagination** côté MVP - limite serveur à 20 résultats, suffisant tant que `is_public=true` users < 1k.
+- **Pas d'API JSON publique** pour la search - server action seulement (auth-only, type-safe, pas de surface attaque).
 - **Min 2 chars** avant fire la query pour ne pas spam le serveur sur la 1ère lettre tapée.
 - **Anti-enumeration** : seuls les profils opt-in apparaissent. Le user qui ne veut pas être trouvable garde `is_public=false`.
 
-## Section 1 — Côté propriétaire
+## Section 1 - Côté propriétaire
 
 ### 1.A Card "Mon profil public" sur `/dashboard`
 
@@ -72,7 +72,7 @@ Placée en haut, juste après `<AppHeader>` (avant `<ImportBanner>`). Server com
   ```
   CTA link `/settings`.
 
-- **Pas encore configuré** (`!username`) : carte n'apparaît pas du tout — la 1ère visite settings configure auto le username (déjà fait via `ensureUsernamePersisted` server action).
+- **Pas encore configuré** (`!username`) : carte n'apparaît pas du tout - la 1ère visite settings configure auto le username (déjà fait via `ensureUsernamePersisted` server action).
 
 Composant : `src/components/profile/own-profile-card.tsx` (server). Action copy : `src/components/profile/own-profile-card-actions.tsx` (client minuscule).
 
@@ -84,11 +84,11 @@ Sous les liens légaux (CGU / Privacy / Mentions légales), ajouter une ligne mo
 @judescha
 ```
 
-- `is_public=true` → link `/u/<username>` (target self, pas blank — c'est de la nav interne)
-- `is_public=false` → link `/settings` avec hint visuel (opacité un cran plus basse + tooltip "Profil privé — clique pour activer")
+- `is_public=true` → link `/u/<username>` (target self, pas blank - c'est de la nav interne)
+- `is_public=false` → link `/settings` avec hint visuel (opacité un cran plus basse + tooltip "Profil privé - clique pour activer")
 - Pas de username → la ligne n'apparaît pas
 
-Modif : [src/components/sidebar.tsx](src/components/sidebar.tsx) — accepter les props `username?: string` et `isPublic?: boolean`, calculer dans [src/app/layout.tsx](src/app/layout.tsx) via le même pattern que `hasImported`.
+Modif : [src/components/sidebar.tsx](src/components/sidebar.tsx) - accepter les props `username?: string` et `isPublic?: boolean`, calculer dans [src/app/layout.tsx](src/app/layout.tsx) via le même pattern que `hasImported`.
 
 ### 1.C Link "Voir mon profil public →" dans `/settings`
 
@@ -108,20 +108,20 @@ Si `session.user.id === profile.id` quand un user authentifié visite `/u/<usern
 
 ```html
 <aside className="rounded-xl border bg-[#7c3aed]/10 px-4 py-3 mb-6 flex items-center justify-between">
-  <span>👤 Tu visites ton propre profil — c'est ce que voient les autres.</span>
+  <span>👤 Tu visites ton propre profil - c'est ce que voient les autres.</span>
   <Link href="/settings">Modifier mes réglages →</Link>
 </aside>
 ```
 
-Modif : [src/app/u/[username]/page.tsx](src/app/u/[username]/page.tsx) — fetch `auth()` puis comparer.
+Modif : [src/app/u/[username]/page.tsx](src/app/u/[username]/page.tsx) - fetch `auth()` puis comparer.
 
-## Section 2 — Page `/find`
+## Section 2 - Page `/find`
 
 ### 2.A Route
 
 `GET /find` (server component) :
 1. `auth()` → redirect `/login` si pas auth.
-2. Render `<FindEditor />` (client component) — pas de query DB côté server, search est purement client-driven via server action.
+2. Render `<FindEditor />` (client component) - pas de query DB côté server, search est purement client-driven via server action.
 
 ### 2.B `<FindEditor />` (client)
 
@@ -248,7 +248,7 @@ export async function searchPublicProfiles(
 }
 ```
 
-Pas de cache `React.cache` ici — query est appelée depuis une server action, à la demande, jamais 2x dans le même render.
+Pas de cache `React.cache` ici - query est appelée depuis une server action, à la demande, jamais 2x dans le même render.
 
 **Note prod** : si la table users dépasse 10k+ rows, ajouter un index sur `display_name` (le `username` a déjà un index unique). Pour le MVP <100 users : inutile.
 
@@ -288,7 +288,7 @@ Import : `import { UserSearch } from "lucide-react";`.
 
 4. **Sidebar nav** :
    - Item "Trouver des amis" présent + actif quand on est sur `/find`
-   - Pas affiché sur les pages publiques (`/`, `/login`, `/u/*`) — déjà géré par le sidebar guard
+   - Pas affiché sur les pages publiques (`/`, `/login`, `/u/*`) - déjà géré par le sidebar guard
 
 ## Files à créer
 
@@ -301,21 +301,21 @@ Import : `import { UserSearch } from "lucide-react";`.
 
 ## Files à modifier
 
-- [src/db/queries/users.ts](src/db/queries/users.ts) — ajouter `searchPublicProfiles` + type `PublicProfileSummary`
-- [src/components/sidebar.tsx](src/components/sidebar.tsx) — nav item "Trouver des amis" + footer `@username`
-- [src/app/layout.tsx](src/app/layout.tsx) — passer `username` + `isPublic` au Sidebar
-- [src/app/dashboard/page.tsx](src/app/dashboard/page.tsx) — render `<OwnProfileCard>` après AppHeader
-- [src/components/settings/profile-form.tsx](src/components/settings/profile-form.tsx) — link "Voir mon profil public →" sous le toggle
-- [src/app/u/[username]/page.tsx](src/app/u/[username]/page.tsx) — banner "tu visites ton propre profil" si auth match
+- [src/db/queries/users.ts](src/db/queries/users.ts) - ajouter `searchPublicProfiles` + type `PublicProfileSummary`
+- [src/components/sidebar.tsx](src/components/sidebar.tsx) - nav item "Trouver des amis" + footer `@username`
+- [src/app/layout.tsx](src/app/layout.tsx) - passer `username` + `isPublic` au Sidebar
+- [src/app/dashboard/page.tsx](src/app/dashboard/page.tsx) - render `<OwnProfileCard>` après AppHeader
+- [src/components/settings/profile-form.tsx](src/components/settings/profile-form.tsx) - link "Voir mon profil public →" sous le toggle
+- [src/app/u/[username]/page.tsx](src/app/u/[username]/page.tsx) - banner "tu visites ton propre profil" si auth match
 
 ## Tests à écrire
 
 Le projet n'a pas d'infra DB-integration tests (vitest est utilisé pour pure logic only). Pragmatique :
 
-- **`src/db/queries/users.test.ts`** (nouveau) — tester uniquement le helper pur `escapeLikePattern` : input normal, input avec `%`, `_`, `\`. ~4 tests.
-- **Pas de test sur `searchPublicProfiles`** — c'est de l'intégration DB, validée par smoke test manuel (curl + visit `/find` en browser).
-- **Pas de test sur la server action** — Next server actions difficiles à isoler sans framework de test serveur ; validée par smoke test manuel.
-- **Pas de tests UI** au MVP (cohérent avec le reste du projet — pas de Playwright/RTL en place).
+- **`src/db/queries/users.test.ts`** (nouveau) - tester uniquement le helper pur `escapeLikePattern` : input normal, input avec `%`, `_`, `\`. ~4 tests.
+- **Pas de test sur `searchPublicProfiles`** - c'est de l'intégration DB, validée par smoke test manuel (curl + visit `/find` en browser).
+- **Pas de test sur la server action** - Next server actions difficiles à isoler sans framework de test serveur ; validée par smoke test manuel.
+- **Pas de tests UI** au MVP (cohérent avec le reste du projet - pas de Playwright/RTL en place).
 
 Validation E2E couverte dans la section "Vérification end-to-end" ci-dessus.
 
@@ -327,4 +327,4 @@ Validation E2E couverte dans la section "Vérification end-to-end" ci-dessus.
 - Cache des résultats search
 - API JSON publique
 - Notifications
-- Indexation full-text Postgres (FTS / trigram) — overkill au MVP
+- Indexation full-text Postgres (FTS / trigram) - overkill au MVP

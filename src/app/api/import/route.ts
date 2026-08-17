@@ -9,7 +9,7 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { importQueue } from "../../../../worker/queue";
 
 // Mutates server state (writes temp files, inserts a row, enqueues a job) and
-// depends on the session cookie — never statically cached.
+// depends on the session cookie - never statically cached.
 export const dynamic = "force-dynamic";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
@@ -70,7 +70,7 @@ export async function POST(request: Request): Promise<Response> {
       .returning({ id: imports.id });
     importId = importRow.id;
 
-    // Persist files to .import-tmp/<importId>/ — the job reads them back from
+    // Persist files to .import-tmp/<importId>/ - the job reads them back from
     // disk so we don't push file buffers through Redis.
     const dir = path.join(IMPORT_TMP_DIR, importId);
     await mkdir(dir, { recursive: true });

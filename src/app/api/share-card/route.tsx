@@ -16,7 +16,7 @@ import {
 } from "@/lib/share/card-config";
 import { prefetchImages } from "@/lib/share/prefetch-images";
 import { periodSince } from "@/lib/stats/period";
-// Image URLs now come from Deezer (already-sized JPEGs) — no CDN
+// Image URLs now come from Deezer (already-sized JPEGs) - no CDN
 // shrinking needed. Identity function keeps call-sites unchanged.
 function shrinkAlbumCoverUrl(url: string | null, _size: "medium" | "small"): string | null {
   return url ?? null;
@@ -126,7 +126,7 @@ async function fetchRecap(
 }
 
 // Inline as a data URL using the prefetch cache. Returns null when the URL
-// isn't in the cache (failed/timed-out prefetch) — we deliberately do NOT
+// isn't in the cache (failed/timed-out prefetch) - we deliberately do NOT
 // fall back to the remote URL, because Satori would then fetch it internally
 // with no timeout and could stall the whole render on a flaky CDN. A dropped
 // image just renders its placeholder.
@@ -187,7 +187,7 @@ export async function GET(req: Request) {
   // Share-card PNG : on ne peut pas render le gradient fallback (Satori
   // gère mal certains background gradients dans @vercel/og). On garde
   // uniquement les vraies covers pour le mur. Si certaines manquent, le
-  // mur aura simplement moins de cellules — acceptable pour l'export.
+  // mur aura simplement moins de cellules - acceptable pour l'export.
   const wallShrunk = rawCovers
     .map((c) => (c.imageUrl ? shrinkAlbumCoverUrl(c.imageUrl, "small") : null))
     .filter((u): u is string => u !== null);
@@ -210,7 +210,7 @@ export async function GET(req: Request) {
   const cache = await prefetchImages(allUrls);
 
   const displayName = profile.displayName ?? profile.username;
-  // Only ever hand Satori inlined data URLs (or nothing) — never a remote URL,
+  // Only ever hand Satori inlined data URLs (or nothing) - never a remote URL,
   // which it would fetch internally without a timeout. See `inline()` above.
   const inlinedAvatar = profile.avatarUrl
     ? cache.get(profile.avatarUrl) ?? null

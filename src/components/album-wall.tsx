@@ -15,7 +15,7 @@ export interface WallCell {
  * (gating via le sélecteur `.dark .ls-album-wall` dans globals.css).
  *
  * Si une cell n'a pas encore d'imageUrl (album pas enrichi par MBz/CAA),
- * on render un gradient déterministe dérivé du nom — cohérent avec
+ * on render un gradient déterministe dérivé du nom - cohérent avec
  * ArtistAvatar. Au fur et à mesure que le worker enrichit le catalog,
  * chaque reload du dashboard remplace progressivement les gradients par
  * les vraies covers.

@@ -8,7 +8,7 @@ const THROTTLE_TTL_SECONDS = 600;
  * when a row's image_url is null. Honours the same Redis NX guard as the
  * /api/enrich-single endpoint to avoid thundering-herd on hot items.
  *
- * Errors are swallowed — this is best-effort, the render must not block.
+ * Errors are swallowed - this is best-effort, the render must not block.
  */
 export interface VisibleItem {
   type: "album" | "artist";
@@ -19,7 +19,7 @@ export interface VisibleItem {
  * Enrichissement prioritaire de CE QUE LA PAGE AFFICHE. Appelé par les pages
  * de listes (tops, dashboard, profil public) avec les items rendus sans
  * cover, dans l'ordre d'affichage. Un seul job "enrich-priority" est posé
- * sur la hot queue — le sweep global se met en pause tant qu'elle n'est pas
+ * sur la hot queue - le sweep global se met en pause tant qu'elle n'est pas
  * vide, donc l'écran courant passe toujours devant.
  *
  * Même garde Redis que le single (TTL 10 min, clés partagées) : un reload
@@ -50,7 +50,7 @@ export async function triggerVisibleEnrich(items: VisibleItem[]): Promise<void> 
       { jobId: `enrich-visible:${Date.now()}:${Math.random().toString(36).slice(2, 8)}` },
     );
   } catch {
-    // ignore — caller must not block on this
+    // ignore - caller must not block on this
   }
 }
 
@@ -73,6 +73,6 @@ export async function triggerSingleEnrich(
       { jobId: `enrich-single:${type}:${id}` },
     );
   } catch {
-    // ignore — caller must not block on this
+    // ignore - caller must not block on this
   }
 }

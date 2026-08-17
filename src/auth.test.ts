@@ -22,7 +22,7 @@ vi.mock("next-auth", () => ({
 vi.mock("next-auth/providers/google", () => ({ default: vi.fn() }));
 
 // Recreate the signIn callback shape so we can test it in isolation. The
-// real callback in src/auth.ts has the exact same logic — this test file
+// real callback in src/auth.ts has the exact same logic - this test file
 // duplicates only the *behavior under test* (not the NextAuth handler shell).
 async function signInCallback(args: {
   account: { provider: string } | null;

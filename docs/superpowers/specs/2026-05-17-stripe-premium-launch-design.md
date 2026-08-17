@@ -1,4 +1,4 @@
-# Stripe Premium Launch — Design Spec
+# Stripe Premium Launch - Design Spec
 
 **Date** : 2026-05-17
 **Branche d'implémentation cible** : `feat/stripe-premium` (depuis `main`)
@@ -7,7 +7,7 @@
 
 Phase A "viral first" + profile discoverability sont livrés sur `main`. Le produit a un funnel viral (cartes partageables, profils publics, search interne) mais **aucun monétisation active** : 100% des features sont gratuites. Le plan de monétisation (`~/.claude/plans/j-aimerai-monetiser-ce-projet-smooth-sloth.md`) prévoyait Phase C avec un tier Premium freemium.
 
-Ce spec implémente la **Phase C — partie paiement** : infrastructure Stripe complète (pricing page + checkout + webhook + Customer Portal + helper `isPremium`) **plus 2 features Premium minimum viables** pour que la pricing page ait quelque chose à vendre au launch (no-watermark cartes + profil customisé).
+Ce spec implémente la **Phase C - partie paiement** : infrastructure Stripe complète (pricing page + checkout + webhook + Customer Portal + helper `isPremium`) **plus 2 features Premium minimum viables** pour que la pricing page ait quelque chose à vendre au launch (no-watermark cartes + profil customisé).
 
 L'offre promotionnelle de lancement = **free trial 14 jours avec CB collectée** (standard SaaS, conversion ~50%, churn maîtrisé).
 
@@ -28,13 +28,13 @@ L'offre promotionnelle de lancement = **free trial 14 jours avec CB collectée**
 10. Lien sidebar "Premium" (état dynamique)
 
 **Features Premium au launch**
-11. No-watermark sur cartes téléchargeables `/api/share-card` ET sur OG image `/u/[username]/opengraph-image` — gating sur **le propriétaire du profil** (pas le visiteur)
+11. No-watermark sur cartes téléchargeables `/api/share-card` ET sur OG image `/u/[username]/opengraph-image` - gating sur **le propriétaire du profil** (pas le visiteur)
 12. Profil customisé : background (4 presets : mesh / wall / noir / mauve) + accent color (6 swatches), édité dans `/settings`, rendu sur `/u/<username>`
 
 ### Hors MVP (issues GH ouvertes après merge)
 
 - Page upgrade-prompts contextuelles (modal "cette feature est Premium")
-- Multi-currency (USD/GBP) — €/EUR only au launch
+- Multi-currency (USD/GBP) - €/EUR only au launch
 - Cadeau d'abonnement (gift)
 - Promo étudiants/spéciales hors trial 14j
 - Referral / parrainage
@@ -53,7 +53,7 @@ L'offre promotionnelle de lancement = **free trial 14 jours avec CB collectée**
 - **Downgrade UX** : si user passe non-Premium, on garde son `profile_settings` en DB (visiteurs voient toujours le custom) mais on désactive l'édition dans `/settings`. Pas de reset brutal.
 - **Watermark gating** : `isPremium(profile.id)` (propriétaire), pas `isPremium(session.user.id)` (visiteur). Sinon le incentive Premium pour celui qui partage est cassé.
 
-## Section 1 — Business model
+## Section 1 - Business model
 
 - **Tier unique : Premium**. Pas de Basic/Pro/Enterprise.
 - **2 prix** : 3€/mois (mensuel recurring) ou 20€/an (annuel recurring, -45%).
@@ -61,7 +61,7 @@ L'offre promotionnelle de lancement = **free trial 14 jours avec CB collectée**
 - **TVA** : Stripe Tax activé (+0.5%) calcule la taxe selon le pays du buyer. Déclaration / remise côté Jules.
 - **Annulation 1-click** via Stripe Customer Portal. Reste Premium jusqu'à `current_period_end`.
 
-## Section 2 — DB & state
+## Section 2 - DB & state
 
 ### Migration
 
@@ -76,7 +76,7 @@ ALTER TABLE "users" ADD COLUMN "premium_until" timestamptz;
 
 - `stripe_customer_id` : créé au 1er checkout, persisté pour les renouvellements / portal sessions. UNIQUE.
 - `stripe_subscription_id` : mis à jour à chaque event `customer.subscription.{created,updated}`.
-- `premium_status` : `"trialing" | "active" | "past_due" | "canceled" | null` — source = Stripe webhook events.
+- `premium_status` : `"trialing" | "active" | "past_due" | "canceled" | null` - source = Stripe webhook events.
 - `premium_until` : timestamp d'expiration du droit Premium. Sur trial = `trial_end`, sur active = `current_period_end`. Permet à `isPremium` de répondre sans round-trip Stripe.
 
 ### Type Drizzle (`src/db/schema.ts`)
@@ -89,7 +89,7 @@ premiumStatus: text("premium_status"),
 premiumUntil: timestamp("premium_until", { withTimezone: true }),
 ```
 
-### `profile_settings` (déjà jsonb) — extension
+### `profile_settings` (déjà jsonb) - extension
 
 Pas de migration. Le type local s'étend :
 
@@ -142,9 +142,9 @@ export async function updateBillingFromWebhook(
 }
 ```
 
-(Squelette — implémentations détaillées en plan d'implémentation.)
+(Squelette - implémentations détaillées en plan d'implémentation.)
 
-## Section 3 — Stripe Dashboard setup (hors code)
+## Section 3 - Stripe Dashboard setup (hors code)
 
 À faire avant le 1er run :
 
@@ -187,7 +187,7 @@ STRIPE_PRICE_ID_YEARLY=price_...
 
 `pnpm add stripe` (le package officiel, server-side only).
 
-## Section 4 — Pages
+## Section 4 - Pages
 
 ### `/pricing` (server, public)
 
@@ -255,7 +255,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ s
 
 Files : `src/app/settings/billing/page.tsx` (server) + `src/app/settings/billing/portal-form.tsx` (client, POST `/api/portal` puis redirect).
 
-## Section 5 — Routes API
+## Section 5 - Routes API
 
 ### `POST /api/checkout`
 
@@ -386,7 +386,7 @@ export async function POST(req: Request) {
 }
 ```
 
-## Section 6 — Premium features
+## Section 6 - Premium features
 
 ### A. No-watermark sur cartes share
 
@@ -430,7 +430,7 @@ Nouvelle section "Apparence du profil" entre "Profil public" et "Compte" :
 
 **Server action** : étendre `updateProfileAction` ou nouvelle `updateAppearanceAction(formData)` dans `src/app/settings/actions.ts` :
 - Validate background + accent enums
-- Refuse si user pas Premium (defense in depth — UI déjà gated, mais double-check)
+- Refuse si user pas Premium (defense in depth - UI déjà gated, mais double-check)
 - `db.update(users).set({ profileSettings: { ...existing, background, accent } })`
 - `revalidatePath("/settings")`, `revalidatePath("/u/<username>")`
 
@@ -503,7 +503,7 @@ export function PremiumGate({
 }
 ```
 
-## Section 7 — UI / CTAs
+## Section 7 - UI / CTAs
 
 **Sidebar** : nouvel item entre "Trouver des amis" et "Horloge d'écoute" :
 - Icon `Crown` (lucide)
@@ -546,7 +546,7 @@ Si user Premium + public → ajout du badge "👑 Premium" à côté du badge "P
 | Path | Change |
 |---|---|
 | `src/db/schema.ts` | 4 nouvelles colonnes sur users + extension `ProfileSettings` |
-| `src/components/sidebar.tsx` | Nav item "Premium" avec état dynamique (free / trial / active) — accepter prop `billingState` ou `isPremium`+`trialEndsAt` |
+| `src/components/sidebar.tsx` | Nav item "Premium" avec état dynamique (free / trial / active) - accepter prop `billingState` ou `isPremium`+`trialEndsAt` |
 | `src/app/layout.tsx` | Étendre Promise.all pour fetcher l'état Premium et le forwarder à Sidebar |
 | `src/app/api/share-card/route.tsx` | Check `isPremium(profile.id)` → `hideWatermark` |
 | `src/app/u/[username]/opengraph-image.tsx` | Idem |
@@ -599,7 +599,7 @@ Si user Premium + public → ajout du badge "👑 Premium" à côté du badge "P
 
 1. **TVA EU non gérée** → Stripe Tax compute mais déclaration manuelle. Tracker dans une feuille externe au début. À automatiser via export Stripe Tax ou outil tiers (Quaderno, Octobat) quand revenu justifie.
 2. **Webhook race condition** : si user complète checkout, redirect `/checkout/success` avant que le webhook arrive → `isPremium` retourne false brièvement. Mitigation : la landing `/checkout/success` ne fait PAS dépendre son contenu de l'état Premium (juste un message générique). L'user voit le statut "trial" se mettre à jour quand il navigue.
-3. **Webhook delivery delay** (rare mais possible) : Stripe retry jusqu'à 72h en cas d'échec 5xx. Notre handler doit être **idempotent** (les updates DB le sont — repeat = même résultat).
+3. **Webhook delivery delay** (rare mais possible) : Stripe retry jusqu'à 72h en cas d'échec 5xx. Notre handler doit être **idempotent** (les updates DB le sont - repeat = même résultat).
 4. **`automatic_tax` requires customer_update** : Stripe exige que la session puisse enrichir le customer (nom, adresse) pour calculer la TVA. On passe `customer_update: { name: "auto", address: "auto" }`. À tester en mode test.
 5. **Pas de feature à vendre** au launch si Premium gating mal implémenté → on ship strictement les 2 features Premium dans CE spec, pas en suivant.
 6. **Apple Pay sur Safari/iOS** : marche automatiquement via Stripe Checkout hosted, MAIS si on switche vers Payment Element plus tard il faudra une domain registration Stripe.
@@ -615,6 +615,6 @@ Si user Premium + public → ajout du badge "👑 Premium" à côté du badge "P
 - Tiers Basic/Pro
 - Annual savings calculator interactif
 - Testimonials sur pricing
-- Customisation cartes (couleurs polices Premium) — déjà couvert par /share editor existant, et la customisation Premium ferait l'objet d'une feature à part
-- Exports HD sans watermark — le no-watermark générique au MVP suffit, exports HD est une feature séparée
+- Customisation cartes (couleurs polices Premium) - déjà couvert par /share editor existant, et la customisation Premium ferait l'objet d'une feature à part
+- Exports HD sans watermark - le no-watermark générique au MVP suffit, exports HD est une feature séparée
 - Notifications (rappel J-3 fin de trial : déjà géré par Stripe nativement, pas besoin de code)

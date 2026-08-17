@@ -40,7 +40,7 @@ export default async function SharePage({
   let config: ShareCardConfig = parseShareCardParams(params);
 
   // Apply context preset only when no explicit fields are set (i.e. the
-  // user just clicked "Customize…" from a page — we don't override their
+  // user just clicked "Customize…" from a page - we don't override their
   // hand-edited URL on subsequent reloads).
   const contextRaw = params.context;
   const contextValue = Array.isArray(contextRaw) ? contextRaw[0] : contextRaw;

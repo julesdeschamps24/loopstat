@@ -13,7 +13,7 @@ const STORAGE_KEY = "loopstat-period";
 
 // Module-level flag : the reload check must run EXACTLY once per browser tab
 // lifecycle. `performance.getEntriesByType("navigation")[0].type` is set at
-// document load and stays "reload" forever even after soft navigations — if
+// document load and stays "reload" forever even after soft navigations - if
 // we re-checked on every mount, the storage would be wiped on each cross-
 // page nav after a refresh.
 let initialReloadChecked = false;
@@ -82,7 +82,7 @@ export function PeriodSelector({
       return;
     }
 
-    // URL didn't specify a period — try to restore the user's last choice.
+    // URL didn't specify a period - try to restore the user's last choice.
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored && isStreamPeriod(stored) && stored !== current) {
       const params = new URLSearchParams(searchParams.toString());
@@ -90,7 +90,7 @@ export function PeriodSelector({
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
     // Re-run on cross-page nav (pathname change). Don't add searchParams to
-    // avoid re-running on every URL tick — the click handler already stores
+    // avoid re-running on every URL tick - the click handler already stores
     // the new value directly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);

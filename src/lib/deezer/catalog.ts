@@ -7,7 +7,7 @@ import { fetchAlbumDetails } from "./album";
 const SENTINEL_DEEZER_ID = 0;
 
 /**
- * Enrich artist image via Deezer. Single enrichment source — Deezer's
+ * Enrich artist image via Deezer. Single enrichment source - Deezer's
  * catalog covers ~99% of mainstream + non-English artists.
  *
  * Stores Deezer's artist ID for tracking. On miss, stores the sentinel (0)

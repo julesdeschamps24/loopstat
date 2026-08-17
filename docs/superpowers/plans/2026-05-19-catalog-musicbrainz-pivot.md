@@ -1,4 +1,4 @@
-# Sub-projet C+D+E — pivot catalog Spotify → MusicBrainz : implementation plan
+# Sub-projet C+D+E - pivot catalog Spotify → MusicBrainz : implementation plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -14,14 +14,14 @@
 
 ---
 
-## Phase 1 — Schéma DB + helpers fondationnels
+## Phase 1 - Schéma DB + helpers fondationnels
 
-### Task 1: Update `src/db/schema.ts` — drop colonnes Spotify, add mbid
+### Task 1: Update `src/db/schema.ts` - drop colonnes Spotify, add mbid
 
 **Files:**
 - Modify: `src/db/schema.ts`
 
-- [ ] **Step 1: Edit `tracks` table — drop 5 colonnes Spotify-only**
+- [ ] **Step 1: Edit `tracks` table - drop 5 colonnes Spotify-only**
 
 Remplace le bloc `export const tracks = pgTable(...)` actuel par :
 
@@ -36,7 +36,7 @@ export const tracks = pgTable("tracks", {
 
 (supprime `durationMs`, `popularity`, `explicit`, `previewUrl`, `isrc`)
 
-- [ ] **Step 2: Edit `albums` table — add `mbid`**
+- [ ] **Step 2: Edit `albums` table - add `mbid`**
 
 ```ts
 export const albums = pgTable("albums", {
@@ -53,7 +53,7 @@ export const albums = pgTable("albums", {
 }));
 ```
 
-- [ ] **Step 3: Edit `artists` table — add `mbid`, drop `popularity`**
+- [ ] **Step 3: Edit `artists` table - add `mbid`, drop `popularity`**
 
 ```ts
 export const artists = pgTable("artists", {
@@ -68,15 +68,15 @@ export const artists = pgTable("artists", {
 }));
 ```
 
-- [ ] **Step 4: Edit `users` table — drop `spotifyId`**
+- [ ] **Step 4: Edit `users` table - drop `spotifyId`**
 
 Supprime la propriété `spotifyId: text("spotify_id")` et toute contrainte unique associée (`uniqSpotifyId`).
 
-- [ ] **Step 5: Drop `spotifyTokens` table — supprimer entièrement**
+- [ ] **Step 5: Drop `spotifyTokens` table - supprimer entièrement**
 
 Supprime `export const spotifyTokens = pgTable("spotify_tokens", { ... })` du fichier.
 
-- [ ] **Step 6: Update imports — add `uuid` from drizzle-orm/pg-core si manquant**
+- [ ] **Step 6: Update imports - add `uuid` from drizzle-orm/pg-core si manquant**
 
 Au top du fichier, vérifie que `uuid` est dans la liste import :
 ```ts
@@ -208,7 +208,7 @@ describe("synthesizeAlbumId", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test src/lib/ids/synthesize.test.ts`
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 3: Implement**
 
@@ -226,7 +226,7 @@ function sha1Hex16(input: string): string {
  * Format: `art_<sha1[:16]>` where sha1 = hash of the lowercased trimmed name.
  * Idempotent across imports.
  * Caveat: homonymous artists (e.g. "John Williams" classical vs jazz) collide
- * — we accept this since the JSON export doesn't distinguish them either.
+ * - we accept this since the JSON export doesn't distinguish them either.
  */
 export function synthesizeArtistId(name: string): string {
   return `art_${sha1Hex16(name.trim().toLowerCase())}`;
@@ -258,7 +258,7 @@ git commit -m "feat(ids): add synthesizeArtistId + synthesizeAlbumId helpers"
 
 ---
 
-## Phase 2 — MusicBrainz library
+## Phase 2 - MusicBrainz library
 
 ### Task 4: MBz types `src/lib/musicbrainz/types.ts`
 
@@ -270,7 +270,7 @@ git commit -m "feat(ids): add synthesizeArtistId + synthesizeAlbumId helpers"
 ```ts
 /**
  * Minimal subset of MusicBrainz Web Service v2 response types.
- * Only the fields we actually consume are typed — MBz returns a lot more.
+ * Only the fields we actually consume are typed - MBz returns a lot more.
  */
 
 export interface MbReleaseGroup {
@@ -378,7 +378,7 @@ describe("mbFetch", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test src/lib/musicbrainz/client.test.ts`
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 3: Implement**
 
@@ -540,7 +540,7 @@ describe("searchArtist", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test src/lib/musicbrainz/search.test.ts`
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 3: Implement**
 
@@ -656,7 +656,7 @@ describe("fetchCoverUrl", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response("ok", {
         status: 200,
-        // simulate fetch followed the redirect — response.url contains final
+        // simulate fetch followed the redirect - response.url contains final
         headers: {},
       } as ResponseInit),
     );
@@ -699,7 +699,7 @@ describe("fetchCoverUrl", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test src/lib/musicbrainz/coverArt.test.ts`
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 3: Implement**
 
@@ -717,7 +717,7 @@ const CAA_BASE = "https://coverartarchive.org";
  * Notes:
  *  - `front-500` returns a 500px-wide cover (good for /album/[id] hero).
  *  - The fetch follows 302 by default; response.url is the resolved URL.
- *  - We don't proxy the image — we store the archive.org URL and the browser
+ *  - We don't proxy the image - we store the archive.org URL and the browser
  *    fetches it directly.
  */
 export async function fetchCoverUrl(
@@ -874,7 +874,7 @@ describe("enrichArtistByName", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test src/lib/musicbrainz/catalog.test.ts`
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 3: Implement**
 
@@ -932,7 +932,7 @@ export async function enrichAlbumByNames({
 /**
  * Enrich an artist row by name lookup against MusicBrainz.
  * Updates `artists.mbid`, or marks with sentinel mbid on no match.
- * Does NOT fetch artist images — MBz doesn't host them; deferred to TheAudioDB.
+ * Does NOT fetch artist images - MBz doesn't host them; deferred to TheAudioDB.
  */
 export async function enrichArtistByName({
   artistId,
@@ -966,7 +966,7 @@ git commit -m "feat(mb): add enrichAlbumByNames + enrichArtistByName"
 
 ---
 
-## Phase 3 — Refactor importHistory
+## Phase 3 - Refactor importHistory
 
 ### Task 9: Extend RawStreamEntry + accumulator types
 
@@ -1194,7 +1194,7 @@ git commit -m "refactor(import): insert full catalog (artists+albums+tracks+join
 
 ---
 
-## Phase 4 — Nouveau worker enrichCatalog
+## Phase 4 - Nouveau worker enrichCatalog
 
 ### Task 12: Rename queue + scheduler IDs in `worker/queue.ts`
 
@@ -1244,7 +1244,7 @@ export const enrichCatalogQueue =
 
 - [ ] **Step 3: Update import in importHistory.ts**
 
-Edit `worker/jobs/importHistory.ts` — remplacer `import { enrichQueue } from "../queue";` par `import { enrichCatalogQueue } from "../queue";`. Et update l'appel :
+Edit `worker/jobs/importHistory.ts` - remplacer `import { enrichQueue } from "../queue";` par `import { enrichCatalogQueue } from "../queue";`. Et update l'appel :
 ```ts
 await enrichCatalogQueue.add("enrich-catalog", { userId }, { jobId: "enrich-catalog-global" });
 ```
@@ -1298,7 +1298,7 @@ describe("enrichCatalog (smoke)", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test worker/jobs/enrichCatalog.test.ts`
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 3: Implement**
 
@@ -1364,7 +1364,7 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
       slog.info({ state }, "removing stale failed job");
       await existing.remove();
     } else {
-      slog.info({ state }, "enrich already pending — no re-enqueue");
+      slog.info({ state }, "enrich already pending - no re-enqueue");
       return { unenrichedAlbums, unenrichedArtists, enqueued: false };
     }
   }
@@ -1384,7 +1384,7 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
 /**
  * Main enrich job. Sweeps unenriched albums then artists, calls MBz once per
  * entity (1 req/sec), persists progressively. On any error, BullMQ retries
- * the job — but already-persisted rows survive.
+ * the job - but already-persisted rows survive.
  */
 export async function enrichCatalog(): Promise<EnrichCatalogResult> {
   const wlog = log.child({ job: "enrich-catalog" });
@@ -1536,7 +1536,7 @@ git commit -m "refactor(worker): swap pollRecent+enrichMetadata for enrichCatalo
 
 ---
 
-## Phase 5 — Cleanup Spotify code
+## Phase 5 - Cleanup Spotify code
 
 ### Task 15: Delete `src/lib/spotify/` and `src/app/api/now-playing/`
 
@@ -1564,7 +1564,7 @@ Expected: liste d'erreurs imports cassés.
 
 Pour chaque erreur, soit supprimer l'import (si la feature est entièrement Spotify-related), soit ajuster (cf. tâches suivantes).
 
-- [ ] **Step 4: Commit (work in progress, ok if typecheck still fails — fix in next tasks)**
+- [ ] **Step 4: Commit (work in progress, ok if typecheck still fails - fix in next tasks)**
 
 ```bash
 git add -A
@@ -1608,11 +1608,11 @@ Run: `grep -n "source.*'api'" src/db/queries/streams.ts`
 
 - [ ] **Step 2: If `pruneOverlappingApiStreams` exists, keep it as no-op**
 
-The function will simply find 0 rows after TRUNCATE — no need to delete it now (out of scope). Just verify it still compiles.
+The function will simply find 0 rows after TRUNCATE - no need to delete it now (out of scope). Just verify it still compiles.
 
 - [ ] **Step 3: No commit if no change needed**
 
-### Task 18: Refactor `src/app/album/[id]/page.tsx` — drop lazy Spotify enrich
+### Task 18: Refactor `src/app/album/[id]/page.tsx` - drop lazy Spotify enrich
 
 **Files:**
 - Modify: `src/app/album/[id]/page.tsx`
@@ -1640,10 +1640,10 @@ Expected: clean ou seulement des erreurs résiduelles à fixer.
 
 ```bash
 git add src/app/album/'[id]'/page.tsx
-git commit -m "refactor(album): drop lazy Spotify enrich — show placeholder if no cover"
+git commit -m "refactor(album): drop lazy Spotify enrich - show placeholder if no cover"
 ```
 
-### Task 19: Refactor `src/app/artist/[id]/page.tsx` + `src/app/track/[id]/page.tsx` — drop Spotify fallback
+### Task 19: Refactor `src/app/artist/[id]/page.tsx` + `src/app/track/[id]/page.tsx` - drop Spotify fallback
 
 **Files:**
 - Modify: `src/app/artist/[id]/page.tsx`
@@ -1732,7 +1732,7 @@ Si l'endpoint /api/account renvoie ou modifie un `spotify_id`, le retirer. La ta
 - [ ] **Step 3: Run typecheck**
 
 Run: `pnpm tsc --noEmit`
-Expected: 0 erreur (sauf si d'autres fichiers cassent — corriger récursivement).
+Expected: 0 erreur (sauf si d'autres fichiers cassent - corriger récursivement).
 
 - [ ] **Step 4: Commit**
 
@@ -1743,7 +1743,7 @@ git commit -m "refactor(account): remove spotify_tokens + spotify_id references"
 
 ---
 
-## Phase 6 — UI : artist avatar
+## Phase 6 - UI : artist avatar
 
 ### Task 22: Create `ArtistAvatar` component + gradient color helper
 
@@ -1779,14 +1779,14 @@ describe("avatarGradient", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test src/lib/ui/avatar-color.test.ts`
-Expected: FAIL — module not found.
+Expected: FAIL - module not found.
 
 - [ ] **Step 3: Implement color helper**
 
 Create `src/lib/ui/avatar-color.ts`:
 
 ```ts
-// Palette nébuleuse violet — cohérent avec le design system loopstat.
+// Palette nébuleuse violet - cohérent avec le design system loopstat.
 const PALETTE: [string, string][] = [
   ["#7c3aed", "#ec4899"],
   ["#a855f7", "#581c87"],
@@ -1888,7 +1888,7 @@ Ou simplement remplacer `imageUrl ?? <PlaceholderDiv>` par `imageUrl ?? <ArtistA
 - [ ] **Step 3: Lance le dev server, vérif visuelle**
 
 Run: `pnpm dev` (déjà running probablement)
-Naviguer sur `/top/artists` (en mode démo et en mode connecté) — chaque artiste doit afficher un cercle gradient violet + initiale.
+Naviguer sur `/top/artists` (en mode démo et en mode connecté) - chaque artiste doit afficher un cercle gradient violet + initiale.
 
 - [ ] **Step 4: Commit**
 
@@ -1899,7 +1899,7 @@ git commit -m "feat(ui): swap artist placeholder for ArtistAvatar across stats p
 
 ---
 
-## Phase 7 — Vérification finale + restore
+## Phase 7 - Vérification finale + restore
 
 ### Task 24: Run full test suite + typecheck
 
@@ -1931,11 +1931,11 @@ git add -A
 git commit -m "chore: post-cleanup typecheck + lint fixes"
 ```
 
-### Task 25: Manual verification — re-import + observe enrich
+### Task 25: Manual verification - re-import + observe enrich
 
 - [ ] **Step 1: Restart dev server (worker + Next)**
 
-Si `pnpm dev` est déjà en cours, le redémarrer pour piquer la nouvelle worker. Vérifier les logs au boot — pas d'erreur d'import.
+Si `pnpm dev` est déjà en cours, le redémarrer pour piquer la nouvelle worker. Vérifier les logs au boot - pas d'erreur d'import.
 
 - [ ] **Step 2: Login + import du JSON de Jules**
 

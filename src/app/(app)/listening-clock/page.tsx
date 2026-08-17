@@ -8,7 +8,7 @@ import { hasCompletedImport } from "@/db/queries/imports";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
 import { DEMO_LISTENING_HOURS } from "@/lib/demo/data";
 
-// The hourly distribution shifts slowly — re-derive it at most once an hour.
+// The hourly distribution shifts slowly - re-derive it at most once an hour.
 export const revalidate = 3600;
 
 const LOW_DATA_THRESHOLD = 20;
@@ -32,7 +32,7 @@ export default async function ListeningClockPage() {
           <header className="mb-8">
             <h1 className="text-2xl font-semibold">Horloge d&apos;écoute</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Ces données sont fictives — importe ton historique pour voir les tiennes.
+              Ces données sont fictives - importe ton historique pour voir les tiennes.
             </p>
           </header>
           <section className="rounded-2xl border bg-card p-6">
@@ -43,7 +43,7 @@ export default async function ListeningClockPage() {
                   <div
                     key={hour}
                     className="flex flex-col items-center gap-1"
-                    title={`${hour}h — ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
+                    title={`${hour}h - ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
                   >
                     <div className="flex h-24 w-full items-end">
                       <div
@@ -94,7 +94,7 @@ export default async function ListeningClockPage() {
         <section className="rounded-2xl border bg-card p-6">
           {totalStreams < LOW_DATA_THRESHOLD ? (
             <p className="mb-6 rounded-xl bg-muted px-4 py-3 text-sm text-muted-foreground">
-              Données limitées — la heatmap se précisera avec le temps.
+              Données limitées - la heatmap se précisera avec le temps.
             </p>
           ) : null}
 
@@ -105,7 +105,7 @@ export default async function ListeningClockPage() {
                 <div
                   key={hour}
                   className="flex flex-col items-center gap-1"
-                  title={`${hour}h — ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
+                  title={`${hour}h - ${formatNumber(count)} écoute${count > 1 ? "s" : ""}`}
                 >
                   <div className="flex h-24 w-full items-end">
                     <div

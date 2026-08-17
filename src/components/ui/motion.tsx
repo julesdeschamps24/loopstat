@@ -9,11 +9,11 @@ import {
 } from "framer-motion";
 
 /**
- * Motion primitives — a thin wrapper around framer-motion idioms used across
+ * Motion primitives - a thin wrapper around framer-motion idioms used across
  * the app (dashboard top-5, top-page lists, currently-playing widget).
  *
  * Keeping the framer-motion surface localised here means call sites only see
- * named primitives — never raw `motion.*` — so swapping the animation library
+ * named primitives - never raw `motion.*` - so swapping the animation library
  * later stays a single-file change.
  *
  * Each primitive honours `prefers-reduced-motion` via `useReducedMotion()`:
@@ -57,7 +57,7 @@ export function StaggerList({ as = "div", children, ...rest }: StaggerListProps)
 
 export type StaggerItemProps = HTMLMotionProps<"div">;
 
-/** A single staggered child — fades up 8px when motion is allowed. */
+/** A single staggered child - fades up 8px when motion is allowed. */
 export function StaggerItem({ children, ...rest }: StaggerItemProps) {
   const reduce = useReducedMotion();
   return (

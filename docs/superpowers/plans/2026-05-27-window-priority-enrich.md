@@ -262,7 +262,7 @@ import { periodSince, type StreamPeriod } from "@/lib/stats/period";
 
 /**
  * Tiered limits per time window for the priority enrich pass. 1w is the
- * default period shown on /top/* — gets the largest slice. Older windows
+ * default period shown on /top/* - gets the largest slice. Older windows
  * get smaller slices since they're consulted less often.
  */
 const WINDOW_LIMITS: { window: StreamPeriod; limit: number }[] = [
@@ -277,7 +277,7 @@ const WINDOW_LIMITS: { window: StreamPeriod; limit: number }[] = [
  * window (1w, 4w, 6m, 1y) fetch the top-N by play count; concatenate with
  * dedup so an item only appears in the earliest window it qualifies for.
  *
- * `refDate` is the "now" used to compute `since` boundaries — typically the
+ * `refDate` is the "now" used to compute `since` boundaries - typically the
  * user's MAX(played_at), since the dataset is a static snapshot.
  */
 export async function getOrderedTopAlbumIdsForUser(
@@ -368,7 +368,7 @@ git commit -m "feat(enrich): getOrderedTop* helpers for window-priority order"
 cat worker/jobs/enrichCatalogPriority.ts | head -50
 ```
 
-Note the existing 3 sweep blocks (albums, artists MBz, artists Deezer) — each currently iterates `unenrichedAlbums` / `unenrichedArtists` from the SELECT result, losing the input order.
+Note the existing 3 sweep blocks (albums, artists MBz, artists Deezer) - each currently iterates `unenrichedAlbums` / `unenrichedArtists` from the SELECT result, losing the input order.
 
 - [ ] **Step 2: Refactor the album sweep to use Map + iterate input IDs**
 
@@ -651,7 +651,7 @@ import {
 import { getUserLatestPlayedAt } from "@/db/queries/stats";
 ```
 
-(Remove the old `getTopAlbumIdsForUser` / `getTopArtistIdsForUser` / `getTopTrackAlbumIdsForUser` imports — they stay exported but aren't used here anymore.)
+(Remove the old `getTopAlbumIdsForUser` / `getTopArtistIdsForUser` / `getTopTrackAlbumIdsForUser` imports - they stay exported but aren't used here anymore.)
 
 Replace the enqueue block:
 
@@ -759,7 +759,7 @@ pnpm exec dotenv -e .env.local -- tsx scripts/enqueue-priority.ts 2>&1 | head -5
 
 Expected: 0 tsc errors. Script runs and prints the counts + "Enqueued enrich-priority".
 
-(Don't worry if the worker is busy — the script just enqueues; the worker picks up when free.)
+(Don't worry if the worker is busy - the script just enqueues; the worker picks up when free.)
 
 - [ ] **Step 4: Commit**
 
@@ -838,7 +838,7 @@ Expected: log shows `priority album sweep (window-ordered)` with a `total=N` mat
 **2. Placeholder scan:** No TBDs, all code blocks are complete, all commands have expected outputs.
 
 **3. Type consistency:**
-- `getTopAlbumIdsForUser(userId, limit, since?)` — same signature across Tasks 1, 2, 5
-- `getOrderedTop*ForUser(userId, refDate)` — same 2-param signature in Tasks 2, 4, 5
-- `albumMap`, `mbzMap`, `imageMap` — all `Map<string, RowType>` with `.get(id)` lookup pattern in Task 3
+- `getTopAlbumIdsForUser(userId, limit, since?)` - same signature across Tasks 1, 2, 5
+- `getOrderedTop*ForUser(userId, refDate)` - same 2-param signature in Tasks 2, 4, 5
+- `albumMap`, `mbzMap`, `imageMap` - all `Map<string, RowType>` with `.get(id)` lookup pattern in Task 3
 - `albumIds`/`artistIds` payload shape to BullMQ unchanged → no consumer change needed

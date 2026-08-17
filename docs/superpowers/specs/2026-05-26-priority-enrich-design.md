@@ -1,4 +1,4 @@
-# Priority enrichment — design
+# Priority enrichment - design
 
 > Date : 2026-05-26
 > Statut : design validé, plan à écrire
@@ -21,9 +21,9 @@ Le worker `enrich-catalog` scan ~6500 albums + ~3300 artistes dans l'ordre d'ins
 - Pas de UI live-update (Server Components, refresh nécessaire pour voir les nouvelles covers).
 - Pas de quota / billing par user (free for all dans cette itération).
 
-## Architecture — 3 niveaux
+## Architecture - 3 niveaux
 
-### Niveau 1 — Hot priority sweep (per user)
+### Niveau 1 - Hot priority sweep (per user)
 
 Nouvelle queue BullMQ `enrich-catalog-hot`, concurrency=2.
 
@@ -32,7 +32,7 @@ Nouvelle queue BullMQ `enrich-catalog-hot`, concurrency=2.
 - Durée typique : ~150 × 1.1s ≈ **3 min**.
 - Jobs hot ont un `jobId` unique `enrich-priority:<userId>:<importId>` → dedup par import, pas global.
 
-### Niveau 2 — Background sweep (long-tail)
+### Niveau 2 - Background sweep (long-tail)
 
 La queue existante `enrich-catalog` devient le mop-up faible priorité.
 
@@ -41,7 +41,7 @@ La queue existante `enrich-catalog` devient le mop-up faible priorité.
 - Skippe automatiquement les items déjà enrichis par niveau 1 (`isNull(albums.mbid)` filter).
 - Workers `enrich-catalog-hot` et `enrich-catalog` séparés → user B's hot job ne queue pas derrière user A's background sweep.
 
-### Niveau 3 — On-demand enrich (lazy)
+### Niveau 3 - On-demand enrich (lazy)
 
 Nouveau endpoint `POST /api/enrich-single`.
 
@@ -51,7 +51,7 @@ Nouveau endpoint `POST /api/enrich-single`.
   2. Vérifie un guard Redis `SET enrich:<type>:<id> 1 NX EX 600` pour éviter qu'un même item soit enqueué 50 fois si une page le rend en parallèle pour 50 users.
   3. Enqueue dans `enrich-catalog-single` (nouvelle queue, concurrency=1).
 - Le worker `enrich-catalog-single` consomme un item à la fois, applique le pipeline normal.
-- L'UI reste avec le placeholder pour ce render — le refresh suivant verra le cover. Pas de polling client (YAGNI).
+- L'UI reste avec le placeholder pour ce render - le refresh suivant verra le cover. Pas de polling client (YAGNI).
 
 ## Schéma DB
 
@@ -69,25 +69,25 @@ CREATE INDEX artists_unenriched_idx ON artists (id) WHERE mbid IS NULL;
 
 ### Créer
 
-- `worker/jobs/enrichCatalogPriority.ts` — `enrichCatalogPriority({ userId, albumIds, artistIds })`. Reuse `withMbzRetry`, `enrichAlbumByNames`, `enrichArtistByName`, `enrichArtistImageByMbid`.
-- `worker/jobs/enrichCatalogSingle.ts` — `enrichCatalogSingle({ type, id })`. Single-item enrich (album ou artiste).
-- `src/app/api/enrich-single/route.ts` — POST endpoint avec Redis throttle.
-- `src/db/queries/enrich.ts` — `getTopAlbumIdsForUser(userId, limit)`, `getTopArtistIdsForUser(userId, limit)`.
+- `worker/jobs/enrichCatalogPriority.ts` - `enrichCatalogPriority({ userId, albumIds, artistIds })`. Reuse `withMbzRetry`, `enrichAlbumByNames`, `enrichArtistByName`, `enrichArtistImageByMbid`.
+- `worker/jobs/enrichCatalogSingle.ts` - `enrichCatalogSingle({ type, id })`. Single-item enrich (album ou artiste).
+- `src/app/api/enrich-single/route.ts` - POST endpoint avec Redis throttle.
+- `src/db/queries/enrich.ts` - `getTopAlbumIdsForUser(userId, limit)`, `getTopArtistIdsForUser(userId, limit)`.
 
 ### Modifier
 
-- `worker/queue.ts` — ajouter `enrichCatalogHotQueue` + `enrichCatalogSingleQueue`.
-- `worker/index.ts` — register 2 nouveaux workers (hot + single).
-- `worker/jobs/importHistory.ts` — après l'enqueue background, enqueue le hot job avec top IDs.
+- `worker/queue.ts` - ajouter `enrichCatalogHotQueue` + `enrichCatalogSingleQueue`.
+- `worker/index.ts` - register 2 nouveaux workers (hot + single).
+- `worker/jobs/importHistory.ts` - après l'enqueue background, enqueue le hot job avec top IDs.
 
 ### Optionnel (cleanup)
 
-- `worker/jobs/enrichCatalog.ts` — pas changé fonctionnellement, mais on peut ajouter un commentaire indiquant que c'est devenu le "background mop-up".
+- `worker/jobs/enrichCatalog.ts` - pas changé fonctionnellement, mais on peut ajouter un commentaire indiquant que c'est devenu le "background mop-up".
 
 ## Multi-user fairness
 
 - **Imports concurrents** : chaque user a son propre `enrich-priority:<userId>:<importId>` jobId → pas de dedup cross-user. Tous les hot jobs s'exécutent en parallèle (concurrency=2 = 2 hot jobs simultanés max).
-- **Background** : la queue `enrich-catalog` garde son `jobId: "enrich-catalog-global"` (dedup volontaire — pas besoin de relancer le sweep si déjà en cours). Les items s'enrichissent dans l'ordre d'insertion mais c'est OK car le hot a déjà couvert les visibles.
+- **Background** : la queue `enrich-catalog` garde son `jobId: "enrich-catalog-global"` (dedup volontaire - pas besoin de relancer le sweep si déjà en cours). Les items s'enrichissent dans l'ordre d'insertion mais c'est OK car le hot a déjà couvert les visibles.
 - **On-demand** : `enrich-catalog-single` est FIFO. Throttle Redis = pas de duplication par item.
 
 ## Anti-storm pour on-demand
@@ -115,10 +115,10 @@ Les pages liste (`/top/*`) ne déclenchent PAS d'on-demand : elles affichent ce 
 
 ### Unitaires (vitest)
 
-- `worker/jobs/enrichCatalogPriority.test.ts` — smoke test (mock queue, mock enrich funcs).
-- `worker/jobs/enrichCatalogSingle.test.ts` — smoke test idem.
-- `src/db/queries/enrich.test.ts` — `getTopAlbumIdsForUser` retourne IDs ordered by play count.
-- `src/app/api/enrich-single/route.test.ts` — Redis guard prevent duplicate enqueue, valid type values only.
+- `worker/jobs/enrichCatalogPriority.test.ts` - smoke test (mock queue, mock enrich funcs).
+- `worker/jobs/enrichCatalogSingle.test.ts` - smoke test idem.
+- `src/db/queries/enrich.test.ts` - `getTopAlbumIdsForUser` retourne IDs ordered by play count.
+- `src/app/api/enrich-single/route.test.ts` - Redis guard prevent duplicate enqueue, valid type values only.
 
 ### Manuels
 

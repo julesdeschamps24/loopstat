@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CheckCircle2, Upload } from "lucide-react";
 import { ImportProgress } from "@/components/import-progress";
 
-const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB — mirrors the route
+const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50 MB - mirrors the route
 const MAX_FILES = 30; // mirrors the route
 
 // Seuls les fichiers `Streaming_History_Audio_*.json` contiennent des écoutes

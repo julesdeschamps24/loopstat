@@ -1,4 +1,4 @@
-# Share Card Editor — Design Spec
+# Share Card Editor - Design Spec
 
 **Date** : 2026-05-17
 **Auteur** : Jules (brainstorming avec Claude)
@@ -12,7 +12,7 @@ Phase A "viral first" est en cours sur la branche `feat/phase-a-viral`. À ce st
 2. Carte OG automatique générée via `next/og` (file convention `opengraph-image.tsx`)
 3. `ShareButton` dropdown sur dashboard + `/top/*` qui propose : copier lien, télécharger l'image OG fixe, native share (mobile)
 
-Limite actuelle : la carte OG est **non customisable** par l'utilisateur. Toujours top 3 titres, format fixe 1200×630, période 4 semaines. Pour augmenter la viralité, l'utilisateur doit pouvoir **prévisualiser et configurer** ce qu'il partage avant de télécharger — choisir la catégorie (titres / artistes / albums), le nombre d'items, la période, le format (Twitter / Insta Post / Insta Story), et un background.
+Limite actuelle : la carte OG est **non customisable** par l'utilisateur. Toujours top 3 titres, format fixe 1200×630, période 4 semaines. Pour augmenter la viralité, l'utilisateur doit pouvoir **prévisualiser et configurer** ce qu'il partage avant de télécharger - choisir la catégorie (titres / artistes / albums), le nombre d'items, la période, le format (Twitter / Insta Post / Insta Story), et un background.
 
 Ce spec décrit l'éditeur de carte téléchargeable à shipper en MVP.
 
@@ -26,7 +26,7 @@ Ce spec décrit l'éditeur de carte téléchargeable à shipper en MVP.
 - 2 modes (focus / recap), 3 formats, 4 périodes, 2 backgrounds. Matrice détaillée en Section 2.
 - L'URL `/share?…` reflète la config (deep-linkable). Chaque changement met à jour l'URL via `history.replaceState`.
 
-### Hors MVP — issues GitHub à ouvrir
+### Hors MVP - issues GitHub à ouvrir
 
 - **OG image custom** : faire que les choix de l'utilisateur deviennent l'OG image officielle de `/u/<username>` (link preview personnalisé). Demande de persister la config en DB (table `user_share_config` ou `users.profile_settings.shareCard`). Tracking : issue à créer après merge du MVP.
 - Personnalisation polices / couleurs accent.
@@ -50,7 +50,7 @@ Ce spec décrit l'éditeur de carte téléchargeable à shipper en MVP.
 - **Format** : `twitter` (1200×630) | `post` (1080×1080) | `story` (1080×1920).
 - **Background** : `mesh` (gradient violet/cyan/magenta) | `wall` (mur de pochettes de l'utilisateur, écho du dashboard).
 
-## Section 2 — Matrice formats × N × contraintes
+## Section 2 - Matrice formats × N × contraintes
 
 | Format | Dimensions | Mode `focus` : N possibles | Mode `recap` : top × 3 cats |
 |---|---|---|---|
@@ -60,11 +60,11 @@ Ce spec décrit l'éditeur de carte téléchargeable à shipper en MVP.
 
 **Comportement UI** : si l'utilisateur sélectionne une combo invalide (ex: format `twitter` puis N=10), le contrôle N affiche les valeurs invalides en `disabled` plutôt que de planter la preview. À l'inverse, changer de format vers un plus petit ramène N à la valeur max autorisée pour ce format.
 
-**Mode recap** : le paramètre `type` est ignoré (la carte affiche les 3 catégories). Le contrôle "Catégorie" est masqué quand `mode=recap`. Le paramètre `n` est aussi ignoré — chaque catégorie utilise sa valeur fixée (3 pour twitter/post, 5 pour story).
+**Mode recap** : le paramètre `type` est ignoré (la carte affiche les 3 catégories). Le contrôle "Catégorie" est masqué quand `mode=recap`. Le paramètre `n` est aussi ignoré - chaque catégorie utilise sa valeur fixée (3 pour twitter/post, 5 pour story).
 
 **Période par défaut** : `4w` (cohérent avec l'OG image automatique actuelle).
 
-## Section 3 — Architecture
+## Section 3 - Architecture
 
 ### 3.1 Route API : `src/app/api/share-card/route.tsx`
 
@@ -81,8 +81,8 @@ Responsabilités :
    - `recap` : fetch les 3 catégories en parallèle (Promise.all), `limit=3` pour twitter/post, `limit=5` pour story.
 4. Pour `bg=wall` : fetch les 24 premières pochettes uniques sur la période (réutilise la logique du dashboard `album-wall.tsx`).
 5. Génère le PNG via `next/og`'s `ImageResponse` en switchant sur `format` (template dédié par format : `templates/twitter.tsx`, `templates/post.tsx`, `templates/story.tsx`).
-6. Retourne avec `Cache-Control: public, max-age=60, s-maxage=60` — preview se rafraîchit vite mais évite de regénérer à chaque keystroke.
-7. Sur erreur de validation : 400 avec JSON `{ error: "..." }`. Sur erreur Satori : 500 + log côté serveur (déjà mordu par "failed to pipe response" — précaution).
+6. Retourne avec `Cache-Control: public, max-age=60, s-maxage=60` - preview se rafraîchit vite mais évite de regénérer à chaque keystroke.
+7. Sur erreur de validation : 400 avec JSON `{ error: "..." }`. Sur erreur Satori : 500 + log côté serveur (déjà mordu par "failed to pipe response" - précaution).
 
 **Rappel piège Satori** : tous les `<div>` doivent avoir `display: "flex"` même s'ils ne contiennent que du texte. À factoriser dans un helper `<Stack>` si la duplication devient pénible.
 
@@ -96,7 +96,7 @@ Server component :
 
 1. `auth()` → redirect `/login` si pas auth.
 2. `getProfile(userId)` → redirect `/settings` si pas de `username` ou `is_public=false`, avec un toast en query (`?from=share`) sur settings pour expliquer.
-3. Parse query params avec `parseShareCardParams` (defaults + validation tolérante, jamais throw — fallback sur defaults).
+3. Parse query params avec `parseShareCardParams` (defaults + validation tolérante, jamais throw - fallback sur defaults).
 4. Si `context` présent (vient du ShareButton), mappe au preset (cf. 3.4).
 5. Rend `<ShareEditor initialConfig={config} username={profile.username} />` (client component).
 
@@ -104,7 +104,7 @@ Server component :
 
 Layout (cf. Section 4 mockup) :
 
-- **Preview** : `<img src="/api/share-card?…" />` qui re-fetch dès que la config change. Pas de skeleton de chargement — la dernière image valide reste affichée le temps de la nouvelle.
+- **Preview** : `<img src="/api/share-card?…" />` qui re-fetch dès que la config change. Pas de skeleton de chargement - la dernière image valide reste affichée le temps de la nouvelle.
 - **Contrôles** : mode (segmented), catégorie (segmented, hidden si recap), N (chips, disabled si pas valide pour le format courant), période (chips), format (segmented), background (2 thumbs).
 - **Actions** :
   - "Télécharger PNG" : `<a href="/api/share-card?…" download="loopstat-<username>-<format>.png">` (pas de JS, navigateur télécharge directement).
@@ -159,7 +159,7 @@ Schema Zod côté lib pour permettre validation côté server (route API) ET cli
 
 Le "Personnaliser…" navigue vers `/share?context=<page>` où `<page>` est passé en prop par la page parente (`context="dashboard"` etc.). Les 3 actions rapides existantes restent pour les users pressés.
 
-## Section 4 — Layout éditeur
+## Section 4 - Layout éditeur
 
 Cf. mockup `share-layout.html` validé en brainstorming :
 
@@ -185,10 +185,10 @@ Cf. mockup `share-layout.html` validé en brainstorming :
 
 ## Files à modifier
 
-- [src/components/share-button.tsx](src/components/share-button.tsx) — ajouter l'option "Personnaliser…" en première position, accepter prop `context?: "dashboard" | "tracks" | "artists" | "albums"`.
-- [src/components/app-header.tsx](src/components/app-header.tsx) — propager `shareContext` au ShareButton.
-- [src/app/dashboard/page.tsx](src/app/dashboard/page.tsx) — passer `shareContext="dashboard"` au AppHeader.
-- [src/app/top/tracks/page.tsx](src/app/top/tracks/page.tsx), [/top/artists/page.tsx](src/app/top/artists/page.tsx), [/top/albums/page.tsx](src/app/top/albums/page.tsx) — passer `context="<type>"` au `<ShareButton>` direct.
+- [src/components/share-button.tsx](src/components/share-button.tsx) - ajouter l'option "Personnaliser…" en première position, accepter prop `context?: "dashboard" | "tracks" | "artists" | "albums"`.
+- [src/components/app-header.tsx](src/components/app-header.tsx) - propager `shareContext` au ShareButton.
+- [src/app/dashboard/page.tsx](src/app/dashboard/page.tsx) - passer `shareContext="dashboard"` au AppHeader.
+- [src/app/top/tracks/page.tsx](src/app/top/tracks/page.tsx), [/top/artists/page.tsx](src/app/top/artists/page.tsx), [/top/albums/page.tsx](src/app/top/albums/page.tsx) - passer `context="<type>"` au `<ShareButton>` direct.
 - Sidebar : pas d'item nav pour `/share` (atteint uniquement via ShareButton).
 
 ## Verification end-to-end
@@ -226,4 +226,4 @@ Ce qui n'est PAS dans cette feature et qui sera traité plus tard :
 - Stats narratives.
 - Watermark configurable.
 - Format Long vertical.
-- Analytics (Plausible) sur les events `share_card_download`, `share_card_native_share`, `share_editor_visit` — sera ajouté avec l'étape Plausible self-host, à scoper dans son propre spec.
+- Analytics (Plausible) sur les events `share_card_download`, `share_card_native_share`, `share_editor_visit` - sera ajouté avec l'étape Plausible self-host, à scoper dans son propre spec.

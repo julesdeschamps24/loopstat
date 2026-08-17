@@ -58,7 +58,7 @@ export async function getWallCovers(
   limit: number,
 ): Promise<WallAlbum[]> {
   // Anonymous (no userId, e.g. logged-out /demo visitor): skip the
-  // user-scoped query — the wall is filled entirely from the global catalog
+  // user-scoped query - the wall is filled entirely from the global catalog
   // favourites below. (Passing a non-uuid placeholder here crashes Postgres.)
   const userTop = userId
     ? await db
@@ -89,7 +89,7 @@ export async function getWallCovers(
 
   // Pad with other enriched albums from the catalog, excluding the user's
   // top set. Ordered by global play frequency so the most-listened albums
-  // (across all users) appear first — the wall looks like a curated mood
+  // (across all users) appear first - the wall looks like a curated mood
   // board instead of random.
   const exclude = userTop.map((r) => r.albumId);
   const fillerWhere = and(

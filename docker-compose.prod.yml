@@ -1,7 +1,7 @@
 # Prod stack: Postgres + Redis + Next.js app + BullMQ worker.
 # Run on the VPS with: docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 #
-# Postgres and Redis are NOT exposed publicly — only reachable on the internal
+# Postgres and Redis are NOT exposed publicly - only reachable on the internal
 # Docker network. The app is bound to 127.0.0.1:3001 (Caddy reverse-proxies
 # loopstat.fr → localhost:3001).
 
@@ -63,7 +63,7 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET is required}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID is required}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET is required}
-      # Error tracking — optionnel, Sentry inactif si vide.
+      # Error tracking - optionnel, Sentry inactif si vide.
       SENTRY_DSN: ${SENTRY_DSN:-}
       NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
     # Migrate the schema, then start the Next server. drizzle-kit reads
@@ -92,7 +92,7 @@ services:
     command: ["pnpm", "tsx", "worker/index.ts"]
     volumes:
       - import_tmp:/app/.import-tmp
-    # Le HEALTHCHECK de l'image ping http://:3000/api/health — le worker ne
+    # Le HEALTHCHECK de l'image ping http://:3000/api/health - le worker ne
     # sert pas de HTTP, il serait marqué unhealthy en permanence. On vérifie
     # le process à la place.
     healthcheck:

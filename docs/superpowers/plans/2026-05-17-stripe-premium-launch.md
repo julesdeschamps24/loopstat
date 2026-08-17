@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship the Phase C monetisation MVP — Stripe-powered subscription (3€/mois ou 20€/an, 14-day free trial with CB) wrapping a pricing page, Customer Portal, webhook sync, and the two launch Premium features (no-watermark share cards + customizable profile background/accent).
+**Goal:** Ship the Phase C monetisation MVP - Stripe-powered subscription (3€/mois ou 20€/an, 14-day free trial with CB) wrapping a pricing page, Customer Portal, webhook sync, and the two launch Premium features (no-watermark share cards + customizable profile background/accent).
 
 **Architecture:** New `users` columns sync from Stripe webhook events into a local `isPremium`/`getBillingState` cached helper. Stripe Checkout hosted flow (Apple Pay automatic) launched from a public `/pricing` page; Customer Portal is the only way to cancel/switch plans. Premium features gate via `isPremium(profile.id)` on the OWNER (not visitor), so sharing remains the incentive.
 
@@ -16,21 +16,21 @@
 
 ## Critical context for the engineer
 
-1. **Project conventions** : Next.js 16 (read `node_modules/next/dist/docs/01-app/` before touching App Router features — the version has breaking changes vs common docs). Host `http://127.0.0.1:3000` (NEVER localhost — Spotify OAuth quirk). User already runs `pnpm dev` on port 3000 — do NOT start a second dev server.
+1. **Project conventions** : Next.js 16 (read `node_modules/next/dist/docs/01-app/` before touching App Router features - the version has breaking changes vs common docs). Host `http://127.0.0.1:3000` (NEVER localhost - Spotify OAuth quirk). User already runs `pnpm dev` on port 3000 - do NOT start a second dev server.
 
-2. **Stripe is server-side only.** All Stripe SDK usage stays behind API route handlers or server components. No `NEXT_PUBLIC_STRIPE_*` is needed for Hosted Checkout — we redirect users via a server action that returns a Stripe-hosted URL.
+2. **Stripe is server-side only.** All Stripe SDK usage stays behind API route handlers or server components. No `NEXT_PUBLIC_STRIPE_*` is needed for Hosted Checkout - we redirect users via a server action that returns a Stripe-hosted URL.
 
-3. **Webhook needs RAW body for signature verification.** In Next.js 16 App Router, `await req.text()` returns the raw body before any parsing — pass that to `stripe.webhooks.constructEvent(body, sig, secret)`. Do NOT use `req.json()`.
+3. **Webhook needs RAW body for signature verification.** In Next.js 16 App Router, `await req.text()` returns the raw body before any parsing - pass that to `stripe.webhooks.constructEvent(body, sig, secret)`. Do NOT use `req.json()`.
 
 4. **`auth()` from `@/auth`** returns `Session | null` with `session?.user?.id` (uuid).
 
-5. **`isPremium(profile.id)` not `isPremium(session.user.id)`** when gating share cards — the watermark is removed for the PROFILE OWNER, not for the visitor downloading. Otherwise Premium users could download clean cards from free profiles, killing the incentive.
+5. **`isPremium(profile.id)` not `isPremium(session.user.id)`** when gating share cards - the watermark is removed for the PROFILE OWNER, not for the visitor downloading. Otherwise Premium users could download clean cards from free profiles, killing the incentive.
 
 6. **DB state (verified)** : 1 user `judescha`, `is_public=true`, `id='606faa26-da96-4e7c-935d-2a803eaefc01'`. Use Stripe test cards (`4242 4242 4242 4242`) for smoke tests; never live cards in test mode.
 
-7. **Stripe webhook delivery** is asynchronous : a user may land on `/checkout/success` BEFORE the webhook arrives and updates the DB. Don't make `/checkout/success` content depend on `isPremium` — it shows a generic welcome. The trial state appears in the sidebar once the user navigates.
+7. **Stripe webhook delivery** is asynchronous : a user may land on `/checkout/success` BEFORE the webhook arrives and updates the DB. Don't make `/checkout/success` content depend on `isPremium` - it shows a generic welcome. The trial state appears in the sidebar once the user navigates.
 
-8. **TVA admin is on Jules's side** (not merchant of record). Stripe Tax computes per buyer country, but declaration is manual. Spec acknowledges this — no code needed.
+8. **TVA admin is on Jules's side** (not merchant of record). Stripe Tax computes per buyer country, but declaration is manual. Spec acknowledges this - no code needed.
 
 9. **React 19 strict eslint** bans `setState` in `useEffect` body. Reuse the project's `useIsClient` pattern (cf. `src/components/share-button.tsx:21-27` or, ideally, the future shared helper from issue #23 if landed first).
 
@@ -39,7 +39,7 @@
     - `getProfile(userId)` in `src/db/queries/users.ts` (cached, returns ProfileRow with `{ username, isPublic, displayName, spotifyId }`)
     - `getPublicProfileByUsername(username)` returns `PublicProfile | null` (null on not-found OR not-public)
     - `cn`, `glassCard` from `@/lib/utils`
-    - `<AlbumWall covers={...} />` from `src/components/album-wall.tsx` — reusable for the `wall` background option
+    - `<AlbumWall covers={...} />` from `src/components/album-wall.tsx` - reusable for the `wall` background option
 
 11. **Stripe Dashboard setup is MANUAL** (Task 2 documents the steps). The plan code assumes Products/Prices/Webhook are already configured ; if a smoke test fails because Stripe says "no such price", recheck the Dashboard before chasing code bugs.
 
@@ -202,7 +202,7 @@ if (!stripeKey && process.env.NODE_ENV === "production") {
   throw new Error("STRIPE_SECRET_KEY is required in production");
 }
 
-// `null` in dev when not configured — guards in API routes early-return.
+// `null` in dev when not configured - guards in API routes early-return.
 export const stripe = stripeKey
   ? new Stripe(stripeKey, { apiVersion: "2025-09-30.clover" })
   : null;
@@ -249,7 +249,7 @@ export async function getOrCreateStripeCustomer(
 Append to `.env.example`:
 
 ```
-# Stripe — https://dashboard.stripe.com/test/apikeys
+# Stripe - https://dashboard.stripe.com/test/apikeys
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_ID_MONTHLY=
@@ -701,7 +701,7 @@ export async function POST(req: Request) {
       }
       break;
     }
-    // checkout.session.completed and invoice.paid are no-ops — the
+    // checkout.session.completed and invoice.paid are no-ops - the
     // subscription.{created,updated} that follows carries the canonical
     // state.
     case "checkout.session.completed":
@@ -809,7 +809,7 @@ feat(billing): POST /api/portal opens Stripe Customer Portal
 Auth-gated. Looks up the user's stripe_customer_id, creates a
 billing portal session with a return_url back to /settings/billing,
 returns { url } for client redirect. Refuses with 400 no_customer
-when the user has never checked out (defensive — UI should not
+when the user has never checked out (defensive - UI should not
 expose the button in that case).
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
@@ -1152,7 +1152,7 @@ git add src/app/checkout
 git commit -m "$(cat <<'EOF'
 feat(checkout): success + cancel landing pages
 
-Generic landings (no DB lookup, no isPremium dependency) — the
+Generic landings (no DB lookup, no isPremium dependency) - the
 real Premium activation happens via the Stripe webhook. Success
 page sends the user back to /dashboard; cancel page back to
 /pricing.
@@ -1348,7 +1348,7 @@ EOF
 
 ---
 
-## Task 11: Feature A — no-watermark gating
+## Task 11: Feature A - no-watermark gating
 
 **Files:**
 - Modify: `src/app/api/share-card/route.tsx`
@@ -1452,9 +1452,9 @@ Edit `src/app/u/[username]/opengraph-image.tsx`. Add import:
 import { isPremium } from "@/db/queries/billing";
 ```
 
-After the `getPublicProfileByUsername` + null-guard, compute the flag and use it where the watermark text is rendered. Replace the existing `<Watermark>` (or the inline watermark `<div>`) with the conditional render — `if (!hideWatermark) { /* render watermark */ }`.
+After the `getPublicProfileByUsername` + null-guard, compute the flag and use it where the watermark text is rendered. Replace the existing `<Watermark>` (or the inline watermark `<div>`) with the conditional render - `if (!hideWatermark) { /* render watermark */ }`.
 
-If the file uses its own inline watermark rather than the shared `<Watermark>` component, the same gating applies — wrap that JSX in `{!hideWatermark ? (...) : null}`.
+If the file uses its own inline watermark rather than the shared `<Watermark>` component, the same gating applies - wrap that JSX in `{!hideWatermark ? (...) : null}`.
 
 - [ ] **Step 5: Typecheck + lint + tests**
 
@@ -1504,7 +1504,7 @@ EOF
 
 ---
 
-## Task 12: Feature B Part 1 — appearance lib + server action
+## Task 12: Feature B Part 1 - appearance lib + server action
 
 **Files:**
 - Create: `src/lib/profile/appearance.ts`
@@ -1643,7 +1643,7 @@ EOF
 
 ---
 
-## Task 13: Feature B Part 2 — appearance form + preview
+## Task 13: Feature B Part 2 - appearance form + preview
 
 **Files:**
 - Create: `src/components/profile/appearance-form.tsx`
@@ -1860,7 +1860,7 @@ EOF
 
 ---
 
-## Task 14: Feature B render — apply background + accent on `/u/[username]`
+## Task 14: Feature B render - apply background + accent on `/u/[username]`
 
 **Files:**
 - Modify: `src/app/u/[username]/page.tsx`
@@ -1882,7 +1882,7 @@ import { periodSince } from "@/lib/stats/period";
 
 ```ts
 // `getPublicProfileByUsername` returns the short summary used by the rest of the
-// page — we need a fresh DB hit for the appearance settings.
+// page - we need a fresh DB hit for the appearance settings.
 const settingsRow = await db.query.users.findFirst({
   where: eq(users.id, profile.id),
   columns: { profileSettings: true },
@@ -1955,7 +1955,7 @@ Example for the "Public" pill (replace the existing `bg-[#7c3aed]/10 text-[#c4b5
 </span>
 ```
 
-Same `color-mix()` pattern for the banner background (`30%` alpha border, `10%` alpha background). Anywhere a Tailwind arbitrary `bg-[#7c3aed]/10` was used, swap to inline style — Tailwind arbitrary classes can't read CSS variables at build time.
+Same `color-mix()` pattern for the banner background (`30%` alpha border, `10%` alpha background). Anywhere a Tailwind arbitrary `bg-[#7c3aed]/10` was used, swap to inline style - Tailwind arbitrary classes can't read CSS variables at build time.
 
 - [ ] **Step 2: Typecheck + lint**
 
@@ -2272,7 +2272,7 @@ Update the existing self-visit `<aside>` to show a Premium variant when applicab
       className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#7c3aed]/30 bg-[#7c3aed]/10 px-4 py-3 text-sm"
     >
       <span>
-        👤 Tu visites ton propre profil — c&apos;est ce que voient les autres.
+        👤 Tu visites ton propre profil - c&apos;est ce que voient les autres.
       </span>
       <Link
         href="/settings"
@@ -2307,7 +2307,7 @@ const initialBackground = isBackground(settings.background) ? settings.backgroun
 const initialAccent = isAccent(settings.accent) ? settings.accent : "violet";
 ```
 
-(Make sure `userRow` includes `profileSettings` in its `columns: { … }` selection — add it if not.)
+(Make sure `userRow` includes `profileSettings` in its `columns: { … }` selection - add it if not.)
 
 In the JSX, BETWEEN the "Profil public" section and the "Compte" section, add:
 
@@ -2421,7 +2421,7 @@ No new files. Walk through the full flow.
     "UPDATE users SET premium_until = NOW() - INTERVAL '1 day' WHERE username='judescha';"
   ```
 - Refresh `/dashboard` → OwnProfileCard back to "Premium hint" message; Apparence section is greyed out again.
-- BUT: `/u/judescha` still shows the wall+rose visuals (we preserve persisted config — downgrade UX).
+- BUT: `/u/judescha` still shows the wall+rose visuals (we preserve persisted config - downgrade UX).
 - Download a card → watermark BACK.
 
 - [ ] **Step 7: Restore + final state**
@@ -2431,7 +2431,7 @@ docker exec loopstat_postgres psql -U loopstat -d loopstat -c \
   "UPDATE users SET premium_status=NULL, premium_until=NULL, stripe_subscription_id=NULL, profile_settings='{}'::jsonb WHERE username='judescha';"
 ```
 
-(Keep `stripe_customer_id` — that's fine, will be reused if the user re-subscribes.)
+(Keep `stripe_customer_id` - that's fine, will be reused if the user re-subscribes.)
 
 - [ ] **Step 8: Branch hygiene**
 

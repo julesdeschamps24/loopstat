@@ -5,7 +5,7 @@ import IORedis from "ioredis";
 // (and some routes import this file via `importQueue`). Env vars aren't set
 // then, and ioredis would otherwise try to connect at module-load. Use a
 // placeholder URL + lazyConnect so the connection is deferred until the
-// first real command — at runtime, docker-compose always provides REDIS_URL.
+// first real command - at runtime, docker-compose always provides REDIS_URL.
 const redisUrl = process.env.REDIS_URL ?? "redis://placeholder:6379";
 
 // Cache the connection + queue on globalThis so dev-mode HMR (Next.js / tsx watch)
@@ -53,8 +53,8 @@ export const enrichCatalogQueue =
   (globalCache.__loopstatEnrichCatalogQueue = new Queue(ENRICH_CATALOG_QUEUE_NAME, {
     connection,
     defaultJobOptions: {
-      // Enrichment is idempotent (enriched rows have deezer_id set — including
-      // the sentinel 0 on a miss — so a retry won't re-select them) — safe to
+      // Enrichment is idempotent (enriched rows have deezer_id set - including
+      // the sentinel 0 on a miss - so a retry won't re-select them) - safe to
       // retry transient Deezer failures.
       // attempts=3 with exp backoff; hourly self-heal re-enqueues if still needed.
       attempts: 3,

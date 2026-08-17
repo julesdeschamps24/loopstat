@@ -54,5 +54,5 @@ next-env.d.ts
 /.superpowers/
 /.claire/
 
-# Prod DB backups (contain user data — never commit)
+# Prod DB backups (contain user data - never commit)
 /deploy/backups/

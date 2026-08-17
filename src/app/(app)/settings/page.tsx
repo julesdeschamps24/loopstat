@@ -11,7 +11,7 @@ import { users } from "@/db/schema";
 import { deriveUsername } from "@/lib/derive-username";
 import { isAccent, isBackground } from "@/lib/profile/appearance";
 
-// No Spotify calls here — keep the standard revalidate window for consistency
+// No Spotify calls here - keep the standard revalidate window for consistency
 // with the other authenticated pages.
 export const revalidate = 3600;
 
@@ -88,7 +88,7 @@ export default async function SettingsPage() {
           </p>
           <dl className="mb-6 grid gap-3 rounded-2xl border bg-card p-4 text-sm sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:gap-y-2">
             <dt className="text-muted-foreground">Nom affiché</dt>
-            <dd className="font-medium">{displayName || "—"}</dd>
+            <dd className="font-medium">{displayName || "-"}</dd>
             {email ? (
               <>
                 <dt className="text-muted-foreground">Email</dt>

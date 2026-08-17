@@ -80,7 +80,7 @@ export type PublicProfile = {
 
 /**
  * Lookup d'un user par son username. Retourne null si pas trouvé OU si le
- * profil n'est pas public — l'appelant n'a pas à distinguer les deux (404
+ * profil n'est pas public - l'appelant n'a pas à distinguer les deux (404
  * uniforme pour ne pas leaker l'existence d'un compte privé).
  */
 export const getPublicProfileByUsername = cache(

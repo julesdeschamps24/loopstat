@@ -25,7 +25,7 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Réglages", icon: Settings },
 ] as const;
 
-// Pages publiques (avant/hors connexion) où la sidebar n'a aucun sens — la
+// Pages publiques (avant/hors connexion) où la sidebar n'a aucun sens - la
 // landing et tout ce qu'elle référence doivent rester des pages autonomes.
 const PUBLIC_PATHS = new Set<string>([
   "/",
@@ -106,7 +106,7 @@ export function Sidebar({
             (href === "/top/artists" && pathname.startsWith("/artist/")) ||
             (href === "/top/albums" && pathname.startsWith("/album/"));
 
-          // Pour les /top/* — au clic, on lit la période choisie en
+          // Pour les /top/* - au clic, on lit la période choisie en
           // sessionStorage et on l'injecte dans l'URL avant que la nav
           // ne parte. Cela évite le flash "default 1w → redirect 1y"
           // côté PeriodSelector et garantit que la page server-rendered
@@ -182,7 +182,7 @@ export function Sidebar({
           title={
             isPublic
               ? "Ouvre ton profil public"
-              : "Profil privé — clique pour activer"
+              : "Profil privé - clique pour activer"
           }
         >
           @{username}

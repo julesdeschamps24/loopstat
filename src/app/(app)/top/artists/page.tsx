@@ -55,7 +55,7 @@ export default async function TopArtistsPage({
             </Suspense>
           </header>
           <p className="mb-8 text-sm text-muted-foreground">
-            Ces données sont fictives — importe ton historique pour voir les tiennes.
+            Ces données sont fictives - importe ton historique pour voir les tiennes.
           </p>
           <StaggerList className="flex flex-col gap-1">
             {artistsData.map((artist, index) => (

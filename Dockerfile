@@ -58,7 +58,7 @@ RUN mkdir -p /app/.import-tmp && chown nextjs:nodejs /app/.import-tmp
 USER nextjs
 EXPOSE 3000
 
-# Healthcheck — pings the app /api/health (which itself probes DB + Redis).
+# Healthcheck - pings the app /api/health (which itself probes DB + Redis).
 # Docker restarts the container if 3 consecutive checks fail.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD wget --quiet --spider http://127.0.0.1:3000/api/health || exit 1

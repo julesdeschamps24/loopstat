@@ -1,4 +1,4 @@
-# Deezer-only catalog enrichment — design
+# Deezer-only catalog enrichment - design
 
 > Date : 2026-05-27
 > Statut : design validé, plan à écrire
@@ -27,7 +27,7 @@ Supprimer toute dépendance à MusicBrainz et Cover Art Archive. Le catalogue (a
 ## Non-objectifs
 
 - Pas de changement aux queues BullMQ (`enrich-catalog`, `enrich-catalog-hot`, `enrich-catalog-single` restent).
-- Pas de changement aux flows on-demand (single-enrich on click) ni priority (ultra-priority + window-ordered) — ils utilisent déjà Deezer, juste à toiletter les imports.
+- Pas de changement aux flows on-demand (single-enrich on click) ni priority (ultra-priority + window-ordered) - ils utilisent déjà Deezer, juste à toiletter les imports.
 - Pas de changement à l'import history.
 
 ## Décisions architecturales
@@ -41,7 +41,7 @@ Après migration, suppression de :
 - index associés (`albums_mbid_idx`, `artists_mbid_idx`)
 
 Conservé :
-- `albums.release_date` (date) — toujours affiché sur `/album/[id]` ([page.tsx:290](src/app/album/[id]/page.tsx#L290))
+- `albums.release_date` (date) - toujours affiché sur `/album/[id]` ([page.tsx:290](src/app/album/[id]/page.tsx#L290))
 - `albums.image_url`, `artists.image_url`, `artists.deezer_id` (existants)
 
 Ajouté :
@@ -59,11 +59,11 @@ Coût : ~150ms × N albums (~quelques minutes à l'échelle du dataset utilisate
 
 ## Couche Deezer (extensions)
 
-`src/lib/deezer/search.ts` — `searchAlbumByName` inchangé (renvoie `deezerAlbumId` + `coverUrl`).
+`src/lib/deezer/search.ts` - `searchAlbumByName` inchangé (renvoie `deezerAlbumId` + `coverUrl`).
 
 Note : `/search/album` ne renvoie pas `release_date`. Pour l'obtenir, second call `/album/{id}`. C'est le seul champ supplémentaire qu'on veut, donc un module séparé suffit.
 
-`src/lib/deezer/album.ts` (nouveau) — `fetchAlbumDetails({deezerAlbumId})` :
+`src/lib/deezer/album.ts` (nouveau) - `fetchAlbumDetails({deezerAlbumId})` :
 
 ```ts
 export interface DeezerAlbumDetails {
@@ -75,7 +75,7 @@ export async function fetchAlbumDetails({
 }: { deezerAlbumId: number }): Promise<DeezerAlbumDetails | null>;
 ```
 
-`src/lib/deezer/catalog.ts` — `enrichAlbumImageByDeezer` étendu :
+`src/lib/deezer/catalog.ts` - `enrichAlbumImageByDeezer` étendu :
 
 ```ts
 export async function enrichAlbumImageByDeezer({
@@ -144,7 +144,7 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
 
 Suppression : `withMbzRetry`, `RATE_DELAY_MS`, `sleep` entre calls, séparation "MBz pass" / "Deezer pass" (un seul pass).
 
-Note Deezer rate : la doc publique tolère ~50 req/s. Pour rester safe, on garde un délai léger (~50ms) entre calls — pas de saturation, mais évite un burst pathologique.
+Note Deezer rate : la doc publique tolère ~50 req/s. Pour rester safe, on garde un délai léger (~50ms) entre calls - pas de saturation, mais évite un burst pathologique.
 
 `selfHealEnrichCatalog` : filtre `isNull(albums.deezerId)` au lieu de `mbid`. Idem `artists`.
 
@@ -153,7 +153,7 @@ Note Deezer rate : la doc publique tolère ~50 req/s. Pour rester safe, on garde
 - Ultra-priority pass : déjà Deezer, rien à changer
 - Window-ordered sweep : remplacer `isNull(albums.mbid)` par `isNull(albums.deezerId)`. Boucle interne appelle `enrichAlbumImageByDeezer` (qui couvre maintenant aussi `release_date`).
 
-Suppression : `withMbzRetry`, `enrichAlbumByNames` (MBz/CAA), `enrichArtistByName` (MBz) — plus aucun import musicbrainz.
+Suppression : `withMbzRetry`, `enrichAlbumByNames` (MBz/CAA), `enrichArtistByName` (MBz) - plus aucun import musicbrainz.
 
 ## Refactor `worker/jobs/enrichCatalogSingle.ts`
 
@@ -161,7 +161,7 @@ Aucun changement (déjà Deezer-only via `enrichAlbumImageByDeezer` + `enrichArt
 
 ## Refactor `worker/jobs/enrichArtistImage.ts`
 
-Plus de fallback chain — c'est juste Deezer. Renommer `enrichArtistImageWithFallback` → `enrichArtistImageByDeezer` (alias direct sur la fonction Deezer) et inline la garde de la pre-check.
+Plus de fallback chain - c'est juste Deezer. Renommer `enrichArtistImageWithFallback` → `enrichArtistImageByDeezer` (alias direct sur la fonction Deezer) et inline la garde de la pre-check.
 
 ## Suppressions
 
@@ -203,11 +203,11 @@ Deux migrations séparées : la première active le nouveau filtre, la deuxième
 
 ## Tests à mettre à jour
 
-- `src/lib/deezer/search.test.ts` — assertions sur `recordType`
-- `src/lib/deezer/album.test.ts` (nouveau) — `fetchAlbumDetails`
-- `src/lib/deezer/catalog.test.ts` — assertions release_date write
-- `worker/jobs/enrichCatalog.test.ts` — supprimer assertions MBz, ajouter sweep Deezer albums
-- `worker/jobs/enrichCatalogPriority.test.ts` — filtre `isNull(deezerId)`
+- `src/lib/deezer/search.test.ts` - assertions sur `recordType`
+- `src/lib/deezer/album.test.ts` (nouveau) - `fetchAlbumDetails`
+- `src/lib/deezer/catalog.test.ts` - assertions release_date write
+- `worker/jobs/enrichCatalog.test.ts` - supprimer assertions MBz, ajouter sweep Deezer albums
+- `worker/jobs/enrichCatalogPriority.test.ts` - filtre `isNull(deezerId)`
 - Tests MBz : delete
 
 ## Edge cases

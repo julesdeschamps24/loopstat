@@ -19,7 +19,7 @@ import {
 import { formatNumber } from "@/lib/utils";
 import { DEFAULT_PERIOD, TOP_LIMIT } from "@/lib/stats/access";
 
-// User-scoped local DB aggregation — always dynamic, no static caching.
+// User-scoped local DB aggregation - always dynamic, no static caching.
 export const dynamic = "force-dynamic";
 
 export default async function TopTracksPage({
@@ -54,7 +54,7 @@ export default async function TopTracksPage({
             </Suspense>
           </header>
           <p className="mb-8 text-sm text-muted-foreground">
-            Ces données sont fictives — importe ton historique pour voir les tiennes.
+            Ces données sont fictives - importe ton historique pour voir les tiennes.
           </p>
           <StaggerList className="flex flex-col gap-1">
             {tracks.map((track, index) => (
@@ -95,7 +95,7 @@ export default async function TopTracksPage({
   const emptyMessage =
     period === "all" && !imported
       ? "Aucune écoute lifetime enregistrée. Importe ton historique Spotify pour débloquer tes tops all-time."
-      : "Aucun titre pour cette période — écoute quelques sons puis reviens dans ~30 min (le polling synchronise automatiquement).";
+      : "Aucun titre pour cette période - écoute quelques sons puis reviens dans ~30 min (le polling synchronise automatiquement).";
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">

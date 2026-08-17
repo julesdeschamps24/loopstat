@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 
 /**
- * Hook de boot Next.js — s'exécute UNE fois au démarrage du serveur
+ * Hook de boot Next.js - s'exécute UNE fois au démarrage du serveur
  * (jamais pendant `next build`). Fail fast sur une config invalide,
  * puis initialise Sentry (no-op si SENTRY_DSN absent).
  */

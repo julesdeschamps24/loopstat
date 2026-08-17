@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Refondre `src/app/page.tsx` selon la spec [2026-05-17-landing-page-redesign-design.md](../specs/2026-05-17-landing-page-redesign-design.md) — palette nébuleuse violet auto-portée (sans dépendre de `.dark` sur `<html>`), hero single-screen avec CTA Spotify vert + lien démo.
+**Goal:** Refondre `src/app/page.tsx` selon la spec [2026-05-17-landing-page-redesign-design.md](../specs/2026-05-17-landing-page-redesign-design.md) - palette nébuleuse violet auto-portée (sans dépendre de `.dark` sur `<html>`), hero single-screen avec CTA Spotify vert + lien démo.
 
 **Architecture:** Page autonome qui peint son propre fond inline (radial mauve) au lieu de dépendre du `ThemeProvider`. Trois nouveaux composants isolés sous `src/components/landing/`. Logique d'auth Spotify factorée dans un helper testable (`src/lib/auth/start-spotify-signin.ts`) partagé avec le bouton existant `/login`.
 
@@ -486,7 +486,7 @@ export default function HomePage() {
           className="max-w-xl text-base sm:text-lg"
           style={{ color: "#a89ec8", lineHeight: 1.5 }}
         >
-          Tops, historique d&apos;écoute, listening clock — toutes tes stats
+          Tops, historique d&apos;écoute, listening clock - toutes tes stats
           Spotify, gratuites et sans pub.
         </p>
 
@@ -563,7 +563,7 @@ Vérifie :
 DevTools → Rendering → Emulate CSS media feature `prefers-color-scheme: light`.
 
 Vérifie :
-- [ ] La landing reste **identique** (palette violette inchangée — c'est le point clé du force-dark)
+- [ ] La landing reste **identique** (palette violette inchangée - c'est le point clé du force-dark)
 
 - [ ] **Step 8 : Vérification flow OAuth (non-régression)**
 
@@ -574,7 +574,7 @@ Vérifie aussi `/login` :
 
 - [ ] **Step 9 : Vérification lien démo**
 
-Clique sur "Voir un exemple →" → tu dois arriver sur `/u/demo` (qui renvoie un 404 tant que le profil démo n'a pas été seedé — c'est attendu, voir spec).
+Clique sur "Voir un exemple →" → tu dois arriver sur `/u/demo` (qui renvoie un 404 tant que le profil démo n'a pas été seedé - c'est attendu, voir spec).
 
 - [ ] **Step 10 : Vérification accessibilité au clavier**
 
@@ -600,7 +600,7 @@ feat(landing): redesign homepage with nébuleuse violet palette
 Refonte de src/app/page.tsx selon docs/superpowers/specs/2026-05-17-landing-page-redesign-design.md.
 
 Hero single-screen sur fond radial mauve auto-porté (peint inline,
-indépendant du ThemeProvider — la landing reste violette même en
+indépendant du ThemeProvider - la landing reste violette même en
 prefers-color-scheme: light). CTA vert Spotify officiel + lien "Voir
 un exemple →" vers /u/demo (profil démo à créer dans une spec séparée).
 
@@ -653,7 +653,7 @@ Attendu : `5 commits → origin/main`.
 - ✅ Non-régression `/login` OAuth : Task 5 step 8
 
 **Cohérence des types :**
-- `startSpotifySignin(callbackPath: string): Promise<void>` — utilisé identiquement en Tasks 1, 4. ✅
+- `startSpotifySignin(callbackPath: string): Promise<void>` - utilisé identiquement en Tasks 1, 4. ✅
 - Pas d'autre interface inter-tâches. ✅
 
 **Pas de placeholder :** scan effectué, pas de "TBD" ni "implement later". ✅

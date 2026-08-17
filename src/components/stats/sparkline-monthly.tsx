@@ -26,7 +26,7 @@ function formatMonth(d: Date): string {
 }
 
 /**
- * Dense series from the first non-zero month to "now" — fills empty months
+ * Dense series from the first non-zero month to "now" - fills empty months
  * with 0. Without this a track played in 2019 and 2025 would look like two
  * adjacent bars instead of two bars years apart.
  */
@@ -52,7 +52,7 @@ function fillGaps(points: MonthlyPoint[]): MonthlyPoint[] {
 
 /**
  * Monthly play sparkline rendered as flex-bar columns with native title
- * tooltips. No chart dep — pure CSS. Empty-month gaps are filled so the
+ * tooltips. No chart dep - pure CSS. Empty-month gaps are filled so the
  * time axis is linear.
  */
 export function SparklineMonthly({ data }: { data: MonthlyPoint[] }) {
@@ -88,7 +88,7 @@ export function SparklineMonthly({ data }: { data: MonthlyPoint[] }) {
                 height: `${Math.max(ratio * 100, p.plays > 0 ? 4 : 2)}%`,
                 opacity: p.plays > 0 ? (isPeak ? 1 : 0.55 + ratio * 0.4) : 0.1,
               }}
-              title={`${formatMonth(p.month)} — ${formatNumber(p.plays)} écoute${p.plays > 1 ? "s" : ""}`}
+              title={`${formatMonth(p.month)} - ${formatNumber(p.plays)} écoute${p.plays > 1 ? "s" : ""}`}
             />
           );
         })}

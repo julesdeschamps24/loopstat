@@ -1,7 +1,7 @@
 /**
  * Pre-fetches a set of image URLs in parallel and returns a Map of
  * `url → data:image/...;base64,...` data URLs. Used to bypass
- * Satori's internal image fetcher, which fetches serially — passing
+ * Satori's internal image fetcher, which fetches serially - passing
  * data URLs lets Satori decode locally with no network round trip.
  *
  * Process-global cache with a 30-min TTL: across requests, the same
@@ -29,7 +29,7 @@ async function fetchAsDataUrl(url: string): Promise<string | null> {
     IMAGE_CACHE.set(url, { dataUrl, expiresAt: Date.now() + TTL_MS });
     return dataUrl;
   } catch {
-    // Network error, timeout, abort — caller treats as missing.
+    // Network error, timeout, abort - caller treats as missing.
     return null;
   }
 }

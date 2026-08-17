@@ -3,7 +3,7 @@ import Link from "next/link";
 export const dynamic = "force-static";
 
 export const metadata = {
-  title: "Conditions générales d'utilisation — loopstat",
+  title: "Conditions générales d'utilisation - loopstat",
   description: "Conditions d'utilisation du service loopstat.",
 };
 

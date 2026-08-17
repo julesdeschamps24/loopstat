@@ -126,7 +126,7 @@ git commit -m "feat(ui): ImportBanner server component (dashboard CTA)"
 
 ---
 
-## Task 3 : Sidebar — prop `hasImported` + lien conditionnel
+## Task 3 : Sidebar - prop `hasImported` + lien conditionnel
 
 **Files:**
 - Modify: `src/components/sidebar.tsx`
@@ -137,7 +137,7 @@ Le composant `Sidebar` actuel n'accepte aucune prop. Lui ajouter une
 prop `hasImported: boolean` et un lien discret en bas de la sidebar,
 visible uniquement si `hasImported === true`.
 
-Le contour `<aside>` est déjà en `md:flex-col` — il suffit d'utiliser
+Le contour `<aside>` est déjà en `md:flex-col` - il suffit d'utiliser
 `mt-auto` sur le lien pour qu'il soit poussé en bas (au-delà des nav
 items).
 
@@ -169,7 +169,7 @@ Et juste avant la fermeture `</aside>` (après la `<nav>`), ajouter :
 - [ ] **Step 2: Vérifier le typecheck**
 
 Run: `pnpm typecheck`
-Expected: **DOIT échouer** — `src/app/layout.tsx` utilise `<Sidebar />`
+Expected: **DOIT échouer** - `src/app/layout.tsx` utilise `<Sidebar />`
 sans la nouvelle prop requise. C'est attendu, sera fixé en Task 4.
 Note l'erreur et passe au commit.
 
@@ -255,7 +255,7 @@ import { ImportBanner } from "@/components/import-banner";
 
 Puis trouver l'élément racine du dashboard (probablement un fragment
 `<>...</>` ou un `<main>`) et insérer `<ImportBanner />` comme premier
-enfant visible — c'est-à-dire AVANT les KPI cards (`StatCard`) mais
+enfant visible - c'est-à-dire AVANT les KPI cards (`StatCard`) mais
 APRÈS le mur d'albums (qui est aria-hidden et fixed en background, donc
 ordre DOM non critique).
 
@@ -282,7 +282,7 @@ Si la racine est un fragment avec `<AlbumWall />` en premier puis un
 
 Run: `pnpm typecheck && pnpm lint`
 Expected: pas d'erreur. (Si erreur sur `<Sidebar />` sans prop, c'est
-que la Task 3 n'a pas été commitée — la prop est requise depuis ce
+que la Task 3 n'a pas été commitée - la prop est requise depuis ce
 commit-là.)
 
 - [ ] **Step 4: Vérifier le build**
@@ -338,5 +338,5 @@ les deux branches (avant / après import).
 - Pas de tests unitaires : suit le pattern existant (queries DB et UI
   components non testés dans ce projet).
 - Pas de modal / onboarding tutoriel.
-- Pas d'animations / transitions custom — Tailwind `transition` standard.
+- Pas d'animations / transitions custom - Tailwind `transition` standard.
 - Pas de mesure analytique de conversion.

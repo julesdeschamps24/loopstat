@@ -69,7 +69,7 @@ export async function importHistory(
       .set({ status: "processing" })
       .where(eq(imports.id, importId));
 
-    // readdir throws ENOENT if the temp dir is missing — an expected condition
+    // readdir throws ENOENT if the temp dir is missing - an expected condition
     // (route crashed before mkdir, or a stale job) distinct from a parse
     // failure. The outer try/catch intentionally catches it and marks failed.
     const fileNames = await readdir(dir);
@@ -90,7 +90,7 @@ export async function importHistory(
       const raw = await readFile(path.join(dir, fileName), "utf8");
       const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) {
-        // Not a Spotify history array (e.g. a JSON object) — skip, don't fail.
+        // Not a Spotify history array (e.g. a JSON object) - skip, don't fail.
         wlog.warn({ fileName }, "skipping file: not a JSON array");
         continue;
       }
@@ -106,7 +106,7 @@ export async function importHistory(
       }
 
       for (const item of parsed as RawStreamEntry[]) {
-        // Skip non-object array items (null, numbers, strings) — field access
+        // Skip non-object array items (null, numbers, strings) - field access
         // would otherwise throw and fail the whole import.
         if (typeof item !== "object" || item === null) continue;
 
@@ -232,12 +232,12 @@ export async function importHistory(
     }
 
     // insertStreams chunks by 1000 and onConflictDoNothing against the unique
-    // index (user_id, played_at, track_id) — dedup vs DB and within the dump.
+    // index (user_id, played_at, track_id) - dedup vs DB and within the dump.
     const rowsImported = await insertStreams(streamRows);
 
     // pruneOverlappingApiStreams was used when Spotify polling produced
     // source='api' streams that overlapped imports. Polling is gone (post
-    // sub-projet C), no api streams exist anymore — call removed.
+    // sub-projet C), no api streams exist anymore - call removed.
 
     await db
       .update(imports)
@@ -252,11 +252,11 @@ export async function importHistory(
 
     // Chain the import → enrich pipeline: backfill full metadata for the
     // minimal track rows just inserted. The import already succeeded, so an
-    // enqueue failure must not fail it — enrichment can be retried later.
+    // enqueue failure must not fail it - enrichment can be retried later.
     // Use jobId to dedup concurrent enqueues: if an enrich job is already
     // queued or in-flight, this add() returns the existing job ref.
     // ATTENTION : un job completed/failed résiduel porte le même jobId et
-    // rend le add() silencieusement no-op — il faut le purger d'abord
+    // rend le add() silencieusement no-op - il faut le purger d'abord
     // (c'est exactement ce qui a laissé 6k albums sans cover après le
     // premier import prod).
     try {

@@ -10,7 +10,7 @@ function sha1Hex16(input: string): string {
  * across imports.
  *
  * Caveat: homonymous artists (e.g. "John Williams" classical vs jazz) collide
- * — accepted, since the Spotify JSON export doesn't distinguish them.
+ * - accepted, since the Spotify JSON export doesn't distinguish them.
  */
 export function synthesizeArtistId(name: string): string {
   return `art_${sha1Hex16(name.trim().toLowerCase())}`;

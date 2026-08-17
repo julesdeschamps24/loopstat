@@ -1,6 +1,6 @@
 # loopstat
 
-> Ton historique d'écoute Spotify, en chiffres. Une alternative **plus légère, gratuite et sans pub** à [stats.fm](https://stats.fm) — auto-hébergeable et open.
+> Ton historique d'écoute Spotify, en chiffres. Une alternative **plus légère, gratuite et sans pub** à [stats.fm](https://stats.fm) - auto-hébergeable et open.
 
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
 [![React 19](https://img.shields.io/badge/React-19-149ECA?logo=react)](https://react.dev)
@@ -54,7 +54,7 @@ C'est le piège n°1 quand on (re)découvre le projet. **loopstat n'appelle PAS 
 
 > Le mot « Spotify » dans le code désigne presque toujours **le format du fichier d'export** (`spotify:track:<id>`, `master_metadata_*`), pas un appel réseau vers Spotify. La route `POST /api/sync` n'est plus qu'un **stub vide** conservé pour ne pas casser d'anciens clients.
 
-**Historique des archis (pour éviter de réintroduire du code mort)** : le projet a d'abord utilisé l'API Web Spotify (live polling), puis MusicBrainz + Cover Art Archive pour les pochettes. **Les deux ont été abandonnés.** Si tu vois une référence à `spotify/client`, `musicbrainz`, `mbid`, `coverartarchive` ou `TheAudioDB`, c'est du legacy — ne le ressuscite pas, la source unique des images est Deezer.
+**Historique des archis (pour éviter de réintroduire du code mort)** : le projet a d'abord utilisé l'API Web Spotify (live polling), puis MusicBrainz + Cover Art Archive pour les pochettes. **Les deux ont été abandonnés.** Si tu vois une référence à `spotify/client`, `musicbrainz`, `mbid`, `coverartarchive` ou `TheAudioDB`, c'est du legacy - ne le ressuscite pas, la source unique des images est Deezer.
 
 ---
 
@@ -69,7 +69,7 @@ C'est le piège n°1 quand on (re)découvre le projet. **loopstat n'appelle PAS 
 | DB | **PostgreSQL 16** (Docker en local, conteneur sur le VPS en prod) | Relationnel + agrégations + JSON natif. |
 | ORM | **Drizzle** | Schéma 100 % TS, requêtes proches de SQL. |
 | Jobs / queue | **BullMQ** + **Redis 7** | Import lourd de l'historique + enrichissement des métadonnées Deezer. |
-| Catalogue images | **API publique Deezer** | `/search/album`, `/search/artist`, `/album/{id}` — aucune clé requise. |
+| Catalogue images | **API publique Deezer** | `/search/album`, `/search/artist`, `/album/{id}` - aucune clé requise. |
 | Validation | Zod | Schémas typés bout-en-bout (UI + worker). |
 
 ---
@@ -91,7 +91,7 @@ git clone <repo-url> loopstat
 cd loopstat
 pnpm install
 
-# 2. Préparer .env.local — voir la section "Variables d'environnement"
+# 2. Préparer .env.local - voir la section "Variables d'environnement"
 cp .env.example .env.local
 #   → générer AUTH_SECRET : openssl rand -base64 32
 #   → GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET : voir docs/google-auth-setup.md
@@ -109,7 +109,7 @@ pnpm dev                   # http://127.0.0.1:3000
 pnpm worker
 ```
 
-> ⚠️ **Toujours ouvrir l'app sur `http://127.0.0.1:3000` — pas `localhost:3000`.**
+> ⚠️ **Toujours ouvrir l'app sur `http://127.0.0.1:3000` - pas `localhost:3000`.**
 > Le redirect URI Google est figé sur `127.0.0.1`, donc le cookie de session est posé sur cet host. Un visiteur arrivant sur `localhost` ne le verrait pas. `next.config.ts` redirige `localhost:3000/*` → `127.0.0.1:3000/*` au niveau framework, mais on évite quand même le détour.
 
 ### Configuration Google OAuth
@@ -148,17 +148,17 @@ Toutes dans `.env.local` (gitignored). Modèle complet : [`.env.example`](.env.e
 | `pnpm start` | Lance le build de production (`next start`). |
 | `pnpm lint` | ESLint. |
 | `pnpm typecheck` | `tsc --noEmit`. |
-| `pnpm test` | Vitest, un run unique (nécessite Postgres up — `pnpm db:up`). |
+| `pnpm test` | Vitest, un run unique (nécessite Postgres up - `pnpm db:up`). |
 | `pnpm test:watch` | Vitest en mode watch. |
 | `pnpm db:up` | `docker compose up -d` (Postgres + Redis). |
 | `pnpm db:down` | Arrête les containers. |
 | `pnpm db:generate` | Génère un fichier de migration SQL depuis `src/db/schema.ts`. |
 | `pnpm db:migrate` | Applique les migrations versionnées de `drizzle/`. |
-| `pnpm db:push` | **Dev jetable uniquement** — synchronise le schéma sans migration. Voir [Migrations](#migrations). |
+| `pnpm db:push` | **Dev jetable uniquement** - synchronise le schéma sans migration. Voir [Migrations](#migrations). |
 | `pnpm db:studio` | Drizzle Studio (UI web pour explorer la DB). |
 | `pnpm worker` | Lance le worker BullMQ (`tsx watch worker/index.ts`). |
 
-Scripts utilitaires dans [`scripts/`](scripts/) : `seed-demo-catalog.ts` (enrichit les fixtures du mode démo via Deezer — utilisé au premier déploiement), `enqueue-enrich.ts` / `enqueue-priority.ts` (re-déclenchent manuellement l'enrichissement).
+Scripts utilitaires dans [`scripts/`](scripts/) : `seed-demo-catalog.ts` (enrichit les fixtures du mode démo via Deezer - utilisé au premier déploiement), `enqueue-enrich.ts` / `enqueue-priority.ts` (re-déclenchent manuellement l'enrichissement).
 
 ---
 
@@ -184,7 +184,7 @@ Scripts utilitaires dans [`scripts/`](scripts/) : `seed-demo-catalog.ts` (enrich
              ▲
              │
 ┌────────────┴───────────────────────────────┐
-│  Worker Node (BullMQ + Redis) — 4 queues    │
+│  Worker Node (BullMQ + Redis) - 4 queues    │
 │  - import              (parse export → streams)
 │  - enrich-catalog      (sweep Deezer + self-heal horaire)
 │  - enrich-catalog-hot  (priorité après un import)
@@ -204,7 +204,7 @@ loopstat/
 ├── next.config.ts              # Redirige localhost → 127.0.0.1 (cookies OAuth)
 ├── scripts/                    # seed-demo-catalog, enqueue-enrich, enqueue-priority
 ├── src/
-│   ├── app/                    # App Router — pages SSR + route handlers (/api/*)
+│   ├── app/                    # App Router - pages SSR + route handlers (/api/*)
 │   ├── components/             # React UI (stats/, settings/, onboarding/, share/, ...)
 │   ├── db/
 │   │   ├── client.ts           # Drizzle client (postgres-js)
@@ -220,7 +220,7 @@ loopstat/
 └── worker/
     ├── index.ts                # Entrée : 4 Workers BullMQ + sweep au boot + scheduler self-heal
     ├── queue.ts                # Définition des 4 queues
-    ├── schemas.ts              # Zod — validation des payloads worker
+    ├── schemas.ts              # Zod - validation des payloads worker
     └── jobs/                   # importHistory, enrichCatalog, enrichCatalogPriority, enrichCatalogSingle, enrichArtistImage
 ```
 
@@ -270,7 +270,7 @@ Flux : `POST /api/import` valide les fichiers (`.json`, ≤ 50 Mo, ≤ 30 fichie
 | `imports` | État des imports | `status`, `files_count`, `rows_imported`, `error_message` |
 | `top_cache` | Agrégats pré-calculés | Clé `(user_id, kind, period)` |
 
-À 10 k users × ~30 streams/jour, on parle d'environ **100 M lignes/an** dans `streams` — Postgres encaisse avec les index actuels, et un partitionnement par `RANGE(played_at)` mensuel pourra être ajouté plus tard sans casser l'API.
+À 10 k users × ~30 streams/jour, on parle d'environ **100 M lignes/an** dans `streams` - Postgres encaisse avec les index actuels, et un partitionnement par `RANGE(played_at)` mensuel pourra être ajouté plus tard sans casser l'API.
 
 ---
 
@@ -299,7 +299,7 @@ pnpm db:migrate
 
 Cible : `loopstat.tech` sur un VPS, derrière Caddy, le tout en Docker (`docker-compose.prod.yml`). La procédure complète (DNS, redirect URI prod Google, `.env.production`, build, Caddy, seed démo, backups, rollback) est dans **[`deploy/README.md`](deploy/README.md)**.
 
-Env prod : voir [`.env.production.example`](.env.production.example) — Google + `AUTH_*` + `POSTGRES_PASSWORD` (Deezer ne demande rien).
+Env prod : voir [`.env.production.example`](.env.production.example) - Google + `AUTH_*` + `POSTGRES_PASSWORD` (Deezer ne demande rien).
 
 ---
 
@@ -316,7 +316,7 @@ Le worker BullMQ n'est pas lancé. Démarre-le : `pnpm worker`. Au prochain boot
 
 ### « `AccessDenied` juste après l'autorisation Google »
 
-Le callback NextAuth a échoué à écrire la session — quasi toujours parce que **Postgres n'est pas joignable**. Vérifie :
+Le callback NextAuth a échoué à écrire la session - quasi toujours parce que **Postgres n'est pas joignable**. Vérifie :
 
 ```bash
 pnpm db:up
@@ -341,7 +341,7 @@ N'utilise pas `pnpm db:push` en CI ni en prod. Préférer `db:generate` + `db:mi
 
 ## Licence
 
-MIT — fais-en ce que tu veux.
+MIT - fais-en ce que tu veux.
 
 ---
 

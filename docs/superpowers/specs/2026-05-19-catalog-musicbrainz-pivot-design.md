@@ -1,11 +1,11 @@
-# Sub-projet C+D+E — pivot catalog Spotify → MusicBrainz
+# Sub-projet C+D+E - pivot catalog Spotify → MusicBrainz
 
 > Date : 2026-05-19
 > Statut : design validé, plan à écrire
 
 ## Contexte
 
-La pivot stratégique (sub-projet A déjà livré) a remplacé l'auth Spotify par Google et fait de l'upload JSON la seule source de données utilisateur. Restait à éliminer la dépendance Spotify Web API pour l'enrichissement catalogue (covers, métadonnées album/artist) — c'est le but de ce spec.
+La pivot stratégique (sub-projet A déjà livré) a remplacé l'auth Spotify par Google et fait de l'upload JSON la seule source de données utilisateur. Restait à éliminer la dépendance Spotify Web API pour l'enrichissement catalogue (covers, métadonnées album/artist) - c'est le but de ce spec.
 
 Décision opérationnelle : C, D et E sont fusionnés dans ce spec pour éviter de laisser `main` dans un état mort-vivant avec du code Spotify non appelé.
 
@@ -19,10 +19,10 @@ Décision opérationnelle : C, D et E sont fusionnés dans ce spec pour éviter 
 ## Non-objectifs
 
 - Pas de support podcast/audiobook (skip comme aujourd'hui).
-- Pas de fallback iTunes ou autre service tiers — si MBz n'a pas le match, l'album reste sans cover.
+- Pas de fallback iTunes ou autre service tiers - si MBz n'a pas le match, l'album reste sans cover.
 - Pas de re-fetch sur changement de nom d'album/artist côté Spotify (one-shot match à l'import).
 
-## Schéma DB — migration `0005_pivot_catalog_musicbrainz.sql`
+## Schéma DB - migration `0005_pivot_catalog_musicbrainz.sql`
 
 ```sql
 -- Wipe catalog (l'utilisateur re-importera son JSON)
@@ -54,11 +54,11 @@ DROP TABLE IF EXISTS spotify_tokens CASCADE;
 ### Convention d'IDs après pivot
 
 - `tracks.id` = Spotify track ID extrait du JSON (`spotify_track_uri` → suffix). **Opaque** : on ne fait plus aucun call Spotify dessus. Stable car le JSON le contient toujours.
-- `albums.id` = `alb_<sha1(artist_name + '|' + album_name)[:16]>` — synthétisé à l'import. Idempotent, déterministe.
-- `artists.id` = `art_<sha1(artist_name)[:16]>` — synthétisé à l'import.
+- `albums.id` = `alb_<sha1(artist_name + '|' + album_name)[:16]>` - synthétisé à l'import. Idempotent, déterministe.
+- `artists.id` = `art_<sha1(artist_name)[:16]>` - synthétisé à l'import.
 - `albums.mbid`, `artists.mbid` = MBz UUIDs (nullable). Sentinelle `00000000-0000-0000-0000-000000000000` = "tenté mais pas trouvé sur MBz" (évite les retentes infinies).
 
-## Pipeline d'import — modifications de [worker/jobs/importHistory.ts](worker/jobs/importHistory.ts)
+## Pipeline d'import - modifications de [worker/jobs/importHistory.ts](worker/jobs/importHistory.ts)
 
 Le parser actuel ne capture que `spotify_track_uri` et `master_metadata_track_name`. On étend à 3 champs supplémentaires :
 
@@ -79,7 +79,7 @@ En plus de `trackNames`, on accumule :
 - `artistRows: Map<artistId, { name }>`
 - `albumRows: Map<albumId, { name, artistId }>` (premier artiste seulement comme owner)
 - `trackToAlbum: Map<trackId, albumId>` (pour remplir `tracks.album_id`)
-- `trackArtists: Map<trackId, artistId>` (un seul artiste/track côté JSON Spotify — les features ne sont pas séparées dans les exports)
+- `trackArtists: Map<trackId, artistId>` (un seul artiste/track côté JSON Spotify - les features ne sont pas séparées dans les exports)
 - `albumArtists: Map<albumId, artistId>`
 
 ### Skip rules
@@ -99,25 +99,25 @@ En plus de `trackNames`, on accumule :
 
 ### Idempotence
 
-Tout est `ON CONFLICT DO NOTHING`. Les noms ne sont jamais mis à jour — un user qui re-import le même JSON n'écrase rien.
+Tout est `ON CONFLICT DO NOTHING`. Les noms ne sont jamais mis à jour - un user qui re-import le même JSON n'écrase rien.
 
 ### Helper isolable
 
 `synthesizeIds(artistName, albumName) → { artistId, albumId }` dans [worker/jobs/importHistory.ts](worker/jobs/importHistory.ts) (testable unitairement).
 
-## Worker enrich — nouveau `worker/jobs/enrichCatalog.ts`
+## Worker enrich - nouveau `worker/jobs/enrichCatalog.ts`
 
 Remplace [worker/jobs/enrichMetadata.ts](worker/jobs/enrichMetadata.ts). Boucle sur albums puis artists.
 
 ### Flow pour 1 album
 
-1. **Search MBz** — `GET https://musicbrainz.org/ws/2/release-group/?query=release:"{album}" AND artist:"{artist}"&fmt=json&limit=5`
+1. **Search MBz** - `GET https://musicbrainz.org/ws/2/release-group/?query=release:"{album}" AND artist:"{artist}"&fmt=json&limit=5`
    - User-Agent : `loopstat/1.0 (https://loopstat.tech)` (sinon ban).
    - Score MBz ≥ 90 → match. Sinon stocker la sentinelle.
-2. **Cover Art Archive** — `GET https://coverartarchive.org/release-group/<mbid>/front-500`
+2. **Cover Art Archive** - `GET https://coverartarchive.org/release-group/<mbid>/front-500`
    - 200 → suivre le 302, stocker l'URL finale dans `albums.image_url`.
    - 404 → mbid stocké, `image_url` reste null (placeholder gradient en UI).
-3. **Métadonnées album** — Profiter du lookup pour remplir `albums.release_date` (`first-release-date`), `albums.album_type` (`primary-type`), `albums.total_tracks`.
+3. **Métadonnées album** - Profiter du lookup pour remplir `albums.release_date` (`first-release-date`), `albums.album_type` (`primary-type`), `albums.total_tracks`.
 
 ### Flow pour 1 artiste
 
@@ -142,11 +142,11 @@ La branche actuelle qui appelle Spotify pour enrichir à la volée (cf [src/app/
 
 ### Nouveau `src/lib/musicbrainz/`
 
-- **`client.ts`** — wrapper fetch avec User-Agent obligatoire, retry sur 503, parse `Retry-After`. Export `mbFetch<T>(path, options)`.
-- **`search.ts`** — `searchReleaseGroup({ artist, album })` et `searchArtist({ name })`. Construction de la query, score-checking, normalisation.
-- **`coverArt.ts`** — `fetchCoverUrl(releaseGroupMbid): Promise<string | null>`. Suit le 302.
-- **`catalog.ts`** — `enrichAlbumByNames({ albumId, albumName, artistName })` et `enrichArtistByName({ artistId, name })`. Pipelines complets.
-- **`types.ts`** — types minimaux des responses MBz.
+- **`client.ts`** - wrapper fetch avec User-Agent obligatoire, retry sur 503, parse `Retry-After`. Export `mbFetch<T>(path, options)`.
+- **`search.ts`** - `searchReleaseGroup({ artist, album })` et `searchArtist({ name })`. Construction de la query, score-checking, normalisation.
+- **`coverArt.ts`** - `fetchCoverUrl(releaseGroupMbid): Promise<string | null>`. Suit le 302.
+- **`catalog.ts`** - `enrichAlbumByNames({ albumId, albumName, artistName })` et `enrichArtistByName({ artistId, name })`. Pipelines complets.
+- **`types.ts`** - types minimaux des responses MBz.
 - Tests : `client.test.ts`, `search.test.ts`, `coverArt.test.ts`, `catalog.test.ts`.
 
 ### Suppression
@@ -161,7 +161,7 @@ La branche actuelle qui appelle Spotify pour enrichir à la volée (cf [src/app/
 
 ### Ajout UI
 
-- `src/components/ui/artist-avatar.tsx` — cercle gradient (couleur dérivée de `sha1(name)`) + initiale. Utilisé partout où il y avait une image artiste.
+- `src/components/ui/artist-avatar.tsx` - cercle gradient (couleur dérivée de `sha1(name)`) + initiale. Utilisé partout où il y avait une image artiste.
 - Les `RankedRow` actuels gèrent déjà `imageUrl = null` → placeholder. Adapter pour les artists rows à utiliser `<ArtistAvatar>` au lieu du placeholder générique.
 
 ## Erreurs & edge cases
@@ -182,7 +182,7 @@ La branche actuelle qui appelle Spotify pour enrichir à la volée (cf [src/app/
 
 - `src/lib/musicbrainz/{client,search,coverArt,catalog}.test.ts`
 - `src/lib/musicbrainz/synthesizeIds.test.ts` (ou colocaté avec importHistory)
-- `worker/jobs/importHistory.test.ts` (étendre) — entries avec `master_metadata_album_*`, entries sans album, idempotence re-import.
+- `worker/jobs/importHistory.test.ts` (étendre) - entries avec `master_metadata_album_*`, entries sans album, idempotence re-import.
 
 ### Migration
 
@@ -205,10 +205,10 @@ Pas de cible chiffrée stricte. Si < 60% sur dataset Jules → revoir la query M
 
 ## Dépendances externes
 
-- **MusicBrainz API** — gratuit, 1 req/sec/UA, sans clef. Endpoint `https://musicbrainz.org/ws/2/`.
-- **Cover Art Archive** — gratuit, sans limite documentée, sans clef. Endpoint `https://coverartarchive.org/`.
+- **MusicBrainz API** - gratuit, 1 req/sec/UA, sans clef. Endpoint `https://musicbrainz.org/ws/2/`.
+- **Cover Art Archive** - gratuit, sans limite documentée, sans clef. Endpoint `https://coverartarchive.org/`.
 
-Aucun ajout package npm prévu (fetch natif suffit). Si on veut éventuellement un wrapper, candidate : `musicbrainz-api` (npm) — à évaluer dans le plan.
+Aucun ajout package npm prévu (fetch natif suffit). Si on veut éventuellement un wrapper, candidate : `musicbrainz-api` (npm) - à évaluer dans le plan.
 
 ## Ordre de travail suggéré
 

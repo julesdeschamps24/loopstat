@@ -13,7 +13,7 @@ import { imports } from "@/db/schema";
  * qu'un COUNT(*) sur potentiellement plusieurs imports.
  *
  * Wrappé dans React.cache : le `RootLayout` et le `ImportBanner` appellent
- * tous deux cette fonction pendant le même render — sans cache, on ferait
+ * tous deux cette fonction pendant le même render - sans cache, on ferait
  * 2 round-trips DB identiques par requête.
  */
 export const hasCompletedImport = cache(

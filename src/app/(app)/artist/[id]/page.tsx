@@ -28,7 +28,7 @@ import { enrichArtistImageByDeezer } from "@/lib/deezer/catalog";
 
 function PercentDisplay({ percent }: { percent: number }) {
   // 2-decimal precision with French comma separator. "0.005" still rounds to
-  // "0,01" so we'd never show a misleading "0,00%" — but for a true 0 we want
+  // "0,01" so we'd never show a misleading "0,00%" - but for a true 0 we want
   // to suppress the section's value entirely (handled by the caller).
   const display =
     percent < 0.01
@@ -130,7 +130,7 @@ export default async function ArtistDetailPage({
 
   const { id: rawId } = await params;
   // Next.js 16 passes the param URL-encoded (e.g. "demo%3Asabrina-carpenter"),
-  // but our demo fixtures use a literal ":" prefix — decode so lookups match.
+  // but our demo fixtures use a literal ":" prefix - decode so lookups match.
   const id = decodeURIComponent(rawId);
 
   // ===== DEMO MODE =====
@@ -223,7 +223,7 @@ export default async function ArtistDetailPage({
   if (!artist) notFound();
 
   if (artist.imageUrl === null) {
-    // Try inline Deezer enrich with a tight timeout — image loads on first
+    // Try inline Deezer enrich with a tight timeout - image loads on first
     // visit instead of after a refresh. Falls back to background queue if
     // Deezer is slow.
     try {
@@ -244,7 +244,7 @@ export default async function ArtistDetailPage({
         .limit(1);
       if (refreshed?.imageUrl) artist.imageUrl = refreshed.imageUrl;
     } catch {
-      // Inline failed (timeout or Deezer error) — enqueue background fallback
+      // Inline failed (timeout or Deezer error) - enqueue background fallback
       void triggerSingleEnrich("artist", artist.id);
     }
   }
@@ -259,7 +259,7 @@ export default async function ArtistDetailPage({
       getUserTotalMsPlayed(userId),
     ]);
 
-  // % du temps d'écoute total — basé sur ms_played lifetime.
+  // % du temps d'écoute total - basé sur ms_played lifetime.
   const totalPercent = totalMs > 0 ? (stats.msPlayed / totalMs) * 100 : 0;
 
   return (

@@ -295,7 +295,7 @@ export function Watermark({
 
 /**
  * Background layer absolutely positioned over the whole card. Both
- * variants render edge-to-edge — content sits on top via a sibling
+ * variants render edge-to-edge - content sits on top via a sibling
  * positioned container.
  */
 export function Background({
@@ -348,7 +348,7 @@ function WallBackground({
   // 6 columns × ceil(height/tileSize) rows, no gap, slight opacity so
   // the covers tile feels like an ambient texture not a photo grid.
   // If the caller provided fewer covers than the canvas can fit, we
-  // repeat them — better to see the same album twice than to leave
+  // repeat them - better to see the same album twice than to leave
   // the bottom half on the bare background color.
   const cols = 6;
   const tileSize = Math.ceil(width / cols);

@@ -84,7 +84,7 @@ export default async function DashboardPage() {
     // garde que les covers pour le panneau gauche de la WelcomeModal.
     const wallAlbums = await getWallCovers(userId, null, WALL_CELLS);
     // Les 12 premiers covers alimentent le panneau gauche de
-    // la WelcomeModal — vraies pochettes plutôt que gradients violet.
+    // la WelcomeModal - vraies pochettes plutôt que gradients violet.
     const modalCovers = wallAlbums
       .map((a) => a.imageUrl)
       .filter((u): u is string => u !== null)

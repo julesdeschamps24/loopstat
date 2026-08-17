@@ -81,7 +81,7 @@ déjà propagé). Vérifie :
 
 ```sh
 curl -sI https://loopstat.fr | head -3
-# HTTP/2 307 — redirect vers /login = prod opérationnelle
+# HTTP/2 307 - redirect vers /login = prod opérationnelle
 ```
 
 ### 6. Tester le flow OAuth complet
@@ -162,7 +162,7 @@ ssh root@204.168.178.52 'cd /opt/loopstat && \
   docker compose -f docker-compose.prod.yml down'
 ```
 
-DESTRUCTIVE — wipe the DB too:
+DESTRUCTIVE - wipe the DB too:
 
 ```sh
 ssh root@204.168.178.52 'cd /opt/loopstat && \
@@ -208,12 +208,12 @@ Inspect from the VPS:
 docker inspect --format='{{.State.Health.Status}}' loopstat_app
 ```
 
-## Sécurité — points d'attention
+## Sécurité - points d'attention
 
 - **Postgres et Redis ne sont pas exposés** publiquement (pas de `ports:` mappés
   vers l'hôte). Ils ne sont accessibles qu'à l'intérieur du réseau Docker.
 - **App bindée à `127.0.0.1:3001`** : seul Caddy local peut l'atteindre.
-- **`.env.production`** contient les secrets — `chmod 600` recommandé.
+- **`.env.production`** contient les secrets - `chmod 600` recommandé.
 - **Mises à jour OS** : `apt update && apt upgrade` régulier. Reboot après
   mises à jour du noyau (Docker reprendra les containers `restart: unless-stopped`).
 - **Sauvegardes Postgres** : à mettre en place (pas dans ce guide). Au minimum

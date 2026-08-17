@@ -16,7 +16,7 @@ export function CopyProfileLinkButton({ username }: { username: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* clipboard unavailable on non-HTTPS — fail silently */
+      /* clipboard unavailable on non-HTTPS - fail silently */
     }
   }
 

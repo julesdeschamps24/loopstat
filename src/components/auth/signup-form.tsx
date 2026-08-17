@@ -26,7 +26,7 @@ export function SignupForm() {
   );
 
   // Full page load (pas router.push) : garantit que le cookie de session posé
-  // par l'action est envoyé au serveur — cf. commentaire dans actions.ts.
+  // par l'action est envoyé au serveur - cf. commentaire dans actions.ts.
   useEffect(() => {
     if (state && "ok" in state) window.location.assign("/dashboard");
   }, [state]);

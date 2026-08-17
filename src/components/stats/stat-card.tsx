@@ -1,7 +1,7 @@
 import { cn, glassCard } from "@/lib/utils";
 
 /**
- * A label + big number card. Pure presentational — value is pre-formatted
+ * A label + big number card. Pure presentational - value is pre-formatted
  * by the caller.
  */
 export type StatCardProps = {

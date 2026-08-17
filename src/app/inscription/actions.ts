@@ -11,7 +11,7 @@ import { checkRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 
 export type SignUpState = { error: string } | { ok: true } | null;
 
-// 5 créations de compte / heure par IP — large pour un humain, bloquant
+// 5 créations de compte / heure par IP - large pour un humain, bloquant
 // pour un script.
 const SIGNUP_MAX_PER_IP = 5;
 const SIGNUP_WINDOW_MS = 60 * 60 * 1000;

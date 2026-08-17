@@ -95,7 +95,7 @@ async function sweepStaleImports(): Promise<void> {
   }
 
   try {
-    // readdir throws ENOENT si .import-tmp/ n'existe pas — état normal
+    // readdir throws ENOENT si .import-tmp/ n'existe pas - état normal
     // si aucun import n'a tourné depuis le boot précédent.
     const dirs = await readdir(IMPORT_TMP_DIR).catch(() => [] as string[]);
     if (dirs.length > 0) {

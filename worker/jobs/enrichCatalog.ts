@@ -29,12 +29,12 @@ async function yieldToPriorityJobs(wlog: ReturnType<typeof log.child>): Promise<
     const pending =
       (hot.waiting ?? 0) + (hot.active ?? 0) + (single.waiting ?? 0) + (single.active ?? 0);
     if (pending === 0) {
-      if (paused) wlog.info({}, "priorite videe — reprise du sweep");
+      if (paused) wlog.info({}, "priorite videe - reprise du sweep");
       return;
     }
     if (!paused) {
       paused = true;
-      wlog.info({ pending }, "sweep en pause — priorite aux covers visibles");
+      wlog.info({ pending }, "sweep en pause - priorite aux covers visibles");
     }
     await sleep(PRIORITY_POLL_MS);
   }
@@ -81,7 +81,7 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
       slog.info({ state }, "removing stale finished job");
       await existing.remove();
     } else {
-      slog.info({ state }, "enrich already pending — no re-enqueue");
+      slog.info({ state }, "enrich already pending - no re-enqueue");
       return { unenrichedAlbums, unenrichedArtists, enqueued: false };
     }
   }

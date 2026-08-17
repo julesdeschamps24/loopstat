@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Gate stat depth behind Premium — free users get only the `1y` + `all` periods, top-10 lists, and a locked listening clock; Premium unlocks all 5 periods, top-100, and the full clock.
+**Goal:** Gate stat depth behind Premium - free users get only the `1y` + `all` periods, top-10 lists, and a locked listening clock; Premium unlocks all 5 periods, top-100, and the full clock.
 
 **Architecture:** A single pure policy module (`src/lib/stats/access.ts`) is the source of truth for what a tier can access (allowed periods, default period, clamped period, locked periods, top limit). Server components fetch `isPremium(userId)` (already exists, `cache()`-wrapped), pass the boolean into the pure helpers to decide what to fetch, and pass `lockedValues` into the existing `PeriodSelector` so locked periods render as upsell links. The listening clock reuses the existing `PremiumGate` overlay. **Period access is enforced server-side** (the URL `?period=` is clamped) so a free user can't bypass gating by editing the URL.
 
@@ -12,13 +12,13 @@
 
 ## Scope
 
-In scope (chantier 🅰 — gating existing surfaces): periods, top-list depth, listening clock, plus a dashboard-preview consistency fix.
+In scope (chantier 🅰 - gating existing surfaces): periods, top-list depth, listening clock, plus a dashboard-preview consistency fix.
 
-Out of scope (separate epics 🅑): net-new Premium features **deep-dives** and **comparaison entre amis** — they don't exist yet and are their own plans.
+Out of scope (separate epics 🅑): net-new Premium features **deep-dives** and **comparaison entre amis** - they don't exist yet and are their own plans.
 
 ## Testing strategy (read before starting)
 
-- `vitest.config.ts` runs in the **`node`** environment with **no jsdom** and there is no E2E harness. So **only the pure policy module (Task 1) gets unit tests (full TDD).** Client/server-component tasks (Tasks 2–8) are verified by `pnpm typecheck` + **manual browser checks** against the already-running dev server (`http://127.0.0.1:3000`).
+- `vitest.config.ts` runs in the **`node`** environment with **no jsdom** and there is no E2E harness. So **only the pure policy module (Task 1) gets unit tests (full TDD).** Client/server-component tasks (Tasks 2-8) are verified by `pnpm typecheck` + **manual browser checks** against the already-running dev server (`http://127.0.0.1:3000`).
 - **Toggle a test account between tiers** for manual verification (the logged-in dev account is `julesdeschamps24@gmail.com`):
 
 ```bash
@@ -37,13 +37,13 @@ docker exec -i loopstat_postgres psql -U loopstat -d loopstat -c \
 
 ## File Structure
 
-- **Create** `src/lib/stats/access.ts` — pure tier-access policy (no DB, no React). One responsibility: "given a premium boolean, what can this user see?".
-- **Create** `src/lib/stats/access.test.ts` — unit tests for the policy.
-- **Create** `src/components/stats/top-list-upsell.tsx` — server component: a CTA shown below a free user's top-10 list.
-- **Modify** `src/components/stats/period-selector.tsx` — add `lockedValues` prop; render locked pills as `/pricing` links; never restore/mirror a locked period.
-- **Modify** `src/app/(app)/top/tracks/page.tsx`, `.../top/artists/page.tsx`, `.../top/albums/page.tsx` — fetch `isPremium`, clamp period, use tier top-limit, pass `lockedValues`, show upsell for free.
-- **Modify** `src/app/(app)/listening-clock/page.tsx` — wrap the populated heatmap in `PremiumGate`.
-- **Modify** `src/app/(app)/dashboard/page.tsx` — free users' top-5 preview uses lifetime instead of the 4-week window (which is Premium-only).
+- **Create** `src/lib/stats/access.ts` - pure tier-access policy (no DB, no React). One responsibility: "given a premium boolean, what can this user see?".
+- **Create** `src/lib/stats/access.test.ts` - unit tests for the policy.
+- **Create** `src/components/stats/top-list-upsell.tsx` - server component: a CTA shown below a free user's top-10 list.
+- **Modify** `src/components/stats/period-selector.tsx` - add `lockedValues` prop; render locked pills as `/pricing` links; never restore/mirror a locked period.
+- **Modify** `src/app/(app)/top/tracks/page.tsx`, `.../top/artists/page.tsx`, `.../top/albums/page.tsx` - fetch `isPremium`, clamp period, use tier top-limit, pass `lockedValues`, show upsell for free.
+- **Modify** `src/app/(app)/listening-clock/page.tsx` - wrap the populated heatmap in `PremiumGate`.
+- **Modify** `src/app/(app)/dashboard/page.tsx` - free users' top-5 preview uses lifetime instead of the 4-week window (which is Premium-only).
 
 ---
 
@@ -123,7 +123,7 @@ describe("tier access policy", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test -- src/lib/stats/access.test.ts`
-Expected: FAIL — `Failed to resolve import "./access"` (module doesn't exist yet).
+Expected: FAIL - `Failed to resolve import "./access"` (module doesn't exist yet).
 
 - [ ] **Step 3: Write the implementation**
 
@@ -154,7 +154,7 @@ export function isPeriodAllowed(period: StreamPeriod, premium: boolean): boolean
 
 /**
  * Default period when the URL specifies none. Premium defaults to the most
- * recent window (1w); free defaults to lifetime ("all") — both the only
+ * recent window (1w); free defaults to lifetime ("all") - both the only
  * sensible default for free AND the most shareable view.
  */
 export function defaultPeriod(premium: boolean): StreamPeriod {
@@ -192,7 +192,7 @@ git commit -m "feat(gating): tier-access policy module (free=1y+all, top10)"
 
 ---
 
-## Task 2: PeriodSelector — render & guard locked periods
+## Task 2: PeriodSelector - render & guard locked periods
 
 **Files:**
 - Modify: `src/components/stats/period-selector.tsx`
@@ -911,7 +911,7 @@ with:
 }
 ```
 
-> The `EmptyState` branch (`totalStreams === 0`) stays ungated — there's nothing to blur. The demo branch (`!hasImport`) stays ungated — it's the pre-import teaser.
+> The `EmptyState` branch (`totalStreams === 0`) stays ungated - there's nothing to blur. The demo branch (`!hasImport`) stays ungated - it's the pre-import teaser.
 
 - [ ] **Step 4: Typecheck**
 
@@ -961,7 +961,7 @@ with:
 
 ```ts
   const premium = await isPremium(userId);
-  // 4w is a Premium-only period — free users get their lifetime top 5 instead
+  // 4w is a Premium-only period - free users get their lifetime top 5 instead
   // (the impressive, on-brand hook). Premium keeps the recent 28-day snapshot.
   const previewSince = premium
     ? new Date(refDate.getTime() - 28 * 24 * 60 * 60 * 1000)
@@ -985,7 +985,7 @@ If a label is rendered above/around the top-5 preview (`top5Tracks` / `top5Artis
 {premium ? "4 dernières semaines" : "Tout temps"}
 ```
 
-If the grep returns nothing, no change needed — skip this step.
+If the grep returns nothing, no change needed - skip this step.
 
 - [ ] **Step 3: Typecheck**
 
@@ -1041,7 +1041,7 @@ git commit -m "chore(gating): verification fixups"
 
 ## Self-review notes (author)
 
-- **Spec coverage:** periods ✅ (Tasks 1,2,4–6), top-10 ✅ (Tasks 1,4–6), partial/locked listening clock ✅ (Task 7), customization (already shipped — no task). Dashboard leak closed (Task 8). Deep-dives + friend comparison explicitly out of scope.
-- **Server-side enforcement:** period clamping happens in the page server component via `resolvePeriod` before any fetch — URL tampering can't bypass it. List length is enforced by the SQL `limit`. (Listening-clock gating is client-side blur via `PremiumGate`, acceptable: hourly counts are low-sensitivity, consistent with the existing customization gate.)
-- **Type consistency:** `lockedPeriods`/`resolvePeriod`/`defaultPeriod`/`topLimit` signatures are used identically across Tasks 4–6; `TopListUpsell` takes `noun: string` everywhere; `PeriodSelector` gains `lockedValues?: StreamPeriod[]` used by all callers.
-- **Known minor / not addressed here:** the stale "le polling synchronise automatiquement" empty-message in `top/tracks/page.tsx` (no polling anymore) — unrelated to gating, leave for a docs/copy pass.
+- **Spec coverage:** periods ✅ (Tasks 1,2,4-6), top-10 ✅ (Tasks 1,4-6), partial/locked listening clock ✅ (Task 7), customization (already shipped - no task). Dashboard leak closed (Task 8). Deep-dives + friend comparison explicitly out of scope.
+- **Server-side enforcement:** period clamping happens in the page server component via `resolvePeriod` before any fetch - URL tampering can't bypass it. List length is enforced by the SQL `limit`. (Listening-clock gating is client-side blur via `PremiumGate`, acceptable: hourly counts are low-sensitivity, consistent with the existing customization gate.)
+- **Type consistency:** `lockedPeriods`/`resolvePeriod`/`defaultPeriod`/`topLimit` signatures are used identically across Tasks 4-6; `TopListUpsell` takes `noun: string` everywhere; `PeriodSelector` gains `lockedValues?: StreamPeriod[]` used by all callers.
+- **Known minor / not addressed here:** the stale "le polling synchronise automatiquement" empty-message in `top/tracks/page.tsx` (no polling anymore) - unrelated to gating, leave for a docs/copy pass.

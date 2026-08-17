@@ -1,4 +1,4 @@
-# Refonte de la page `/album/[id]` — design spec
+# Refonte de la page `/album/[id]` - design spec
 
 **Date** : 2026-05-17
 **Auteur** : Jules + Claude (brainstorming session)
@@ -158,7 +158,7 @@ Si l'artiste n'a aucun autre album dans l'historique → ne pas afficher la sect
 ## Composants à modifier / créer / extraire
 
 ### Modifier
-- **[src/app/album/[id]/page.tsx](../../../src/app/album/[id]/page.tsx)** —
+- **[src/app/album/[id]/page.tsx](../../../src/app/album/[id]/page.tsx)** -
   refactor complet selon la spec ci-dessus.
 
 ### Créer (nouvelles queries SQL dans `src/db/queries/stats.ts`)
@@ -168,7 +168,7 @@ Toutes les nouvelles queries suivent les patterns existants (Drizzle + `QUALIFYI
 1. **`getAlbumTrackPlays(userId, albumId)`** → `{ trackId, name, trackNumber, plays }[]`
    - JOIN streams → tracks WHERE album_id = ? AND user_id = ? AND QUALIFYING_PLAY
    - GROUP BY track_id, name, track_number
-   - ORDER BY track_number ASC (ordre album, pas plays — la barre dit déjà qui domine)
+   - ORDER BY track_number ASC (ordre album, pas plays - la barre dit déjà qui domine)
    - Inclut les tracks de l'album **avec 0 plays** : LEFT JOIN streams sur tracks WHERE album_id
    - Caller calcule maxPlays et top track côté React
 
@@ -194,10 +194,10 @@ Toutes les nouvelles queries suivent les patterns existants (Drizzle + `QUALIFYI
    - ORDER BY count(*) DESC, LIMIT ?
    - Premier artiste de l'album courant utilisé comme `artistId`
 
-7. **`getAlbumPlayStats`** (existant) — **élargir** pour retourner aussi
+7. **`getAlbumPlayStats`** (existant) - **élargir** pour retourner aussi
    `firstPlayedAt`, `lastPlayedAt`, `totalMsPlayed` (somme).
    Nouveau retour : `{ count, firstPlayedAt: Date | null, lastPlayedAt: Date | null, totalMsPlayed: number }`.
-   Seul caller : `src/app/album/[id]/page.tsx` (qu'on réécrit dans cette spec) —
+   Seul caller : `src/app/album/[id]/page.tsx` (qu'on réécrit dans cette spec) -
    aucun autre fichier à mettre à jour. **Le top track est dérivé en JS** côté
    caller depuis le résultat de `getAlbumTrackPlays` (pas de query dédiée).
 
@@ -206,11 +206,11 @@ Toutes les nouvelles queries suivent les patterns existants (Drizzle + `QUALIFYI
 Deux composants visuels sont actuellement inline dans `/track/[id]` et seront
 réutilisés sur `/album/[id]`. Les extraire pour mutualiser :
 
-- **`src/components/stats/hour-heatmap.tsx`** — la heatmap 24h. Props :
+- **`src/components/stats/hour-heatmap.tsx`** - la heatmap 24h. Props :
   `{ data: { hour: number; count: number }[] }`. Inclut le grid 12/24 cols
   responsive et l'opacité dépendante de `intensity`.
 
-- **`src/components/stats/period-breakdown-grid.tsx`** — la grille 4 cards
+- **`src/components/stats/period-breakdown-grid.tsx`** - la grille 4 cards
   4w/6m/1y/all. Props : `{ data: Record<StreamPeriod, number> }`. Utilise
   `STREAM_PERIODS` existant.
 
@@ -235,7 +235,7 @@ mécanique, pas de risque).
   user + streams + tracks + albums + artists). Pattern : suivre les tests
   existants pour `getTopTracksFromStreams` (si présents dans `stats.test.ts`).
 - **Vérification visuelle manuelle** (UI sans infra de test React) :
-  - Album avec 0 play (état edge — sections optionnelles doivent disparaître)
+  - Album avec 0 play (état edge - sections optionnelles doivent disparaître)
   - Album avec 1 play (top track caché)
   - Album peu écouté (sparkline absente)
   - Album très écouté (toutes sections visibles)
@@ -251,11 +251,11 @@ mécanique, pas de risque).
   lib type `node-vibrant`, du caching, edge cases sur les covers Spotify)
 - Comparaison "comment cet album se classe vs tes autres albums" (méta-stat,
   pourrait venir plus tard)
-- Listening curve par heure de la JOURNÉE × jour de la SEMAINE (heatmap 2D —
+- Listening curve par heure de la JOURNÉE × jour de la SEMAINE (heatmap 2D -
   trop de scope, /track/[id] ne l'a pas non plus)
 - Recommandations "albums similaires" depuis Spotify API (~3-5 albums type
-  similar artists — sortie de scope, non-trivial)
-- Boutons d'action ("play on Spotify", "share") — sortie de scope
+  similar artists - sortie de scope, non-trivial)
+- Boutons d'action ("play on Spotify", "share") - sortie de scope
 - Refonte de `/artist/[id]` (pourrait suivre dans une autre passe avec carousel
   d'albums, etc.)
-- Refonte de `/top/albums` (séparée — pas de bug confirmé là-bas)
+- Refonte de `/top/albums` (séparée - pas de bug confirmé là-bas)

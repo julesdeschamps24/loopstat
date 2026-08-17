@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "loopstat",
     short_name: "loopstat",
-    description: "Ton Spotify, en chiffres — stats détaillées, sans pub.",
+    description: "Ton Spotify, en chiffres - stats détaillées, sans pub.",
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#070710",

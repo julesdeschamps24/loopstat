@@ -37,7 +37,7 @@ export function ImportProgress({ importId }: { importId: string }) {
   const [state, setState] = useState<State>({ kind: "loading" });
   // Mount time stands in for the import's server-side `started_at`: the
   // component mounts right after POST /api/import returns, so the gap is at
-  // most a couple of seconds — well below the 5 min stall threshold. A `now`
+  // most a couple of seconds - well below the 5 min stall threshold. A `now`
   // state ticks every 30s so the banner appears as soon as the elapsed time
   // crosses STALL_THRESHOLD_MS, even if no poll response lands in that window.
   const [mountedAt] = useState<number>(() => Date.now());
@@ -58,7 +58,7 @@ export function ImportProgress({ importId }: { importId: string }) {
 
         if (cancelled) return;
 
-        // Definitive errors — stop polling, show a message.
+        // Definitive errors - stop polling, show a message.
         if (res.status === 401) {
           setState({ kind: "unauthorized" });
           return;
@@ -67,7 +67,7 @@ export function ImportProgress({ importId }: { importId: string }) {
           setState({ kind: "notfound" });
           return;
         }
-        // Transient (5xx, network blips) — keep polling.
+        // Transient (5xx, network blips) - keep polling.
         if (!res.ok) {
           console.error("[import-progress] status poll failed", res.status);
           timer = setTimeout(() => void poll(), POLL_INTERVAL_MS);
@@ -90,7 +90,7 @@ export function ImportProgress({ importId }: { importId: string }) {
         timer = setTimeout(() => void poll(), POLL_INTERVAL_MS);
       } catch (err) {
         if (cancelled) return;
-        // Network error — log and retry.
+        // Network error - log and retry.
         console.error("[import-progress] status poll error", err);
         timer = setTimeout(() => void poll(), POLL_INTERVAL_MS);
       }
@@ -146,7 +146,7 @@ export function ImportProgress({ importId }: { importId: string }) {
     );
   }
 
-  // loading / running — animated indicator, plus a stalled banner when the
+  // loading / running - animated indicator, plus a stalled banner when the
   // import has been pending/processing past its status-specific threshold.
   const elapsedMs = now - mountedAt;
   const stalledKind =

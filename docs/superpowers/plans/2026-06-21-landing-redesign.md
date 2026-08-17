@@ -1,8 +1,8 @@
-# Landing Redesign — Split Hero with Floating Cluster — Implementation Plan
+# Landing Redesign - Split Hero with Floating Cluster - Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the empty centered landing (`/`) with a compact, above-the-fold split hero — value prop + CTA on the left, an animated cluster of real product fragments (mini dashboard, album covers, KPI chip, vinyl) floating on the right — in loopstat's "Nébuleuse" design language.
+**Goal:** Replace the empty centered landing (`/`) with a compact, above-the-fold split hero - value prop + CTA on the left, an animated cluster of real product fragments (mini dashboard, album covers, KPI chip, vinyl) floating on the right - in loopstat's "Nébuleuse" design language.
 
 **Architecture:** `page.tsx` stays a static server component (no DB query). Curated demo album covers are baked into `public/landing/`. A small client component (`FloatingCluster`) renders the floating elements; a CSS keyframe handles the idle bob, and a tiny vanilla `pointermove` handler adds subtle mouse parallax (disabled on touch / reduced-motion). Parallax composes with the float by putting the parallax transform on a wrapper and the float animation on an inner element.
 
@@ -15,18 +15,18 @@
 ## File Structure
 
 **Create:**
-- `public/landing/cover-espresso.jpg`, `cover-birds.jpg`, `cover-beautiful.jpg`, `cover-fortnight.jpg`, `cover-houdini.jpg`, `cover-texas.jpg` — 6 curated demo covers.
-- `src/lib/landing/parallax.ts` — pure parallax-offset helper.
-- `src/lib/landing/parallax.test.ts` — its test.
-- `src/components/landing/landing-data.ts` — curated dashboard rows + floating cover list.
-- `src/components/landing/floating-cluster.tsx` — client component (markup + float + parallax).
+- `public/landing/cover-espresso.jpg`, `cover-birds.jpg`, `cover-beautiful.jpg`, `cover-fortnight.jpg`, `cover-houdini.jpg`, `cover-texas.jpg` - 6 curated demo covers.
+- `src/lib/landing/parallax.ts` - pure parallax-offset helper.
+- `src/lib/landing/parallax.test.ts` - its test.
+- `src/components/landing/landing-data.ts` - curated dashboard rows + floating cover list.
+- `src/components/landing/floating-cluster.tsx` - client component (markup + float + parallax).
 
 **Modify:**
-- `src/app/globals.css` — add `ls-float` keyframes + class + reduced-motion guard.
-- `src/app/page.tsx` — restructure into the split layout.
-- `src/components/landing/landing-footer.tsx` — slim to one thin row (only if it isn't already; see Task 7).
+- `src/app/globals.css` - add `ls-float` keyframes + class + reduced-motion guard.
+- `src/app/page.tsx` - restructure into the split layout.
+- `src/components/landing/landing-footer.tsx` - slim to one thin row (only if it isn't already; see Task 7).
 
-**Note on TDD:** the only unit-testable logic here is the parallax math (Task 2, full TDD). The components are JSX/CSS — this repo has no component-render test harness (vitest covers queries/helpers only), so they are verified by `pnpm typecheck` + `pnpm lint` + `pnpm build` + visual check in `pnpm dev`. This is consistent with how the rest of the UI is built.
+**Note on TDD:** the only unit-testable logic here is the parallax math (Task 2, full TDD). The components are JSX/CSS - this repo has no component-render test harness (vitest covers queries/helpers only), so they are verified by `pnpm typecheck` + `pnpm lint` + `pnpm build` + visual check in `pnpm dev`. This is consistent with how the rest of the UI is built.
 
 ---
 
@@ -100,7 +100,7 @@ describe("parallaxTranslate", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pnpm test src/lib/landing/parallax.test.ts`
-Expected: FAIL — cannot resolve `./parallax`.
+Expected: FAIL - cannot resolve `./parallax`.
 
 - [ ] **Step 3: Write minimal implementation**
 
@@ -111,7 +111,7 @@ export type Vec2 = { x: number; y: number };
 /**
  * Parallax translation for a floating element. `nx`/`ny` are the cursor
  * position relative to the hero centre, normalised to ~[-1, 1] (left/top
- * negative, right/bottom positive). `factor` is the element's depth in px —
+ * negative, right/bottom positive). `factor` is the element's depth in px -
  * larger moves more. Returns the px offset to apply.
  */
 export function parallaxTranslate(nx: number, ny: number, factor: number): Vec2 {
@@ -185,7 +185,7 @@ git commit -m "feat(landing): ls-float keyframes + reduced-motion guard"
 export type LandingCover = { src: string; tilt: string; dur: string; delay: string };
 export type LandingRow = { rank: number; src: string; title: string; artist: string };
 
-// Mini-dashboard "Top titres" rows (demo top-3) — covers baked in public/landing/.
+// Mini-dashboard "Top titres" rows (demo top-3) - covers baked in public/landing/.
 export const LANDING_ROWS: LandingRow[] = [
   { rank: 1, src: "/landing/cover-espresso.jpg", title: "Espresso", artist: "Sabrina Carpenter" },
   { rank: 2, src: "/landing/cover-birds.jpg", title: "BIRDS OF A FEATHER", artist: "Billie Eilish" },
@@ -266,7 +266,7 @@ export function FloatingCluster() {
 
   return (
     <div ref={rootRef} className="relative h-full w-full" aria-hidden="true">
-      {/* Mini dashboard — parallax wrapper + inner float */}
+      {/* Mini dashboard - parallax wrapper + inner float */}
       <div
         data-factor="10"
         className="absolute"
@@ -503,7 +503,7 @@ export default function HomePage() {
           </h1>
 
           <p className="max-w-md text-base sm:text-lg" style={{ color: "#a89ec8", lineHeight: 1.5 }}>
-            Tops, historique d&apos;écoute, listening clock — toutes tes stats,
+            Tops, historique d&apos;écoute, listening clock - toutes tes stats,
             gratuit et sans pub.
           </p>
 
@@ -537,7 +537,7 @@ export default function HomePage() {
 - [ ] **Step 2: Verify typecheck + lint + build**
 
 Run: `pnpm typecheck && pnpm lint && pnpm build`
-Expected: all pass. (`pnpm build` confirms the public route renders without runtime env — important since the landing is public.)
+Expected: all pass. (`pnpm build` confirms the public route renders without runtime env - important since the landing is public.)
 
 - [ ] **Step 3: Visual check in dev**
 
@@ -556,20 +556,20 @@ git commit -m "feat(landing): split hero layout with floating cluster"
 
 ---
 
-## Task 7: Footer — confirm it stays above the fold (likely no change)
+## Task 7: Footer - confirm it stays above the fold (likely no change)
 
 **Files:**
 - Possibly modify: `src/components/landing/landing-footer.tsx`
 
 The current footer is already a single compact row: `border-t px-8 py-5 text-xs`,
-with `© 2026 loopstat` on the left and a nav of three links on the right —
+with `© 2026 loopstat` on the left and a nav of three links on the right -
 `CGU` (`/terms`), `Confidentialité` (`/privacy`), `Mentions légales` (`/legal`).
 It almost certainly fits without change.
 
 - [ ] **Step 1: Visual confirm in dev**
 
 At `http://127.0.0.1:3000/`, confirm the footer sits at the bottom and the page
-does not scroll. If it fits (expected), **no change — skip to Task 8.**
+does not scroll. If it fits (expected), **no change - skip to Task 8.**
 
 - [ ] **Step 2 (only if the page scrolls because of footer height): reduce padding**
 
@@ -595,7 +595,7 @@ Expected: typecheck pass, lint clean, all tests pass (including the new parallax
 
 In `pnpm dev` at `http://127.0.0.1:3000/`:
 - Desktop window: split layout, no scroll, gentle float + subtle parallax on mouse move.
-- Narrow the window (mobile width): single column — text on top, simplified cluster below (vinyl + 2 extra covers hidden), still no scroll.
+- Narrow the window (mobile width): single column - text on top, simplified cluster below (vinyl + 2 extra covers hidden), still no scroll.
 - Toggle reduced motion (macOS: System Settings → Accessibility → Display → Reduce motion) and reload: floating elements are static (no bob, no parallax).
 
 - [ ] **Step 3: Confirm no regressions on the rest of the app**
@@ -607,6 +607,6 @@ Spot-check `http://127.0.0.1:3000/login` and `/pricing` still render (the landin
 ## Notes for the executor
 
 - Match the existing landing's styling idiom (inline `style={{…}}` + Tailwind utility classes); the codebase uses this throughout `src/components/landing/`.
-- Album covers render via plain `<img>` (not `next/image`) with an `eslint-disable-next-line @next/next/no-img-element` comment — the same pattern as `src/app/api/share-card/templates/` and the artist page. This is intentional (small decorative covers, no optimizer needed).
+- Album covers render via plain `<img>` (not `next/image`) with an `eslint-disable-next-line @next/next/no-img-element` comment - the same pattern as `src/app/api/share-card/templates/` and the artist page. This is intentional (small decorative covers, no optimizer needed).
 - Exact `left`/`top` percentages and `data-factor` values in `FloatingCluster` are starting points tuned to the approved `landing_dir_b_split` mockup. Adjust by eye in `pnpm dev` so nothing overlaps the dashboard card or the text column.
-- Deployment: this ships with the next prod redeploy (rsync + rebuild) — no migration, no env change. Not part of this plan unless requested.
+- Deployment: this ships with the next prod redeploy (rsync + rebuild) - no migration, no env change. Not part of this plan unless requested.

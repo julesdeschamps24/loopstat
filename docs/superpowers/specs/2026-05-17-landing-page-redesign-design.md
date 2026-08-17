@@ -1,4 +1,4 @@
-# Refonte de la page d'accueil `/` — design spec
+# Refonte de la page d'accueil `/` - design spec
 
 **Date** : 2026-05-17
 **Auteur** : Jules + Claude (brainstorming session)
@@ -11,7 +11,7 @@ minimaliste (H1 + sous-titre + CTA vert Spotify) qui souffre d'incohérences
 chromatiques avec le reste du dark mode :
 
 - `--primary` (vert Spotify `#1ed760`) sert à la fois de couleur de marque
-  globale **et** de couleur fonctionnelle "auth Spotify" — confusion sémantique.
+  globale **et** de couleur fonctionnelle "auth Spotify" - confusion sémantique.
 - Le dark mode établit pourtant une identité forte **nébuleuse violet/mauve**
   (`#070710` + radial `#1a0d2e`, accent `#7c3aed`) qui n'est pas exploitée
   sur la landing.
@@ -47,7 +47,7 @@ de landing tout en restant cohérente avec la suite du parcours.
 │               en chiffres.                         │     ("en chiffres" en lavande)
 │                                                    │
 │        Tops, historique d'écoute, listening        │   ← sous-titre 18px
-│        clock — toutes tes stats Spotify,           │
+│        clock - toutes tes stats Spotify,           │
 │        gratuites et sans pub.                      │
 │                                                    │
 │      [● Continuer avec Spotify]  Voir un exemple → │   ← CTA + lien
@@ -60,7 +60,7 @@ de landing tout en restant cohérente avec la suite du parcours.
 └────────────────────────────────────────────────────┘
 ```
 
-### Palette (cette page uniquement — ne touche pas globals.css)
+### Palette (cette page uniquement - ne touche pas globals.css)
 
 | Rôle | Hex | Usage |
 |---|---|---|
@@ -76,7 +76,7 @@ de landing tout en restant cohérente avec la suite du parcours.
 | Spotify text on green | `#0a0a0a` | Texte du bouton CTA |
 
 Le radial est appliqué via `body::before` dans `.dark` (déjà existant
-[globals.css:65](../../../src/app/globals.css#L65)) — la force-dark suffit pour
+[globals.css:65](../../../src/app/globals.css#L65)) - la force-dark suffit pour
 l'activer.
 
 ### Typographie
@@ -124,27 +124,27 @@ H1 line-height : `1.0` desktop, `1.05` mobile. Sous-titre line-height : `1.5`.
 
 ### Modifier
 
-- **[src/app/page.tsx](../../../src/app/page.tsx)** — refactor complet selon la spec
+- **[src/app/page.tsx](../../../src/app/page.tsx)** - refactor complet selon la spec
   ci-dessus
 
 ### Créer
 
-- **`src/components/landing/spotify-cta-button.tsx`** — bouton réutilisable
+- **`src/components/landing/spotify-cta-button.tsx`** - bouton réutilisable
   intégrant l'icône SVG Spotify officielle (la même que sur `/login`, à
   factoriser depuis [src/components/spotify-login-button.tsx](../../../src/components/spotify-login-button.tsx)
   si possible). Props : `href`, `variant: "hero" | "compact"`.
 
-- **`src/components/landing/landing-header.tsx`** — header simple
+- **`src/components/landing/landing-header.tsx`** - header simple
   wordmark + lien Tarifs. Pas réutilisable ailleurs (header différent
   sur les pages internes via la sidebar), mais isole proprement.
   - Wordmark `loopstat.` (le point en `#7c3aed`) est un `<Link href="/">`
   - Lien droite : `<Link href="/pricing">Tarifs</Link>`
 
-- **`src/components/landing/landing-footer.tsx`** — variante allégée du
+- **`src/components/landing/landing-footer.tsx`** - variante allégée du
   footer (juste copyright + 3 liens légaux). Si [src/components/legal-footer.tsx](../../../src/components/legal-footer.tsx)
   est déjà minimal, on le réutilise tel quel ou avec une prop `variant`.
 
-### Force dark — sans dépendre du `ThemeProvider`
+### Force dark - sans dépendre du `ThemeProvider`
 
 La page doit afficher la palette violet/mauve indépendamment de
 `prefers-color-scheme: light`. Deux pièges à éviter :
@@ -155,7 +155,7 @@ La page doit afficher la palette violet/mauve indépendamment de
    Un wrapper `<div className="dark">` à l'intérieur de la page **n'activera
    pas** ce pseudo-élément (la cible CSS exige que `body` soit descendant
    de `.dark`, pas un div).
-2. **Ne pas modifier le `ThemeProvider`** au niveau layout — il sert pour
+2. **Ne pas modifier le `ThemeProvider`** au niveau layout - il sert pour
    tout le reste de l'app.
 
 **Solution** : la landing peint son propre fond inline sans dépendre de
@@ -175,7 +175,7 @@ La page doit afficher la palette violet/mauve indépendamment de
 
 Toutes les couleurs (texte, accents, borders) sont appliquées en utilities
 Tailwind avec valeurs arbitraires (`text-[#f4f0ff]`, `bg-[#1ed760]`, etc.)
-ou via classes utilitaires définies localement — **jamais** via
+ou via classes utilitaires définies localement - **jamais** via
 `text-foreground` ou `bg-background` (qui dépendent du thème actif).
 
 Conséquence : la landing est totalement déconnectée de `ThemeProvider`,
@@ -210,7 +210,7 @@ brainstorming séparée.
   focus visible partout, contraste vérifié avec outil WCAG
 - **`prefers-reduced-motion`** : RAS (pas d'animation dans cette spec)
 - **SEO** : `metadata.title` et `metadata.description` du layout
-  s'appliquent — pas de besoin d'override
+  s'appliquent - pas de besoin d'override
 
 ## Hors-scope explicite
 

@@ -4,7 +4,7 @@
 
 **Goal:** Ship a `/share` page where authenticated public-profile users can preview + customize a downloadable card (mode focus or recap, 3 formats, 4 periods, 2 backgrounds) and a `/api/share-card` route that generates the PNG via `next/og`.
 
-**Architecture:** URL-driven editor (no DB persistence at MVP — query params are the source of truth). Server renders the page, a client component handles controls + `history.replaceState` URL sync + re-fetches a single `<img>` whose `src` points to `/api/share-card?...`. The API parses Zod-validated params, fetches stats (existing helpers in `src/db/queries/stats.ts`), and returns a PNG built with format-specific JSX templates that share a small helpers module.
+**Architecture:** URL-driven editor (no DB persistence at MVP - query params are the source of truth). Server renders the page, a client component handles controls + `history.replaceState` URL sync + re-fetches a single `<img>` whose `src` points to `/api/share-card?...`. The API parses Zod-validated params, fetches stats (existing helpers in `src/db/queries/stats.ts`), and returns a PNG built with format-specific JSX templates that share a small helpers module.
 
 **Tech Stack:** Next.js 16.2.4 (App Router), React 19.2.4, TypeScript, Drizzle ORM + Postgres, `next/og` + Satori, Zod 4, Vitest.
 
@@ -16,9 +16,9 @@
 
 ## Critical context for the engineer
 
-1. **Satori (`next/og`) requires `display: "flex"` on every `<div>` that has children — even text-only ones.** Without it, the response throws "failed to pipe response" with no Satori-side error in the Next dev log. We hit this when building the auto OG image; do not regress.
+1. **Satori (`next/og`) requires `display: "flex"` on every `<div>` that has children - even text-only ones.** Without it, the response throws "failed to pipe response" with no Satori-side error in the Next dev log. We hit this when building the auto OG image; do not regress.
 
-2. **`<img>` inside `ImageResponse` JSX fetches the URL server-side and embeds the bytes.** Spotify CDN (`i.scdn.co`) URLs work fine — confirmed in [src/app/u/[username]/opengraph-image.tsx](src/app/u/[username]/opengraph-image.tsx).
+2. **`<img>` inside `ImageResponse` JSX fetches the URL server-side and embeds the bytes.** Spotify CDN (`i.scdn.co`) URLs work fine - confirmed in [src/app/u/[username]/opengraph-image.tsx](src/app/u/[username]/opengraph-image.tsx).
 
 3. **Postgres pool already cached on `globalThis`** in [src/db/client.ts](src/db/client.ts). Adding new queries does not require additional plumbing.
 
@@ -29,11 +29,11 @@
 
 5. **Period helper:** `periodSince(period)` in [src/lib/stats/period.ts](src/lib/stats/period.ts) returns `Date | null` (null = "all").
 
-6. **Profile lookup:** `getPublicProfileByUsername(username)` in [src/db/queries/users.ts](src/db/queries/users.ts) returns `null` if not found OR not public — caller treats both as 404.
+6. **Profile lookup:** `getPublicProfileByUsername(username)` in [src/db/queries/users.ts](src/db/queries/users.ts) returns `null` if not found OR not public - caller treats both as 404.
 
-7. **Dev server caveat:** the user keeps a `pnpm dev` running on port 3000 (PID was 57422 earlier — may have changed). Run smoke-test curls against `http://127.0.0.1:3000`. Do NOT start a second dev server; it will conflict.
+7. **Dev server caveat:** the user keeps a `pnpm dev` running on port 3000 (PID was 57422 earlier - may have changed). Run smoke-test curls against `http://127.0.0.1:3000`. Do NOT start a second dev server; it will conflict.
 
-8. **Test data state (verified 2026-05-17):** one user in DB — `username=judescha`, `is_public=true`. Use `judescha` for all curl smoke tests.
+8. **Test data state (verified 2026-05-17):** one user in DB - `username=judescha`, `is_public=true`. Use `judescha` for all curl smoke tests.
 
 9. **CSS palette tokens reused across cards:**
    - Background mesh: 3 radial gradients (violet `#7c3aed`, magenta `#ec4899`, cyan `#38bdf8`) over `#070710`.
@@ -48,7 +48,7 @@
 
 | Path | Responsibility |
 |---|---|
-| `src/lib/share/card-config.ts` | Zod schema, defaults, format/N matrix, parse helpers — pure functions |
+| `src/lib/share/card-config.ts` | Zod schema, defaults, format/N matrix, parse helpers - pure functions |
 | `src/lib/share/card-config.test.ts` | Vitest unit tests for the helpers |
 | `src/db/queries/wall-covers.ts` | Single query that returns N unique album cover URLs for a user over a period |
 | `src/app/api/share-card/templates/shared.tsx` | JSX building blocks: `<Stack>`, `<HStack>`, `<Header>`, `<Watermark>`, `<BgMesh>`, `<BgWall>`, `<RankRow>` |
@@ -304,7 +304,7 @@ export function clampNForFormat(format: ShareFormat, n: number): number {
 
 // Schema tolérant : applique les defaults sur chaque champ invalide
 // plutôt que de throw. La page /share et la route API n'ont jamais à
-// gérer d'exception ici — l'URL est toujours acceptée.
+// gérer d'exception ici - l'URL est toujours acceptée.
 const fieldSchema = z.object({
   mode: z.enum(SHARE_MODES).catch(SHARE_CARD_DEFAULTS.mode),
   type: z.enum(SHARE_TYPES).catch(SHARE_CARD_DEFAULTS.type),
@@ -357,7 +357,7 @@ export function buildShareCardUrl(
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `pnpm test src/lib/share/card-config.test.ts`
-Expected: PASS — all describe blocks green.
+Expected: PASS - all describe blocks green.
 
 - [ ] **Step 5: Typecheck + lint**
 
@@ -371,7 +371,7 @@ git add src/lib/share/card-config.ts src/lib/share/card-config.test.ts
 git commit -m "$(cat <<'EOF'
 feat(share): card config schema, defaults, format×N matrix
 
-Tolerant Zod parsing (never throws — falls back to defaults per field),
+Tolerant Zod parsing (never throws - falls back to defaults per field),
 matrix constraints from spec Section 2, context-to-preset mapping for
 the ShareButton "Customize…" entry point.
 
@@ -780,7 +780,7 @@ export function Watermark({
 
 /**
  * Background layer absolutely positioned over the whole card. Both
- * variants render edge-to-edge — content sits on top via a sibling
+ * variants render edge-to-edge - content sits on top via a sibling
  * positioned container.
  */
 export function Background({
@@ -907,7 +907,7 @@ EOF
 
 ---
 
-## Task 4: Story template (1080×1920) — focus + recap
+## Task 4: Story template (1080×1920) - focus + recap
 
 **Files:**
 - Create: `src/app/api/share-card/templates/story.tsx`
@@ -1647,7 +1647,7 @@ export async function GET(req: Request) {
 Run: `pnpm typecheck`
 Expected: no errors.
 
-- [ ] **Step 3: Smoke test — defaults (story focus tracks 4w mesh)**
+- [ ] **Step 3: Smoke test - defaults (story focus tracks 4w mesh)**
 
 Run:
 
@@ -1660,7 +1660,7 @@ curl -s -o /tmp/share-defaults.png \
 
 Expected: `HTTP 200`, several KB, `PNG image data, 1080 x 1920`.
 
-- [ ] **Step 4: Smoke test — twitter focus tracks N=3 mesh**
+- [ ] **Step 4: Smoke test - twitter focus tracks N=3 mesh**
 
 Run:
 
@@ -1673,7 +1673,7 @@ curl -s -o /tmp/share-tw.png \
 
 Expected: `HTTP 200`, `PNG image data, 1200 x 630`.
 
-- [ ] **Step 5: Smoke test — post recap 6m mesh**
+- [ ] **Step 5: Smoke test - post recap 6m mesh**
 
 Run:
 
@@ -1686,7 +1686,7 @@ curl -s -o /tmp/share-post-recap.png \
 
 Expected: `HTTP 200`, `PNG image data, 1080 x 1080`.
 
-- [ ] **Step 6: Smoke test — story focus albums N=10 1y wall**
+- [ ] **Step 6: Smoke test - story focus albums N=10 1y wall**
 
 Run:
 
@@ -1699,7 +1699,7 @@ curl -s -o /tmp/share-wall.png \
 
 Expected: `HTTP 200`, `PNG image data, 1080 x 1920`. Visually inspect via `open /tmp/share-wall.png` (macOS) to confirm the wall background renders.
 
-- [ ] **Step 7: Smoke test — 404 on unknown username**
+- [ ] **Step 7: Smoke test - 404 on unknown username**
 
 Run:
 
@@ -1710,7 +1710,7 @@ curl -s -o /dev/null -w "HTTP %{http_code}\n" \
 
 Expected: `HTTP 404`.
 
-- [ ] **Step 8: Smoke test — 400 on missing username**
+- [ ] **Step 8: Smoke test - 400 on missing username**
 
 Run:
 
@@ -2243,7 +2243,7 @@ export default async function SharePage({
   let config: ShareCardConfig = parseShareCardParams(params);
 
   // Apply context preset only when no explicit fields are set (i.e. the
-  // user just clicked "Customize…" from a page — we don't override their
+  // user just clicked "Customize…" from a page - we don't override their
   // hand-edited URL on subsequent reloads).
   const contextRaw = params.context;
   const contextValue = Array.isArray(contextRaw) ? contextRaw[0] : contextRaw;
@@ -2277,7 +2277,7 @@ export default async function SharePage({
 }
 ```
 
-- [ ] **Step 2: Smoke test — auth redirect**
+- [ ] **Step 2: Smoke test - auth redirect**
 
 Run:
 
@@ -2288,15 +2288,15 @@ curl -s -o /dev/null -w "HTTP %{http_code}\n" -L --max-redirs 0 \
 
 Expected: `HTTP 307` (redirect to `/login`). (Without a session cookie.)
 
-- [ ] **Step 3: Smoke test — page renders with session**
+- [ ] **Step 3: Smoke test - page renders with session**
 
 (Manual, in browser): log in → visit `http://127.0.0.1:3000/share` → expect the editor UI with default config (story focus tracks N=5 4w mesh) and a live preview image.
 
-- [ ] **Step 4: Smoke test — context preset**
+- [ ] **Step 4: Smoke test - context preset**
 
 (Manual, in browser): visit `http://127.0.0.1:3000/share?context=dashboard` → expect `mode=recap, format=story` applied.
 
-- [ ] **Step 5: Smoke test — settings redirect for private profile**
+- [ ] **Step 5: Smoke test - settings redirect for private profile**
 
 (Manual, in DB): set `is_public=false` for the test user, visit `/share`, expect redirect to `/settings?from=share`. Restore `is_public=true` afterwards:
 
@@ -2517,7 +2517,7 @@ git log --oneline feat/phase-a-viral ^main   # → review the 9 commits from thi
 
 ## Out-of-scope (do NOT add)
 
-Reminder: the following are explicitly deferred to other issues — do not sneak them in.
+Reminder: the following are explicitly deferred to other issues - do not sneak them in.
 
 - DB persistence of share config (issue #15).
 - Custom fonts, colors, watermark removal.

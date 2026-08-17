@@ -12,7 +12,7 @@
 
 ---
 
-## Task 1: Module Deezer — `fetchAlbumDetails`
+## Task 1: Module Deezer - `fetchAlbumDetails`
 
 **Files:**
 - Create: `src/lib/deezer/album.ts`
@@ -78,7 +78,7 @@ export interface DeezerAlbumDetails {
 
 /**
  * Fetch full album details via `/album/{id}`. We only consume `release_date`
- * here — `searchAlbumByName` already returned id + cover. Returns null on
+ * here - `searchAlbumByName` already returned id + cover. Returns null on
  * shape mismatch so the caller can skip cleanly.
  */
 export async function fetchAlbumDetails({
@@ -112,7 +112,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 ---
 
-## Task 2: Migration N — add `albums.deezer_id`
+## Task 2: Migration N - add `albums.deezer_id`
 
 **Files:**
 - Create: `drizzle/<N>_albums_deezer_id.sql` (Drizzle générera le nom exact)
@@ -168,7 +168,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 ---
 
-## Task 3: Refactor `enrichAlbumImageByDeezer` — sentinel + release_date
+## Task 3: Refactor `enrichAlbumImageByDeezer` - sentinel + release_date
 
 **Files:**
 - Modify: `src/lib/deezer/catalog.ts`
@@ -326,7 +326,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 ---
 
-## Task 4: Refactor `enrichCatalog.ts` — Deezer-only sweep symétrique
+## Task 4: Refactor `enrichCatalog.ts` - Deezer-only sweep symétrique
 
 **Files:**
 - Modify: `worker/jobs/enrichCatalog.ts`
@@ -478,7 +478,7 @@ export async function selfHealEnrichCatalog(): Promise<SelfHealResult> {
       slog.info({ state }, "removing stale failed job");
       await existing.remove();
     } else {
-      slog.info({ state }, "enrich already pending — no re-enqueue");
+      slog.info({ state }, "enrich already pending - no re-enqueue");
       return { unenrichedAlbums, unenrichedArtists, enqueued: false };
     }
   }
@@ -507,7 +507,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 ---
 
-## Task 5: Refactor `enrichCatalogPriority.ts` — filtre deezer_id
+## Task 5: Refactor `enrichCatalogPriority.ts` - filtre deezer_id
 
 **Files:**
 - Modify: `worker/jobs/enrichCatalogPriority.ts`
@@ -560,7 +560,7 @@ for (let i = 0; i < albumIds.length; i++) {
   albumsEnriched++;
 }
 
-// Artists pass — pareil avec isNull(artists.deezerId)
+// Artists pass - pareil avec isNull(artists.deezerId)
 ```
 
 L'ultra-priority pass (Promise.allSettled sur les 20 premiers) est conservé tel quel.
@@ -589,7 +589,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 - Modify: `worker/jobs/enrichArtistImage.ts`
 - Modify: `worker/jobs/enrichArtistImage.test.ts`
 
-La fonction `enrichArtistImageWithFallback` n'a plus de "fallback" — c'est juste Deezer. Renommer en `enrichArtistImage` (ou inline dans single-enrich) et garder la pré-check `imageUrl !== null || deezerId !== null`.
+La fonction `enrichArtistImageWithFallback` n'a plus de "fallback" - c'est juste Deezer. Renommer en `enrichArtistImage` (ou inline dans single-enrich) et garder la pré-check `imageUrl !== null || deezerId !== null`.
 
 - [ ] **Step 1: Update tests**
 
@@ -710,7 +710,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ## Task 8: Update README + AGENTS docs
 
 **Files:**
-- Modify: `README.md` (si des refs MBz/CAA subsistent — vérifier)
+- Modify: `README.md` (si des refs MBz/CAA subsistent - vérifier)
 - Modify: `docs/test-scenarios.md` (vérifier)
 
 - [ ] **Step 1: Cherche les références**
@@ -734,7 +734,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 ---
 
-## Task 9: Migration N+1 — drop colonnes mortes
+## Task 9: Migration N+1 - drop colonnes mortes
 
 **Files:**
 - Create: `drizzle/<N+1>_drop_mbid_album_type.sql`
@@ -745,7 +745,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 - [ ] **Step 1: Vérifier qu'aucun code n'écrit mbid/album_type**
 
 Run: `grep -rn "albums\.mbid\|albums\.albumType\|artists\.mbid\|mbid:\s*[^?]\|albumType:" src/ worker/ --include="*.ts" --include="*.tsx" | grep -v "\.test\." | grep -v schema.ts`
-Expected: aucune occurrence (sauf si quelque chose lit encore — c'est un signal qu'on a oublié un consommateur).
+Expected: aucune occurrence (sauf si quelque chose lit encore - c'est un signal qu'on a oublié un consommateur).
 
 - [ ] **Step 2: Remove from schema**
 
@@ -841,6 +841,6 @@ Puis merge sur main (via interface ou commande locale selon habitude).
 ## Notes pour le worker / executor
 
 - **Parallélisme** : pas de subagents en parallèle, chaque task touche des fichiers qui peuvent dépendre des précédents (en particulier Task 4 ↔ Task 6).
-- **Si une task échoue** : ne pas skip — rapporter le blocage. Les migrations DB en particulier ne sont pas trivialement réversibles.
+- **Si une task échoue** : ne pas skip - rapporter le blocage. Les migrations DB en particulier ne sont pas trivialement réversibles.
 - **Si `pnpm drizzle:push` produit un diff inattendu** : inspecter le `meta/` Drizzle avant d'appliquer. Une drift de schema masquée pourrait causer une perte de données.
 - **Re-sweep coût** : à la première execution post-migration, le sweep va traiter ~N albums. C'est normal et attendu (cf spec section "Re-sweep complet"). Ne pas paniquer si ça prend quelques minutes.

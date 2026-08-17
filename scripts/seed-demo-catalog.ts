@@ -70,7 +70,7 @@ async function main() {
   console.log(`Inserted ${artistRows.length} artist rows (idempotent)`);
 
   // 2) Insert minimal album rows + album_artists junctions.
-  //    Demo tops + wall-only albums (fond <AlbumWall>) — même pipeline.
+  //    Demo tops + wall-only albums (fond <AlbumWall>) - même pipeline.
   const allAlbums: { artistName: string; name: string }[] = [
     ...DEMO_TOP_ALBUMS.map((a) => ({ artistName: a.artistNames[0], name: a.name })),
     ...DEMO_WALL_ALBUMS,
@@ -112,7 +112,7 @@ async function main() {
   });
   if (trackRows.length > 0) {
     // onConflictDoUpdate (et pas DoNothing) : les runs précédents ont pu
-    // laisser album_id NULL sur des rows existantes — on répare sans jamais
+    // laisser album_id NULL sur des rows existantes - on répare sans jamais
     // écraser un lien existant par NULL (COALESCE).
     await db
       .insert(tracks)
@@ -142,7 +142,7 @@ async function main() {
     const albumId = synthesizeAlbumId(a.artistName, a.name);
     const [row] = await db.select({ deezerId: albums.deezerId }).from(albums).where(eq(albums.id, albumId)).limit(1);
     if (row?.deezerId != null) {
-      console.log(`  [${++i}/${allAlbums.length}] ${a.artistName} — ${a.name}: already enriched`);
+      console.log(`  [${++i}/${allAlbums.length}] ${a.artistName} - ${a.name}: already enriched`);
       continue;
     }
     try {
@@ -151,9 +151,9 @@ async function main() {
         artistName: a.artistName,
         albumName: a.name,
       });
-      console.log(`  [${++i}/${allAlbums.length}] ${a.artistName} — ${a.name}: enriched`);
+      console.log(`  [${++i}/${allAlbums.length}] ${a.artistName} - ${a.name}: enriched`);
     } catch (err) {
-      console.error(`  [${++i}/${allAlbums.length}] ${a.artistName} — ${a.name}: FAILED`, (err as Error).message);
+      console.error(`  [${++i}/${allAlbums.length}] ${a.artistName} - ${a.name}: FAILED`, (err as Error).message);
     }
   }
 

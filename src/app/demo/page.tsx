@@ -25,7 +25,7 @@ const WALL_CELLS = 60;
  * Public showcase reached from the landing's "Voir un exemple". Renders the
  * exact same demo dashboard a logged-in user sees before importing (via the
  * shared <DemoShowcase>), but standalone (no sidebar, no auth) and tuned for
- * conversion — every affordance funnels to /inscription.
+ * conversion - every affordance funnels to /inscription.
  */
 export default async function DemoPage() {
   const [tracks, artists, wallCovers] = await Promise.all([

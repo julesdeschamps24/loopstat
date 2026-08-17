@@ -1,4 +1,4 @@
-# Sub-projet F — photos d'artistes via TheAudioDB : implementation plan
+# Sub-projet F - photos d'artistes via TheAudioDB : implementation plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -22,7 +22,7 @@
 - Modify: `drizzle/meta/_journal.json`
 - Create: `drizzle/meta/0007_snapshot.json`
 
-- [ ] **Step 1: Update `src/db/schema.ts` — add tadbId column**
+- [ ] **Step 1: Update `src/db/schema.ts` - add tadbId column**
 
 Locate the `artists` table block and add `tadbId` column + index :
 
@@ -195,7 +195,7 @@ describe("tadbFetch", () => {
 pnpm test src/lib/theaudiodb/client.test.ts
 ```
 
-Expected : FAIL — module not found.
+Expected : FAIL - module not found.
 
 - [ ] **Step 3: Implement `client.ts`**
 
@@ -216,10 +216,10 @@ export class TheAudioDBError extends Error {
 /**
  * Fetch a JSON resource from the TheAudioDB API v1.
  *
- * Reads `TADB_API_KEY` from env (defaults to "2", their public dev key — fine
+ * Reads `TADB_API_KEY` from env (defaults to "2", their public dev key - fine
  * in dev, rate-limited in prod, request a free key for production).
  *
- * Throws TheAudioDBError on non-2xx. No retry-after parsing — TheAudioDB doesn't
+ * Throws TheAudioDBError on non-2xx. No retry-after parsing - TheAudioDB doesn't
  * surface rate-limit headers; the caller paces via sleep().
  */
 export async function tadbFetch<T>(path: string): Promise<T> {
@@ -358,7 +358,7 @@ describe("searchArtistByName", () => {
 pnpm test src/lib/theaudiodb/search.test.ts
 ```
 
-Expected : FAIL — module not found.
+Expected : FAIL - module not found.
 
 - [ ] **Step 3: Implement `search.ts`**
 
@@ -391,7 +391,7 @@ function parseTopArtist(data: ArtistSearchResponse): TadbArtistMatch | null {
 }
 
 /**
- * Lookup TheAudioDB artist by MusicBrainz MBID. Most precise match — no name
+ * Lookup TheAudioDB artist by MusicBrainz MBID. Most precise match - no name
  * ambiguity.
  */
 export async function lookupArtistByMbid({ mbid }: { mbid: string }): Promise<TadbArtistMatch | null> {
@@ -528,7 +528,7 @@ describe("enrichArtistImageByName", () => {
 pnpm test src/lib/theaudiodb/catalog.test.ts
 ```
 
-Expected : FAIL — module not found.
+Expected : FAIL - module not found.
 
 - [ ] **Step 3: Implement `catalog.ts`**
 
@@ -631,7 +631,7 @@ import {
 } from "@/lib/musicbrainz/catalog";
 ```
 
-Wait — that's wrong. The new helpers live in `@/lib/theaudiodb/catalog`. Use :
+Wait - that's wrong. The new helpers live in `@/lib/theaudiodb/catalog`. Use :
 
 ```ts
 import {
@@ -650,7 +650,7 @@ In `worker/jobs/enrichCatalog.ts`, near the top of the file (after imports), add
 const SENTINEL_MBID = "00000000-0000-0000-0000-000000000000";
 ```
 
-(This duplicates the constant in `@/lib/musicbrainz/catalog.ts` where it's not exported. Acceptable — it's a stable invariant.)
+(This duplicates the constant in `@/lib/musicbrainz/catalog.ts` where it's not exported. Acceptable - it's a stable invariant.)
 
 - [ ] **Step 3: Extend `EnrichCatalogResult` interface**
 
@@ -915,7 +915,7 @@ In `src/app/top/artists/page.tsx`, find the `RankedRow` JSX. Add `avatarImageUrl
 />
 ```
 
-(Both `imageUrl` and `avatarImageUrl` — the existing `imageUrl` prop should already work, but the avatar fallback now uses the same URL when present. If the `RankedRow` already renders `<img src={imageUrl}>` directly when set, no avatar is shown — passing `avatarImageUrl` is just a safety net.)
+(Both `imageUrl` and `avatarImageUrl` - the existing `imageUrl` prop should already work, but the avatar fallback now uses the same URL when present. If the `RankedRow` already renders `<img src={imageUrl}>` directly when set, no avatar is shown - passing `avatarImageUrl` is just a safety net.)
 
 Do the same edit for any demo-mode branch in the same file.
 
@@ -957,7 +957,7 @@ git commit -m "feat(ui): wire artists.image_url through to ArtistAvatar"
 Append to `.env.example` :
 
 ```
-# TheAudioDB API key — '2' = dev key public (rate limit conservateur).
+# TheAudioDB API key - '2' = dev key public (rate limit conservateur).
 # Pour la prod : sign-up gratuit sur https://www.theaudiodb.com/api_guide.php
 TADB_API_KEY=2
 ```
@@ -969,7 +969,7 @@ echo "" >> .env.local
 echo "TADB_API_KEY=2" >> .env.local
 ```
 
-(Not committed — `.env.local` is gitignored.)
+(Not committed - `.env.local` is gitignored.)
 
 - [ ] **Step 3: Commit**
 
@@ -980,7 +980,7 @@ git commit -m "chore(env): document TADB_API_KEY"
 
 ---
 
-## Task 9: Manual verification — trigger worker, observe images
+## Task 9: Manual verification - trigger worker, observe images
 
 **Files:** none
 

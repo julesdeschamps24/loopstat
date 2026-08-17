@@ -6,7 +6,7 @@ import { periodSince } from "@/lib/stats/period";
 
 const WALL_CELLS = 60;
 
-// User-scoped DB aggregation for the background — always dynamic.
+// User-scoped DB aggregation for the background - always dynamic.
 export const dynamic = "force-dynamic";
 
 /**
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  * En App Router, les layouts ne se re-rendent pas lors d'une navigation
  * entre leurs routes (ils sont mis en cache côté client). Conséquence :
  * la requête de covers ci-dessous s'exécute une seule fois en entrant dans
- * l'app et le fond reste monté en permanence — plus de « décharge/recharge »
+ * l'app et le fond reste monté en permanence - plus de « décharge/recharge »
  * du gradient violet en passant de track → artist → album, et une seule
  * requête DB pour toute la session (au lieu d'une par page).
  *
@@ -31,7 +31,7 @@ export default async function AppLayout({
   const userId = session?.user?.id;
 
   // Connecté : top albums de l'utilisateur sur 1 an. Visiteur déconnecté
-  // (mode démo — les pages enfants rendent le compte démo plutôt que de
+  // (mode démo - les pages enfants rendent le compte démo plutôt que de
   // rediriger) : on remplit le mur avec les favoris du catalog global.
   const wallCovers = userId
     ? await getPaddedWallCovers(

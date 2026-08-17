@@ -41,7 +41,7 @@ export default async function TrackDetailPage({
 
   const { id: rawId } = await params;
   // Next.js 16 passes the param URL-encoded (e.g. "demo%3Aespresso"), but our
-  // demo fixtures use a literal ":" prefix — decode so lookups match.
+  // demo fixtures use a literal ":" prefix - decode so lookups match.
   const id = decodeURIComponent(rawId);
 
   if (isDemoId(id)) {
@@ -179,7 +179,7 @@ export default async function TrackDetailPage({
   ]);
 
   if (album && album.imageUrl === null) {
-    // Try inline Deezer enrich with a tight timeout — cover loads on first
+    // Try inline Deezer enrich with a tight timeout - cover loads on first
     // visit instead of after a refresh. Falls back to background queue if
     // Deezer is slow.
     const primaryArtistName = trackArtistRows[0]?.name ?? "";
@@ -202,7 +202,7 @@ export default async function TrackDetailPage({
         .limit(1);
       if (refreshed?.imageUrl) album.imageUrl = refreshed.imageUrl;
     } catch {
-      // Inline failed (timeout or Deezer error) — enqueue background fallback
+      // Inline failed (timeout or Deezer error) - enqueue background fallback
       void triggerSingleEnrich("album", album.id);
     }
   }

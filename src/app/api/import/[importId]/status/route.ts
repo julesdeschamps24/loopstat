@@ -5,7 +5,7 @@ import { db } from "@/db/client";
 import { imports } from "@/db/schema";
 import { log } from "@/lib/log";
 
-// Reads per-user import state and depends on the session cookie — never cached.
+// Reads per-user import state and depends on the session cookie - never cached.
 export const dynamic = "force-dynamic";
 
 export async function GET(
@@ -33,7 +33,7 @@ export async function GET(
       .where(eq(imports.id, importId))
       .limit(1);
 
-    // 404 (not 403) when the import belongs to someone else — don't reveal it exists.
+    // 404 (not 403) when the import belongs to someone else - don't reveal it exists.
     if (!row || row.userId !== userId) {
       return Response.json({ error: "not_found" }, { status: 404 });
     }

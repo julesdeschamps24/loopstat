@@ -21,7 +21,7 @@ function ensureLetterPrefix(slug: string): string {
  * Dérive un username à partir du displayName (fallback : uniqueId).
  * Garantit le format attendu par {@link validateUsername} : commence par une
  * lettre, 3-20 caractères, [a-z0-9_-]. Ne gère pas l'unicité ni les mots
- * réservés — c'est le job de l'appelant (server action).
+ * réservés - c'est le job de l'appelant (server action).
  */
 export function deriveUsername(
   displayName: string | null | undefined,

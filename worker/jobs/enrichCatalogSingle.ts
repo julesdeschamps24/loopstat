@@ -13,7 +13,7 @@ export interface EnrichCatalogSingleArgs {
 /**
  * Enrich a single album or artist. Called from the on-demand `/api/enrich-
  * single` endpoint when a page handler detects a NULL image_url. Best-effort
- * — errors are logged, not rethrown (the queue's job retry handles transient
+ * - errors are logged, not rethrown (the queue's job retry handles transient
  * failures, but we don't want one bad item to spin forever).
  */
 export async function enrichCatalogSingle({

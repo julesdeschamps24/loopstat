@@ -7,7 +7,7 @@ import { ArtistAvatar } from "@/components/ui/artist-avatar";
  * A single numbered entity row (track, artist, album, genre…).
  *
  * Renders as a `next/link` when `href` is provided, otherwise a plain `div`.
- * The image is optional — when absent a neutral placeholder is shown.
+ * The image is optional - when absent a neutral placeholder is shown.
  * When `avatarName` is set (artist rows), a gradient avatar is shown instead
  * of the generic music-note placeholder.
  */

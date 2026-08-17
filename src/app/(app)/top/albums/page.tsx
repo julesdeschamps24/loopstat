@@ -56,7 +56,7 @@ export default async function TopAlbumsPage({
             </Suspense>
           </header>
           <p className="mb-8 text-sm text-muted-foreground">
-            Ces données sont fictives — importe ton historique pour voir les tiennes.
+            Ces données sont fictives - importe ton historique pour voir les tiennes.
           </p>
           <StaggerList className="flex flex-col gap-1">
             {albumsData.map((album, index) => (
@@ -95,7 +95,7 @@ export default async function TopAlbumsPage({
   const emptyDescription =
     period === "all" && !imported
       ? "Importe ton historique Spotify pour débloquer tes tops albums lifetime."
-      : "Écoute quelques titres puis reviens — les tops se construisent automatiquement.";
+      : "Écoute quelques titres puis reviens - les tops se construisent automatiquement.";
 
   return (
     <main id="main" className="flex-1 flex flex-col px-6 py-12 max-w-5xl mx-auto w-full">
@@ -114,7 +114,7 @@ export default async function TopAlbumsPage({
       </header>
 
       <p className="mb-8 text-sm text-muted-foreground">
-        Agrégé depuis tes écoutes locales — un album compte chaque fois
+        Agrégé depuis tes écoutes locales - un album compte chaque fois
         qu&apos;un de ses titres a été joué.
       </p>
 

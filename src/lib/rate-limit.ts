@@ -12,7 +12,7 @@ interface CheckResult {
   retryAfterMs: number;
 }
 
-// Share the buckets Map across HMR reloads in dev — same pattern as the
+// Share the buckets Map across HMR reloads in dev - same pattern as the
 // BullMQ queue / Redis connection caching in worker/queue.ts.
 const BUCKETS_KEY = Symbol.for("loopstat.rate-limit");
 type GlobalWithBuckets = typeof globalThis & {
@@ -46,7 +46,7 @@ export function checkRateLimit(
 
 /**
  * Client IP from proxy headers (Caddy sets X-Forwarded-For with the real
- * client IP). Falls back to "unknown" — the rate limit then agrège tous les
+ * client IP). Falls back to "unknown" - the rate limit then agrège tous les
  * clients sans IP dans un seul bucket, ce qui reste protecteur.
  */
 export function clientIpFromHeaders(h: Headers): string {

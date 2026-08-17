@@ -29,9 +29,9 @@ export const glassCard =
   "rounded-2xl border bg-card backdrop-blur-xl dark:bg-white/[0.04] dark:border-white/10";
 
 /**
- * Couleur d'accent unique de la palette Nébuleuse — violet royal #7c3aed
+ * Couleur d'accent unique de la palette Nébuleuse - violet royal #7c3aed
  * avec texte blanc. Utilisée sur tous les CTA et états actifs.
- * (Le nom `gradientCta` est conservé pour ne pas casser les imports — c'est
+ * (Le nom `gradientCta` est conservé pour ne pas casser les imports - c'est
  * désormais un solid color, plus de gradient cyan→magenta.)
  */
 export const gradientCta =
