@@ -10,7 +10,7 @@
  *
  * Run via : pnpm exec dotenv -e .env.local -- tsx scripts/seed-demo-catalog.ts
  */
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { db } from "../src/db/client";
 import {
@@ -31,6 +31,24 @@ import { enrichAlbumImageByDeezer, enrichArtistImageByDeezer } from "../src/lib/
 
 const RATE_MS = 1100;
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * Album réel (ou single éponyme) pour les tracks démo dont l'artiste n'a
+ * AUCUN album dans DEMO_TOP_ALBUMS. Sans ça, ces tracks restent avec
+ * album_id NULL → aucune cover possible dans les tops démo.
+ */
+const TRACK_FALLBACK_ALBUMS: Record<string, { artistName: string; albumName: string }> = {
+  "demo:flowers": { artistName: "Miley Cyrus", albumName: "Endless Summer Vacation" },
+  "demo:water": { artistName: "Tyla", albumName: "TYLA" },
+  "demo:greedy": { artistName: "Tate McRae", albumName: "THINK LATER" },
+  "demo:lovin-on-me": { artistName: "Jack Harlow", albumName: "Lovin On Me" },
+  "demo:million-dollar-baby": { artistName: "Tommy Richman", albumName: "MILLION DOLLAR BABY" },
+  "demo:end-of-beginning": { artistName: "Djo", albumName: "DECIDE" },
+  "demo:di-mi-nombre": { artistName: "Rosalía", albumName: "El Mal Querer" },
+  "demo:gata-only": { artistName: "FloyyMenor", albumName: "GATA ONLY" },
+  "demo:si-no-estas": { artistName: "iñigo quintero", albumName: "Si No Estás" },
+  "demo:vampire": { artistName: "Olivia Rodrigo", albumName: "GUTS" },
+};
 
 async function main() {
   console.log("=== Seed demo catalog ===");
@@ -56,6 +74,10 @@ async function main() {
   const allAlbums: { artistName: string; name: string }[] = [
     ...DEMO_TOP_ALBUMS.map((a) => ({ artistName: a.artistNames[0], name: a.name })),
     ...DEMO_WALL_ALBUMS,
+    ...Object.values(TRACK_FALLBACK_ALBUMS).map((f) => ({
+      artistName: f.artistName,
+      name: f.albumName,
+    })),
   ];
   const albumRows = allAlbums.map((a) => ({
     id: synthesizeAlbumId(a.artistName, a.name),
@@ -80,13 +102,27 @@ async function main() {
     const albumFromTrack = DEMO_TOP_ALBUMS.find((a) =>
       a.artistNames.includes(t.artistNames[0]),
     );
+    const fallback = TRACK_FALLBACK_ALBUMS[t.trackId];
     const albumId = albumFromTrack
       ? synthesizeAlbumId(albumFromTrack.artistNames[0], albumFromTrack.name)
-      : null;
+      : fallback
+        ? synthesizeAlbumId(fallback.artistName, fallback.albumName)
+        : null;
     return { id: t.trackId, name: t.name, albumId };
   });
   if (trackRows.length > 0) {
-    await db.insert(tracks).values(trackRows).onConflictDoNothing();
+    // onConflictDoUpdate (et pas DoNothing) : les runs précédents ont pu
+    // laisser album_id NULL sur des rows existantes — on répare sans jamais
+    // écraser un lien existant par NULL (COALESCE).
+    await db
+      .insert(tracks)
+      .values(trackRows)
+      .onConflictDoUpdate({
+        target: tracks.id,
+        set: {
+          albumId: sql`COALESCE(excluded.album_id, ${tracks.albumId})`,
+        },
+      });
   }
   const trackArtistRows = DEMO_TOP_TRACKS.map((t) => ({
     trackId: t.trackId,
