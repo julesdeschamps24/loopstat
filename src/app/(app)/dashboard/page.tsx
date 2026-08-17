@@ -33,6 +33,7 @@ import { formatNumber } from "@/lib/utils";
 import { DemoShowcase } from "@/components/demo/demo-showcase";
 import { ImportBanner } from "@/components/import-banner";
 import { OwnProfileCard } from "@/components/profile/own-profile-card";
+import { triggerVisibleEnrich } from "@/lib/enrich/trigger";
 
 const WALL_CELLS = 40;
 
@@ -125,6 +126,14 @@ export default async function DashboardPage() {
     getTopTracksFromStreams(userId, previewSince, 5),
     getTopArtistsFromStreams(userId, previewSince, 5),
     getProfile(userId),
+  ]);
+  await triggerVisibleEnrich([
+    ...topTracks
+      .filter((t) => !t.albumImageUrl && t.albumId)
+      .map((t) => ({ type: "album" as const, id: t.albumId! })),
+    ...topArtists
+      .filter((a) => !a.imageUrl)
+      .map((a) => ({ type: "artist" as const, id: a.artistId })),
   ]);
   const shareUsername =
     profile?.isPublic && profile.username ? profile.username : undefined;

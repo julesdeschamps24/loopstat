@@ -377,6 +377,7 @@ export async function getTopTracksFromStreams(
   {
     trackId: string;
     name: string;
+    albumId: string | null;
     albumImageUrl: string | null;
     artistNames: string[];
     plays: number;
@@ -394,6 +395,7 @@ export async function getTopTracksFromStreams(
     .select({
       trackId: streams.trackId,
       name: tracks.name,
+      albumId: tracks.albumId,
       albumImageUrl: albums.imageUrl,
       plays: sql<number>`count(*)::int`,
     })
@@ -401,7 +403,7 @@ export async function getTopTracksFromStreams(
     .innerJoin(tracks, eq(tracks.id, streams.trackId))
     .leftJoin(albums, eq(albums.id, tracks.albumId))
     .where(where)
-    .groupBy(streams.trackId, tracks.name, albums.imageUrl)
+    .groupBy(streams.trackId, tracks.name, tracks.albumId, albums.imageUrl)
     .orderBy(desc(sql`count(*)`))
     .limit(limit);
 
@@ -432,6 +434,7 @@ export async function getTopTracksFromStreams(
   return rows.map((r) => ({
     trackId: r.trackId,
     name: r.name,
+    albumId: r.albumId,
     albumImageUrl: r.albumImageUrl,
     artistNames: namesByTrack.get(r.trackId) ?? [],
     plays: Number(r.plays),

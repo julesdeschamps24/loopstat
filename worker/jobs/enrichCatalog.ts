@@ -3,10 +3,42 @@ import { db } from "@/db/client";
 import { albums, albumArtists, artists } from "@/db/schema";
 import { log } from "@/lib/log";
 import { enrichAlbumImageByDeezer, enrichArtistImageByDeezer } from "@/lib/deezer/catalog";
-import { enrichCatalogQueue } from "../queue";
+import {
+  enrichCatalogHotQueue,
+  enrichCatalogQueue,
+  enrichCatalogSingleQueue,
+} from "../queue";
 import { DEEZER_DELAY_MS, sleep, withQuotaRetry } from "./deezerPacing";
 
 const CHUNK_SIZE = 100;
+const PRIORITY_POLL_MS = 2000;
+
+/**
+ * Le sweep global cède TOUJOURS la place aux jobs prioritaires (covers
+ * visibles à l'écran via triggerVisibleEnrich, hovers via enrich-single) :
+ * ils partagent le même quota Deezer, donc tant qu'il y a du prioritaire en
+ * attente ou en cours, le sweep patiente. Reprend tout seul quand c'est vide.
+ */
+async function yieldToPriorityJobs(wlog: ReturnType<typeof log.child>): Promise<void> {
+  let paused = false;
+  for (;;) {
+    const [hot, single] = await Promise.all([
+      enrichCatalogHotQueue.getJobCounts("waiting", "active"),
+      enrichCatalogSingleQueue.getJobCounts("waiting", "active"),
+    ]);
+    const pending =
+      (hot.waiting ?? 0) + (hot.active ?? 0) + (single.waiting ?? 0) + (single.active ?? 0);
+    if (pending === 0) {
+      if (paused) wlog.info({}, "priorite videe — reprise du sweep");
+      return;
+    }
+    if (!paused) {
+      paused = true;
+      wlog.info({ pending }, "sweep en pause — priorite aux covers visibles");
+    }
+    await sleep(PRIORITY_POLL_MS);
+  }
+}
 
 export interface EnrichCatalogResult {
   albumsEnriched: number;
@@ -77,6 +109,7 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
 
   let albumsEnriched = 0;
   for (let i = 0; i < unenrichedAlbums.length; i++) {
+    await yieldToPriorityJobs(wlog);
     if (i > 0) await sleep(DEEZER_DELAY_MS);
     const row = unenrichedAlbums[i];
     try {
@@ -108,6 +141,7 @@ export async function enrichCatalog(): Promise<EnrichCatalogResult> {
 
   let artistsEnriched = 0;
   for (let i = 0; i < unenrichedArtists.length; i++) {
+    await yieldToPriorityJobs(wlog);
     if (i > 0 || unenrichedAlbums.length > 0) await sleep(DEEZER_DELAY_MS);
     const row = unenrichedArtists[i];
     try {

@@ -11,6 +11,7 @@ import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
 import { getEnrichedDemoTopAlbums } from "@/lib/demo/enrich";
+import { triggerVisibleEnrich } from "@/lib/enrich/trigger";
 import {
   isStreamPeriod,
   periodSince,
@@ -82,6 +83,11 @@ export default async function TopAlbumsPage({
     getTopAlbumsFromStreams(userId, periodSince(period, refDate), TOP_LIMIT),
     getProfile(userId),
   ]);
+  await triggerVisibleEnrich(
+    albums
+      .filter((a) => !a.imageUrl && a.albumId)
+      .map((a) => ({ type: "album" as const, id: a.albumId })),
+  );
   const imported = hasImport;
   const shareUsername =
     profile?.isPublic && profile.username ? profile.username : undefined;

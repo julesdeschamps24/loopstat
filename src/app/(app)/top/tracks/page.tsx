@@ -10,6 +10,7 @@ import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
 import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
 import { getEnrichedDemoTopTracks } from "@/lib/demo/enrich";
+import { triggerVisibleEnrich } from "@/lib/enrich/trigger";
 import {
   isStreamPeriod,
   periodSince,
@@ -80,6 +81,13 @@ export default async function TopTracksPage({
     getTopTracksFromStreams(userId, periodSince(period, refDate), TOP_LIMIT),
     getProfile(userId),
   ]);
+  // Priorite absolue aux covers actuellement affichees (le sweep global
+  // se met en pause tant que ce job n'est pas traite).
+  await triggerVisibleEnrich(
+    tracks
+      .filter((t) => !t.albumImageUrl && t.albumId)
+      .map((t) => ({ type: "album" as const, id: t.albumId! })),
+  );
   const imported = hasImport;
   const shareUsername =
     profile?.isPublic && profile.username ? profile.username : undefined;

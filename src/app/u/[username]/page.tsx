@@ -18,6 +18,7 @@ import { getPublicProfileByUsername } from "@/db/queries/users";
 import { users } from "@/db/schema";
 import { ACCENT_HEX, isAccent, isBackground } from "@/lib/profile/appearance";
 import { periodSince } from "@/lib/stats/period";
+import { triggerVisibleEnrich } from "@/lib/enrich/trigger";
 import { formatNumber } from "@/lib/utils";
 
 // Profils publics : pas d'auth, mais on dépend de la base — toujours dynamique.
@@ -119,6 +120,17 @@ export default async function PublicProfilePage({
     getTopTracksFromStreams(profile.id, since, TOP_LIMIT),
     getTopArtistsFromStreams(profile.id, since, TOP_LIMIT),
     getTopAlbumsFromStreams(profile.id, since, TOP_LIMIT),
+  ]);
+  await triggerVisibleEnrich([
+    ...tracks
+      .filter((t) => !t.albumImageUrl && t.albumId)
+      .map((t) => ({ type: "album" as const, id: t.albumId! })),
+    ...albums
+      .filter((a) => !a.imageUrl && a.albumId)
+      .map((a) => ({ type: "album" as const, id: a.albumId })),
+    ...artists
+      .filter((a) => !a.imageUrl)
+      .map((a) => ({ type: "artist" as const, id: a.artistId })),
   ]);
 
   const displayName = profile.displayName ?? profile.username;
