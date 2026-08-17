@@ -274,13 +274,10 @@ export function RankRow({
 export function Watermark({
   username,
   scale = 1,
-  hidden = false,
 }: {
   username: string;
   scale?: number;
-  hidden?: boolean;
 }) {
-  if (hidden) return null;
   return (
     <div
       style={{
@@ -291,7 +288,7 @@ export function Watermark({
         color: COLORS.textMuted,
       }}
     >
-      loopstat.tech/u/{username}
+      loopstat.fr/u/{username}
     </div>
   );
 }

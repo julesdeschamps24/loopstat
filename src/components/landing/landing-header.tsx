@@ -11,11 +11,11 @@ export function LandingHeader() {
         loopstat<span style={{ color: "#7c3aed" }}>.</span>
       </Link>
       <Link
-        href="/pricing"
+        href="/connexion"
         className="text-sm transition hover:opacity-80"
         style={{ color: "#a89ec8" }}
       >
-        Tarifs
+        Se connecter
       </Link>
     </header>
   );

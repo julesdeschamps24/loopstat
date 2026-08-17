@@ -1,17 +1,11 @@
 import Link from "next/link";
-import { Crown, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 import { CopyProfileLinkButton } from "@/components/profile/own-profile-card-actions";
 import type { ProfileRow } from "@/db/queries/users";
 import { cn, glassCard } from "@/lib/utils";
 
-export function OwnProfileCard({
-  profile,
-  isPremium,
-}: {
-  profile: ProfileRow | null;
-  isPremium: boolean;
-}) {
+export function OwnProfileCard({ profile }: { profile: ProfileRow | null }) {
   if (!profile?.username) return null;
 
   if (!profile.isPublic) {
@@ -27,7 +21,7 @@ export function OwnProfileCard({
           <p className="text-xs text-muted-foreground">
             Active-le pour partager tes stats sur{" "}
             <span className="font-mono">
-              loopstat.tech/u/{profile.username}
+              loopstat.fr/u/{profile.username}
             </span>
             .
           </p>
@@ -42,7 +36,7 @@ export function OwnProfileCard({
     );
   }
 
-  const url = `loopstat.tech/u/${profile.username}`;
+  const url = `loopstat.fr/u/${profile.username}`;
   return (
     <section className={cn(glassCard, "flex flex-col gap-4 p-5")}>
       <div className="flex items-center justify-between">
@@ -52,23 +46,9 @@ export function OwnProfileCard({
             <span className="size-1.5 rounded-full bg-emerald-400" />
             Public
           </span>
-          {isPremium ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#7c3aed]/15 px-2.5 py-0.5 text-xs font-medium text-[#c4b5fd]">
-              <Crown className="size-3" />
-              Premium
-            </span>
-          ) : null}
         </div>
       </div>
       <p className="font-mono text-sm text-muted-foreground">{url}</p>
-      {!isPremium ? (
-        <p className="text-xs text-muted-foreground">
-          💡 Passe Premium pour retirer le watermark des cartes téléchargées ·{" "}
-          <Link href="/pricing" className="underline hover:text-foreground">
-            Découvrir →
-          </Link>
-        </p>
-      ) : null}
       <div className="flex flex-wrap gap-2">
         <CopyProfileLinkButton username={profile.username} />
         <Link

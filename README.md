@@ -37,7 +37,6 @@
 - **Détails par track / artiste / album** avec playcount et minutes cumulées.
 - **Mode démo** : un nouvel utilisateur (avant son premier import) voit un dashboard d'exemple pré-rempli.
 - **Profils publics** opt-in (`/u/<username>`) + **éditeur de cartes à partager** (`/share`) avec OG images.
-- **Premium** (abonnement Stripe) : cartes sans watermark + personnalisation du profil public.
 
 Conçu pour scaler à **≥ 10 000 utilisateurs** dès la modélisation des données (catalogue mutualisé, index sur la table de faits, partitionnement prêt).
 
@@ -71,7 +70,6 @@ C'est le piège n°1 quand on (re)découvre le projet. **loopstat n'appelle PAS 
 | ORM | **Drizzle** | Schéma 100 % TS, requêtes proches de SQL. |
 | Jobs / queue | **BullMQ** + **Redis 7** | Import lourd de l'historique + enrichissement des métadonnées Deezer. |
 | Catalogue images | **API publique Deezer** | `/search/album`, `/search/artist`, `/album/{id}` — aucune clé requise. |
-| Paiements | **Stripe** (Checkout + Customer Portal + webhook) | Abonnement Premium mensuel / annuel. |
 | Validation | Zod | Schémas typés bout-en-bout (UI + worker). |
 
 ---
@@ -84,7 +82,6 @@ C'est le piège n°1 quand on (re)découvre le projet. **loopstat n'appelle PAS 
 - **pnpm** (`npm i -g pnpm` si absent)
 - **Docker Desktop** (pour Postgres + Redis)
 - Un projet **Google Cloud** avec des identifiants OAuth (voir ci-dessous)
-- *(optionnel)* un compte **Stripe** test pour les features Premium
 
 ### Étapes
 
@@ -98,7 +95,6 @@ pnpm install
 cp .env.example .env.local
 #   → générer AUTH_SECRET : openssl rand -base64 32
 #   → GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET : voir docs/google-auth-setup.md
-#   → (optionnel) clés Stripe pour tester le Premium
 
 # 3. Démarrer Postgres + Redis (containers loopstat_postgres / loopstat_redis)
 pnpm db:up
@@ -138,13 +134,7 @@ Toutes dans `.env.local` (gitignored). Modèle complet : [`.env.example`](.env.e
 | `AUTH_URL` | `http://127.0.0.1:3000` | Origine canonique (sans slash final) |
 | `DATABASE_URL` | `postgres://loopstat:loopstat@127.0.0.1:5432/loopstat` | Connexion Postgres (matche `docker-compose.yml`) |
 | `REDIS_URL` | `redis://127.0.0.1:6379` | Connexion Redis pour BullMQ |
-| `STRIPE_SECRET_KEY` | `sk_test_...` | Clé API Stripe (Premium) — optionnel en dev, requis en prod |
-| `STRIPE_WEBHOOK_SECRET` | `whsec_...` | Secret de signature du webhook Stripe |
-| `STRIPE_PRICE_ID_MONTHLY` | `price_...` | Prix mensuel Stripe |
-| `STRIPE_PRICE_ID_YEARLY` | `price_...` | Prix annuel Stripe |
 
-> Stripe est facultatif en local : sans clé, les routes Premium renvoient un early-return propre. En **production**, `STRIPE_SECRET_KEY` est obligatoire (l'app throw au boot sinon). Setup Dashboard détaillé : [`docs/stripe-setup.md`](docs/stripe-setup.md).
->
 > L'API Deezer ne demande **aucune variable d'environnement** (API publique).
 
 ---
@@ -185,7 +175,6 @@ Scripts utilitaires dans [`scripts/`](scripts/) : `seed-demo-catalog.ts` (enrich
 │  - /api/auth/[...nextauth]   (Google OAuth)│
 │  - /api/import               (upload JSON) │
 │  - /api/enrich-single        (cover à la demande)
-│  - /api/checkout /portal /stripe/webhook   │
 │  - Server components pour les pages stats  │
 └────────────┬───────────────────────────────┘
              │ Drizzle ORM
@@ -226,7 +215,6 @@ loopstat/
 │   │   ├── enrich/trigger.ts   # déclenche un enrich single fire-and-forget (guard Redis)
 │   │   ├── ids/synthesize.ts   # IDs stables art_/alb_ (sha1 du nom)
 │   │   ├── demo/               # fixtures du mode démo
-│   │   ├── stripe.ts           # client Stripe + helpers billing
 │   │   ├── redis.ts, log.ts, rate-limit.ts, utils.ts, ...
 │   └── types/                  # Augmentations TS (NextAuth Session, ...)
 └── worker/
@@ -272,7 +260,7 @@ Flux : `POST /api/import` valide les fichiers (`.json`, ≤ 50 Mo, ≤ 30 fichie
 
 | Table | Rôle | Particularité |
 |---|---|---|
-| `users` | Profils | `email` unique (Google), `username` opt-in pour le profil public, `profile_settings` (jsonb), 4 colonnes Stripe (`stripe_customer_id` unique, `stripe_subscription_id`, `premium_status`, `premium_until`) |
+| `users` | Profils | `email` unique (Google), `username` opt-in pour le profil public, `profile_settings` (jsonb) |
 | `artists` | Catalogue artistes | **Mutualisé entre tous les users** ; `deezer_id` (index) pilote l'enrichissement |
 | `albums` | Catalogue albums | idem ; `deezer_id`, `release_date`, `total_tracks` |
 | `tracks` | Catalogue tracks | `album_id` (FK, `set null` à la suppression) |
@@ -311,7 +299,7 @@ pnpm db:migrate
 
 Cible : `loopstat.tech` sur un VPS, derrière Caddy, le tout en Docker (`docker-compose.prod.yml`). La procédure complète (DNS, redirect URI prod Google, `.env.production`, build, Caddy, seed démo, backups, rollback) est dans **[`deploy/README.md`](deploy/README.md)**.
 
-Env prod : voir [`.env.production.example`](.env.production.example) — Google + `AUTH_*` + `POSTGRES_PASSWORD` + clés Stripe (Deezer ne demande rien).
+Env prod : voir [`.env.production.example`](.env.production.example) — Google + `AUTH_*` + `POSTGRES_PASSWORD` (Deezer ne demande rien).
 
 ---
 

@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
-import { isPremium } from "@/db/queries/billing";
 import { AlbumWall } from "@/components/album-wall";
 import { RankedRow } from "@/components/stats/ranked-list";
 import { db } from "@/db/client";
@@ -43,7 +42,7 @@ export async function generateMetadata({
   const name = profile.displayName ?? profile.username;
   const title = `${name} sur loopstat`;
   const description = `Découvre les top titres, artistes et albums de ${name} sur loopstat.`;
-  const url = `https://loopstat.tech/u/${profile.username}`;
+  const url = `https://loopstat.fr/u/${profile.username}`;
 
   return {
     title,
@@ -75,7 +74,6 @@ export default async function PublicProfilePage({
 
   const session = await auth();
   const isOwnProfile = session?.user?.id === profile.id;
-  const ownerIsPremium = await isPremium(profile.id);
 
   // `getPublicProfileByUsername` returns the short summary used by the rest
   // of the page — we need a fresh DB hit for the appearance settings.
@@ -84,10 +82,8 @@ export default async function PublicProfilePage({
     columns: { profileSettings: true },
   });
   const settings = settingsRow?.profileSettings ?? {};
-  const background =
-    ownerIsPremium && isBackground(settings.background) ? settings.background : "mesh";
-  const accent =
-    ownerIsPremium && isAccent(settings.accent) ? settings.accent : "violet";
+  const background = isBackground(settings.background) ? settings.background : "mesh";
+  const accent = isAccent(settings.accent) ? settings.accent : "violet";
   const accentHex = ACCENT_HEX[accent];
 
   const latestPlayedAt = await getUserLatestPlayedAt(profile.id);
@@ -146,10 +142,7 @@ export default async function PublicProfilePage({
             className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm"
           >
             <span>
-              {ownerIsPremium ? "👑" : "👤"}{" "}
-              {ownerIsPremium
-                ? "Profil Premium"
-                : "Tu visites ton propre profil — c’est ce que voient les autres."}
+              👤 Tu visites ton propre profil — c’est ce que voient les autres.
             </span>
             <Link
               href="/settings"

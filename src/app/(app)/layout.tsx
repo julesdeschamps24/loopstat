@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
  *
  * Fond = top albums de l'utilisateur sur 1 an (avec padding catalog si le
  * worker n'a pas encore tout enrichi). Les pages publiques (/, /u/[username],
- * /pricing, /connexion, légal) sont hors de ce groupe et gardent leur propre fond.
+ * /connexion, légal) sont hors de ce groupe et gardent leur propre fond.
  */
 export default async function AppLayout({
   children,

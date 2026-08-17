@@ -6,7 +6,6 @@ import {
   getTopTracksFromStreams,
   getUserLatestPlayedAt,
 } from "@/db/queries/stats";
-import { isPremium } from "@/db/queries/billing";
 import { getPublicProfileByUsername } from "@/db/queries/users";
 import { getWallCovers } from "@/db/queries/wall-covers";
 import {
@@ -166,8 +165,6 @@ export async function GET(req: Request) {
     });
   }
 
-  const hideWatermark = await isPremium(profile.id);
-
   const config = parseShareCardParams(url.searchParams);
   const size = SIZE_BY_FORMAT[config.format];
 
@@ -237,7 +234,6 @@ export async function GET(req: Request) {
     avatarUrl: inlinedAvatar,
     covers: inlinedCovers,
     data: inlinedData,
-    hideWatermark,
   };
 
   try {

@@ -17,14 +17,7 @@ import {
   type StreamPeriod,
 } from "@/lib/stats/period";
 import { formatNumber } from "@/lib/utils";
-import { isPremium } from "@/db/queries/billing";
-import { TopListUpsell } from "@/components/stats/top-list-upsell";
-import {
-  defaultPeriod,
-  lockedPeriods,
-  resolvePeriod,
-  topLimit,
-} from "@/lib/stats/access";
+import { DEFAULT_PERIOD, TOP_LIMIT } from "@/lib/stats/access";
 
 export const dynamic = "force-dynamic";
 
@@ -37,17 +30,12 @@ export default async function TopAlbumsPage({
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
-  const [hasImport, premium] = userId
-    ? await Promise.all([hasCompletedImport(userId), isPremium(userId)])
-    : [false, false];
+  const hasImport = userId ? await hasCompletedImport(userId) : false;
 
   const { period: rawPeriod } = await searchParams;
-  const requested: StreamPeriod = isStreamPeriod(rawPeriod)
+  const period: StreamPeriod = isStreamPeriod(rawPeriod)
     ? rawPeriod
-    : defaultPeriod(premium);
-  const period: StreamPeriod = resolvePeriod(requested, premium);
-  const locked = lockedPeriods(premium);
-  const limit = topLimit(premium);
+    : DEFAULT_PERIOD;
 
   if (!userId || !hasImport) {
     const [albumsData] = await Promise.all([
@@ -63,7 +51,7 @@ export default async function TopAlbumsPage({
           <header className="mb-2 flex flex-wrap items-center justify-between gap-4">
             <h1 className="text-2xl font-semibold">Top albums</h1>
             <Suspense fallback={<div className="h-10 w-75 rounded-full border bg-card" />}>
-              <PeriodSelector current={period} lockedValues={locked} />
+              <PeriodSelector current={period} />
             </Suspense>
           </header>
           <p className="mb-8 text-sm text-muted-foreground">
@@ -91,7 +79,7 @@ export default async function TopAlbumsPage({
   const latestPlayedAt = await getUserLatestPlayedAt(userId);
   const refDate = latestPlayedAt ?? new Date();
   const [albums, profile] = await Promise.all([
-    getTopAlbumsFromStreams(userId, periodSince(period, refDate), limit),
+    getTopAlbumsFromStreams(userId, periodSince(period, refDate), TOP_LIMIT),
     getProfile(userId),
   ]);
   const imported = hasImport;
@@ -114,7 +102,7 @@ export default async function TopAlbumsPage({
               <div className="h-10 w-75 rounded-full border bg-card" />
             }
           >
-            <PeriodSelector current={period} lockedValues={locked} />
+            <PeriodSelector current={period} />
           </Suspense>
         </div>
       </header>
@@ -146,7 +134,6 @@ export default async function TopAlbumsPage({
         </StaggerList>
       )}
 
-      {!premium && albums.length > 0 ? <TopListUpsell noun="albums" /> : null}
     </main>
   );
 }

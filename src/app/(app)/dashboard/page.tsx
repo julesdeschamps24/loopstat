@@ -16,7 +16,6 @@ import { RankedRow } from "@/components/stats/ranked-list";
 import { StatCard } from "@/components/stats/stat-card";
 import { EmptyState } from "@/components/stats/empty-state";
 import { StaggerItem, StaggerList } from "@/components/ui/motion";
-import { isPremium } from "@/db/queries/billing";
 import { hasCompletedImport } from "@/db/queries/imports";
 import {
   getListeningTotals,
@@ -65,7 +64,6 @@ export default async function DashboardPage() {
   // --- MODE DÉMO ---
   if (!hasImport) {
     const profile = await getProfile(userId);
-    const premium = await isPremium(userId);
     const shareUsername =
       profile?.isPublic && profile.username ? profile.username : undefined;
 
@@ -105,7 +103,7 @@ export default async function DashboardPage() {
             shareContext="dashboard"
           />
           <div className="flex flex-col gap-12">
-            <OwnProfileCard profile={profile} isPremium={premium} />
+            <OwnProfileCard profile={profile} />
 
             <DemoShowcase tracks={top5Tracks} artists={top5Artists} />
           </div>
@@ -119,12 +117,8 @@ export default async function DashboardPage() {
   // potentiellement antérieur à aujourd'hui) plutôt que sur now().
   const latestPlayedAt = await getUserLatestPlayedAt(userId);
   const refDate = latestPlayedAt ?? new Date();
-  const premium = await isPremium(userId);
-  // 4w is a Premium-only period — free users get their lifetime top 5 instead
-  // (the impressive, on-brand hook). Premium keeps the recent 28-day snapshot.
-  const previewSince = premium
-    ? new Date(refDate.getTime() - 28 * 24 * 60 * 60 * 1000)
-    : null;
+  // Aperçu = snapshot des 28 derniers jours.
+  const previewSince = new Date(refDate.getTime() - 28 * 24 * 60 * 60 * 1000);
 
   const [totals, topTracks, topArtists, profile] = await Promise.all([
     getListeningTotals(userId, refDate),
@@ -152,7 +146,7 @@ export default async function DashboardPage() {
           shareContext="dashboard"
         />
         <div className="flex flex-col gap-12">
-          <OwnProfileCard profile={profile} isPremium={premium} />
+          <OwnProfileCard profile={profile} />
           <ImportBanner />
 
           {/* Listening totals */}

@@ -57,7 +57,7 @@ export async function getWallCovers(
   since: Date | null,
   limit: number,
 ): Promise<WallAlbum[]> {
-  // Anonymous (no userId, e.g. logged-out /pricing visitor): skip the
+  // Anonymous (no userId, e.g. logged-out /demo visitor): skip the
   // user-scoped query — the wall is filled entirely from the global catalog
   // favourites below. (Passing a non-uuid placeholder here crashes Postgres.)
   const userTop = userId

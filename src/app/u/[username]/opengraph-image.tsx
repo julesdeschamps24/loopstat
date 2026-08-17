@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
 
-import { isPremium } from "@/db/queries/billing";
 import { getTopTracksFromStreams, getUserLatestPlayedAt } from "@/db/queries/stats";
 import { getPublicProfileByUsername } from "@/db/queries/users";
 import { periodSince } from "@/lib/stats/period";
@@ -44,8 +43,6 @@ export default async function Image({
       size,
     );
   }
-
-  const hideWatermark = await isPremium(profile.id);
 
   const latestPlayedAt = await getUserLatestPlayedAt(profile.id);
   const refDate = latestPlayedAt ?? new Date();
@@ -191,19 +188,17 @@ export default async function Image({
           )}
         </div>
 
-        {!hideWatermark ? (
-          <div
-            style={{
-              marginTop: "auto",
-              display: "flex",
-              justifyContent: "flex-end",
-              fontSize: 22,
-              color: TEXT_MUTED,
-            }}
-          >
-            loopstat.tech/u/{profile.username}
-          </div>
-        ) : null}
+        <div
+          style={{
+            marginTop: "auto",
+            display: "flex",
+            justifyContent: "flex-end",
+            fontSize: 22,
+            color: TEXT_MUTED,
+          }}
+        >
+          loopstat.fr/u/{profile.username}
+        </div>
       </div>
     ),
     size,

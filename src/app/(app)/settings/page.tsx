@@ -1,14 +1,11 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { AppHeader } from "@/components/app-header";
 import { AppearanceForm } from "@/components/profile/appearance-form";
-import { PremiumGate } from "@/components/premium-gate";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { ProfileForm } from "@/components/settings/profile-form";
-import { isPremium } from "@/db/queries/billing";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { deriveUsername } from "@/lib/derive-username";
@@ -35,7 +32,6 @@ export default async function SettingsPage() {
     },
   });
 
-  const premium = await isPremium(session.user.id);
   const settings = userRow?.profileSettings ?? {};
   const initialBackground = isBackground(settings.background) ? settings.background : "mesh";
   const initialAccent = isAccent(settings.accent) ? settings.accent : "violet";
@@ -70,21 +66,19 @@ export default async function SettingsPage() {
           <p className="mb-4 text-sm text-muted-foreground">
             Customise le fond et la couleur d&apos;accent de ton profil public.
           </p>
-          <PremiumGate isPremium={premium}>
-            {userRow?.username ? (
-              <AppearanceForm
-                username={userRow.username}
-                displayName={displayName}
-                initialBackground={initialBackground}
-                initialAccent={initialAccent}
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Choisis d&apos;abord un pseudo dans la section &quot;Profil public&quot;
-                ci-dessus.
-              </p>
-            )}
-          </PremiumGate>
+          {userRow?.username ? (
+            <AppearanceForm
+              username={userRow.username}
+              displayName={displayName}
+              initialBackground={initialBackground}
+              initialAccent={initialAccent}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Choisis d&apos;abord un pseudo dans la section &quot;Profil public&quot;
+              ci-dessus.
+            </p>
+          )}
         </section>
 
         <section>
@@ -103,12 +97,6 @@ export default async function SettingsPage() {
             ) : null}
           </dl>
           <DeleteAccountForm />
-          <Link
-            href="/settings/billing"
-            className="self-start text-sm text-[#c4b5fd] hover:underline"
-          >
-            Mon abonnement →
-          </Link>
         </section>
       </div>
     </main>

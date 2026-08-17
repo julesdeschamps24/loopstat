@@ -39,10 +39,6 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  stripeCustomerId: text("stripe_customer_id").unique(),
-  stripeSubscriptionId: text("stripe_subscription_id"),
-  premiumStatus: text("premium_status"),
-  premiumUntil: timestamp("premium_until", { withTimezone: true }),
 });
 
 export const artists = pgTable("artists", {

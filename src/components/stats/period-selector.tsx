@@ -1,7 +1,6 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Crown } from "lucide-react";
 import { useEffect } from "react";
 import {
   isStreamPeriod,
@@ -51,16 +50,13 @@ function consumeInitialReload(): boolean {
 export function PeriodSelector({
   current,
   periods = STREAM_PERIODS,
-  lockedValues = [],
 }: {
   current: StreamPeriod;
   periods?: { value: StreamPeriod; label: string }[];
-  lockedValues?: StreamPeriod[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const locked = new Set(lockedValues);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -81,16 +77,6 @@ export function PeriodSelector({
 
     const urlPeriod = searchParams.get("period");
     if (urlPeriod !== null && isStreamPeriod(urlPeriod)) {
-      if (locked.has(urlPeriod)) {
-        // Free user hit a Premium-only period via the URL. The server already
-        // clamped the data to an allowed period; strip the stale param so the
-        // URL stops lying and we don't mirror a locked value into storage.
-        const params = new URLSearchParams(searchParams.toString());
-        params.delete("period");
-        const qs = params.toString();
-        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-        return;
-      }
       // Mirror what the URL says into storage so the next category picks it up.
       sessionStorage.setItem(STORAGE_KEY, urlPeriod);
       return;
@@ -98,7 +84,7 @@ export function PeriodSelector({
 
     // URL didn't specify a period — try to restore the user's last choice.
     const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (stored && isStreamPeriod(stored) && !locked.has(stored) && stored !== current) {
+    if (stored && isStreamPeriod(stored) && stored !== current) {
       const params = new URLSearchParams(searchParams.toString());
       params.set("period", stored);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -123,20 +109,6 @@ export function PeriodSelector({
     <div className="inline-flex gap-1 rounded-full border bg-card p-1">
       {periods.map(({ value, label }) => {
         const active = value === current;
-        if (locked.has(value)) {
-          return (
-            <button
-              key={value}
-              type="button"
-              title="Disponible en Premium"
-              onClick={() => router.push("/pricing")}
-              className="flex items-center gap-1 rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground opacity-50 transition hover:opacity-100"
-            >
-              <Crown className="size-3" />
-              {label}
-            </button>
-          );
-        }
         return (
           <button
             key={value}

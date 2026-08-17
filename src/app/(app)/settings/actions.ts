@@ -7,7 +7,6 @@ import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { ensureUsernamePersisted, setIsPublic } from "@/db/queries/users";
-import { isPremium } from "@/db/queries/billing";
 import { isAccent, isBackground } from "@/lib/profile/appearance";
 
 export type ProfileFormState =
@@ -71,13 +70,6 @@ export async function updateAppearanceAction(
   const session = await auth();
   if (!session?.user?.id) {
     return { status: "error", error: "Tu dois être connecté." };
-  }
-
-  if (!(await isPremium(session.user.id))) {
-    return {
-      status: "error",
-      error: "Cette personnalisation est réservée Premium.",
-    };
   }
 
   const background = formData.get("background");

@@ -16,14 +16,7 @@ import {
   type StreamPeriod,
 } from "@/lib/stats/period";
 import { formatNumber } from "@/lib/utils";
-import { isPremium } from "@/db/queries/billing";
-import { TopListUpsell } from "@/components/stats/top-list-upsell";
-import {
-  defaultPeriod,
-  lockedPeriods,
-  resolvePeriod,
-  topLimit,
-} from "@/lib/stats/access";
+import { DEFAULT_PERIOD, TOP_LIMIT } from "@/lib/stats/access";
 
 // User-scoped local DB aggregation — always dynamic, no static caching.
 export const dynamic = "force-dynamic";
@@ -37,17 +30,12 @@ export default async function TopTracksPage({
   const session = await auth();
   const userId = session?.user?.id ?? null;
 
-  const [hasImport, premium] = userId
-    ? await Promise.all([hasCompletedImport(userId), isPremium(userId)])
-    : [false, false];
+  const hasImport = userId ? await hasCompletedImport(userId) : false;
 
   const { period: rawPeriod } = await searchParams;
-  const requested: StreamPeriod = isStreamPeriod(rawPeriod)
+  const period: StreamPeriod = isStreamPeriod(rawPeriod)
     ? rawPeriod
-    : defaultPeriod(premium);
-  const period: StreamPeriod = resolvePeriod(requested, premium);
-  const locked = lockedPeriods(premium);
-  const limit = topLimit(premium);
+    : DEFAULT_PERIOD;
 
   if (!userId || !hasImport) {
     const tracks = await getEnrichedDemoTopTracks();
@@ -61,7 +49,7 @@ export default async function TopTracksPage({
           <header className="mb-2 flex flex-wrap items-center justify-between gap-4">
             <h1 className="text-2xl font-semibold">Top titres</h1>
             <Suspense fallback={<div className="h-10 w-75 rounded-full border bg-card" />}>
-              <PeriodSelector current={period} lockedValues={locked} />
+              <PeriodSelector current={period} />
             </Suspense>
           </header>
           <p className="mb-8 text-sm text-muted-foreground">
@@ -89,7 +77,7 @@ export default async function TopTracksPage({
   const latestPlayedAt = await getUserLatestPlayedAt(userId);
   const refDate = latestPlayedAt ?? new Date();
   const [tracks, profile] = await Promise.all([
-    getTopTracksFromStreams(userId, periodSince(period, refDate), limit),
+    getTopTracksFromStreams(userId, periodSince(period, refDate), TOP_LIMIT),
     getProfile(userId),
   ]);
   const imported = hasImport;
@@ -112,7 +100,7 @@ export default async function TopTracksPage({
               <div className="h-10 w-75 rounded-full border bg-card" />
             }
           >
-            <PeriodSelector current={period} lockedValues={locked} />
+            <PeriodSelector current={period} />
           </Suspense>
         </div>
       </header>
@@ -137,8 +125,6 @@ export default async function TopTracksPage({
           ))}
         </StaggerList>
       )}
-
-      {!premium && tracks.length > 0 ? <TopListUpsell noun="titres" /> : null}
     </main>
   );
 }
