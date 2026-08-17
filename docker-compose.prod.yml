@@ -77,6 +77,14 @@ services:
     command: ["pnpm", "tsx", "worker/index.ts"]
     volumes:
       - import_tmp:/app/.import-tmp
+    # Le HEALTHCHECK de l'image ping http://:3000/api/health — le worker ne
+    # sert pas de HTTP, il serait marqué unhealthy en permanence. On vérifie
+    # le process à la place.
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'worker/index.ts' > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   postgres_data:

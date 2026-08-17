@@ -18,14 +18,14 @@
 #      e.g. RSYNC_DEST="user@your-machine:/backups/loopstat/"
 #
 # Restore:
-#   gunzip < <backup.sql.gz> | docker exec -i loopstat_postgres \
+#   gunzip < <backup.sql.gz> | docker exec -i loopstat_postgres_prod \
 #     psql -U loopstat -d loopstat
 
 set -euo pipefail
 
 BACKUP_DIR="/var/backups/loopstat"
 RETENTION_DAYS=7
-CONTAINER="loopstat_postgres"
+CONTAINER="loopstat_postgres_prod"
 DB_NAME="loopstat"
 DB_USER="loopstat"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
