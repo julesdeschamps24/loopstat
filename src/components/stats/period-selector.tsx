@@ -106,7 +106,9 @@ export function PeriodSelector({
   }
 
   return (
-    <div className="inline-flex gap-1 rounded-full border bg-card p-1">
+    // max-w-full + overflow-x-auto : sur mobile la rangee depasse la largeur
+    // de l'ecran ("Tout" coupe) - elle scrolle horizontalement a la place.
+    <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded-full border bg-card p-1">
       {periods.map(({ value, label }) => {
         const active = value === current;
         return (
@@ -116,7 +118,7 @@ export function PeriodSelector({
             aria-pressed={active}
             onClick={() => selectPeriod(value)}
             className={cn(
-              "rounded-full px-4 py-1.5 text-sm font-medium transition",
+              "shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition",
               active
                 ? gradientCta
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",

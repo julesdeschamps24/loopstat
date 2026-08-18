@@ -11,6 +11,7 @@ import { auth } from "@/auth";
 import { hasCompletedImport } from "@/db/queries/imports";
 import { getProfile } from "@/db/queries/users";
 import { Sidebar } from "@/components/sidebar";
+import { MobileNav } from "@/components/mobile-nav";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -90,8 +91,10 @@ export default async function RootLayout({
               username={profile?.username ?? undefined}
               isPublic={profile?.isPublic ?? false}
             />
-            <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+            {/* pb-16 : reserve la hauteur de la MobileNav fixe en bas (< md). */}
+            <div className="flex min-w-0 flex-1 flex-col pb-16 md:pb-0">{children}</div>
           </div>
+          <MobileNav authed={!!userId} />
       </body>
     </html>
   );

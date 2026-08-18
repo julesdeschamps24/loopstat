@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { SearchBar } from "@/components/search-bar";
+import { isNavHidden, resolveDemoHref } from "@/components/nav-config";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -24,17 +25,6 @@ const NAV_ITEMS = [
   { href: "/import", label: "Importer", icon: Download },
   { href: "/settings", label: "Réglages", icon: Settings },
 ] as const;
-
-// Pages publiques (avant/hors connexion) où la sidebar n'a aucun sens - la
-// landing et tout ce qu'elle référence doivent rester des pages autonomes.
-const PUBLIC_PATHS = new Set<string>([
-  "/",
-  "/connexion",
-  "/inscription",
-  "/terms",
-  "/privacy",
-  "/legal",
-]);
 
 /**
  * Sidebar verticale 220 px, fixée à gauche sur >= md, masquée sur mobile.
@@ -60,21 +50,11 @@ export function Sidebar({
   // API 401s when logged out), and the personal/action routes point at the
   // demo home / sign-up instead of bouncing to login.
   const demoMode = !authed;
-  const resolveHref = (href: string): string => {
-    if (!demoMode) return href;
-    if (href === "/dashboard") return "/demo";
-    if (href === "/import" || href === "/settings") return "/inscription";
-    return href;
-  };
+  const resolveHref = (href: string): string => resolveDemoHref(href, authed);
 
   // Pas de sidebar sur les pages publiques (landing + auth + profils
   // partagés) ni sur les routes d'erreur internes Next.
-  if (
-    PUBLIC_PATHS.has(pathname) ||
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/u/")
-  )
-    return null;
+  if (isNavHidden(pathname)) return null;
 
   return (
     <aside className="hidden md:flex md:w-55 md:shrink-0 md:flex-col md:gap-1 md:border-r md:border-white/6 md:bg-white/3 md:backdrop-blur-xl md:p-4 md:sticky md:top-0 md:h-screen">
